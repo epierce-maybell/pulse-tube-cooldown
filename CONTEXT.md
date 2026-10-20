@@ -7,14 +7,14 @@ A ground-up rebuild of the pulse-tube cooldown model for dilution refrigerators.
 **Component**: Any part of the model that carries state. Every component is either a node or a link.
 
 **Node**: A thermal mass with a temperature, e.g. a plate or a linked mass.
-_Avoid_: stage (when meaning the model object)
 
-**Link**: Anything that transfers heat. It can connect to one node or to many, e.g. a pulse tube acting on several plates, or exchange gas coupling every plate.
-_Avoid_: exchanger
+**Boundary node**: A node held at a fixed temperature, e.g. the 295 K surroundings (top flange and vacuum can).
+
+**Link**: Anything that transfers heat. It takes one of three shapes: between two nodes (struts, joints, gas-gap switches, radiation); among many nodes sharing one medium (exchange gas); or a source or sink at nodes (heaters, the cooler).
 
 **Internal state**: The time-varying quantities a component tracks for itself. For a node this includes its temperature. For a link it can include things like sorption-pump temperature or gas pressure.
 
-**Event**: Something that happens during a run and changes the system, e.g. pumping out the exchange gas or turning a heater on. Events are first-class, alongside nodes and links. An event fires on a state condition (e.g. CFP ≤ 70 K) or at a set time, and changes link parameters or modes; the topology stays fixed.
+**Event**: Something that happens during a run and changes the system, e.g. pumping out the exchange gas or turning a heater on. Events are first-class, alongside nodes and links. An event fires on a state condition or at a set time, and changes link parameters or modes; the topology stays fixed.
 
 **Engine**: The generic numerical layer. It knows components, states, equations and events.
 
@@ -27,6 +27,7 @@ _Avoid_: exchanger
 - It is a design tool for R&D first, moving toward a per-unit twin of individual fridges.
 - It models dilution refrigerators, including future DR architectures that may be very different and are not yet known.
 - The engine is generic, and the dilution-fridge knowledge lives in the DR library. Physics is kept separate from numerical methods.
+- The architecture supports parameter sensitivities, e.g. of cooldown time to a component parameter.
 - Use is one run at a time. Runs should be efficient enough to group a handful together.
 - Linked masses are nodes.
 - The v1 DR link types are the brownfield set: cooler, gas-gap switch, exchange gas, radiation shields, strut conduction, MLI, bolted-joint contact resistance.
@@ -48,4 +49,7 @@ _Avoid_: exchanger
 - Docstrings are short and say what code does. Derivations and equations live in `docs/`.
 - Tests are unit tests per component, analytic test cases for the solver, and a regression test against a reference run.
 - The CI/CD decision is deferred until after initial development.
-- The implicit solver is motivated by stiffness and by massless nodes. An off-the-shelf stiff integrator is acceptable.
+- The implicit solver is motivated by stiffness. An off-the-shelf stiff integrator is acceptable.
+- Each cooler stage flange is a node with its own mass and heat capacity.
+- Using scipy to construct Jacobians is preferred over having components calculate their own partial derivatives.
+- Sensitivity will be handled with external wrappers if needed later.
