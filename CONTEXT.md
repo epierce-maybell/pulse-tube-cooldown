@@ -12,6 +12,8 @@ A ground-up rebuild of the pulse-tube cooldown model for dilution refrigerators.
 
 **Link**: Anything that transfers heat. It takes one of three shapes: between two nodes (struts, joints, gas-gap switches, radiation); among many nodes sharing one medium (exchange gas); or a source or sink at nodes (heaters, the cooler).
 
+**Graph**: The structure responsible for handling the topology of nodes and links. 
+
 **Internal state**: The time-varying quantities a component tracks for itself. For a node this includes its temperature. For a link it can include things like sorption-pump temperature or gas pressure.
 
 **Event**: Something that happens during a run and changes the system, e.g. pumping out the exchange gas or turning a heater on. Events are first-class, alongside nodes and links. An event fires on a state condition or at a set time, and changes link parameters or modes; the topology stays fixed.
