@@ -1,7 +1,7 @@
 # Design Specification: Pulse Tube Cooldown Simulation
 
 ## Scope
-Simulate temperature and heat fluxes in a Maybell dilution refrigerator during cooldown, roughly from 300 K to when the MXP turns on (40-50 K). Version 1.0.0 targets a full cooldown simulation of a 6-plate system (SN5), with error comparable to or lower than the legacy model. For this task, we'll define "error" more precisely as the least-squares residual to log-temperature across all thermometers mounted on the system (except for MXP). 
+Simulate temperature and heat fluxes in a Maybell dilution refrigerator during cooldown, roughly from 300 K to when the MXP turns on (40-50 K). Version 1.0.0 targets a full cooldown simulation of a 6-plate system (SNX, where X is whichever system we can get good data for), with error comparable to or lower than the legacy model. For this task, we'll define "error" more precisely as the least-squares residual to log-temperature across all thermometers mounted on the system (except for MXP). 
 
 ## Public API
 For now, we'll call the library Pulse Tube Cooldown, and we can have a canonical import statement:
@@ -14,6 +14,8 @@ Each system gets one, self-contained configuration file. Each model run takes ex
 Configuration files are written in TOML, with the following sections:
 ```toml
 [meta]
+experiment = "Validation on SN5"
+version = # insert commit hash or version tag
 
 [fridge]
 [[fridge.nodes]]
@@ -33,17 +35,16 @@ nodes = ["PRP", "RGP"] # order matters
 end_node = "MXP"
 end_temperature = 50.0 # K
 max_time = 0.0 # s
-
 ```
 
 #### Public functions
 The library exposes the following public functions:
 ```python
-def configure_model(path_to_config) --> Model: ...
+def configure_model(path_to_config) -> Model: ...
     
-def simulate_cooldown(model) --> Result: ...
+def simulate_cooldown(model) -> Result: ...
 
-def save_output(result, path_to_output) --> None: ...
+def save_output(result, path_to_output) -> None: ...
 ```
 
 So the canonical run is:
@@ -51,6 +52,12 @@ So the canonical run is:
 model = ptc.configure_model(path_to_config)
 result = ptc.simulate_cooldown(model)
 ptc.save_output(result, path_to_output)
+```
+
+#### Command-Line Interface
+V1 includes a command-line interface (CLI) to run simulations for a given configuration file. It should be easy to invoke, with only a few options:
+```bash
+python3 run_pulse_tube_cooldown.py --config "path_to_config" --output "path_to_output"
 ```
 
 ## Data Model
@@ -71,7 +78,11 @@ class Node:
 class Link(Protocol):
     @property
     def name(self) -> str: ...
-    def calc_heat_flows(self, temperatures: NDArray[np.float64]) -> NDArray[np.float64]: ...
+
+    @property
+    def nodes(self) -> tuple[str, ...]: ...
+    
+    def calc_heat_flow(self, temperature: NDArray[np.float64]) -> NDArray[np.float64]: ...
 
 @dataclass(frozen = True, slots = True)
 class Graph:
@@ -122,6 +133,8 @@ def build_result(model: Model, solution: scipy.integrate.OdeResult, heat_flow: N
 ```
 
 ## Dilution Refrigerator Library
+As a general rule, physical values should always be specified in SI units.
+
 Materials are stored in TOML files, in data/materials. Each one should take the format:
 ```toml
 name = "OFHC Cu RRR100"
@@ -159,11 +172,30 @@ MATERIAL_FITS = {
 }
 ```
 
-
-
-Known things we need (not organized yet):
-- different types of links
-- different types of materials
-- functions to get specific heat and thermal conductivity for different materials
+Specific Links are frozen dataclasses that match the Link Protocol, where their fields are set by the TOML configuration file. There is a generic loader:
+```python
+def load_link(config: Mapping) -> Link: ...
+```
+which relies on a shared materials loader used by both nodes and links:
+```python
+def load_material(name: str) -> Material: ...
+```
+Links share a common schema, even though there is considerable variation in physics between specific types. Shared quantities should have shared names between types. This should look something like:
+```python
+@dataclass(frozen = True, slots = True)
+class SpecificLinkTemplate:
+    name: str
+    nodes: tuple[str, ...]
+    example_arg1: ...
+    example_arg2: ...
+    
+    def calc_heat_flow(self, temperature_at_nodes: NDArray[np.float64]) -> NDArray[np.float64]: ...
+        """Temperature only on this link's nodes. Positive values indicate heat flow into node."""
+```    
 
 ## Validation and Testing
+Validation experiments should live in simulations/validation/identifier, where identifier is usually a subdirectory that stores the runner script, the configuration file(s), and output.
+
+In the future, we will want regression tests. The first validation experiment(s) that pass, leading us to v1 release, will become the regression tests for later iterations of the model.
+
+Our test suite should include unit tests for each discrete unit of code that is worth testing (e.g., could reasonably not do what we expect it to). Analytic tests are appropriate where we have access to analytic solutions
