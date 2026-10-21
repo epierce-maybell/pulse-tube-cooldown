@@ -4,21 +4,25 @@ A ground-up rebuild of the pulse-tube cooldown model for dilution refrigerators.
 
 ## Language
 
-**Component**: Any part of the model that carries state. Every component is either a node or a link.
+**Component**: A node or a link.
 
-**Node**: A thermal mass with a temperature, e.g. a plate or a linked mass.
+**Material**: A named substance with temperature-dependent specific heat and thermal conductivity. The DR library supplies instances from data files.
 
-**Boundary node**: A node held at a fixed temperature, e.g. the 295 K surroundings (top flange and vacuum can).
+**Node**: A thermal mass with a temperature, e.g. a plate or a linked mass. It is made of materials, each with a mass.
 
-**Link**: Anything that transfers heat. It takes one of three shapes: between two nodes (struts, joints, gas-gap switches, radiation); among many nodes sharing one medium (exchange gas); or a source or sink at nodes (heaters, the cooler).
+**Boundary node**: An ordinary node that the model holds at its initial temperature, e.g. the 295 K surroundings (top flange and vacuum can).
 
-**Graph**: The structure responsible for handling the topology of nodes and links. 
+**Link**: Anything that transfers heat. It takes one of three shapes: between two nodes (struts, joints, gas-gap switches, radiation); among many nodes sharing one medium (exchange gas); or a source or sink at nodes (heaters, the cooler). Given the temperatures of its nodes, it returns the heat flow into each of them. Sources and sinks add or remove heat; the rest move it between nodes.
 
-**Internal state**: The time-varying quantities a component tracks for itself. For a node this includes its temperature. For a link it can include things like sorption-pump temperature or gas pressure.
+**Graph**: The topology. It holds the nodes and links in order, and for each link the indices of the nodes it touches. A component's index is its identity in the engine; names are for display.
 
-**Event**: Something that happens during a run and changes the system, e.g. pumping out the exchange gas or turning a heater on. Events are first-class, alongside nodes and links. An event fires on a state condition or at a set time, and changes link parameters or modes; the topology stays fixed.
+**Model**: The graph plus the conditions of a run: every node's initial temperature, which nodes are boundary nodes, the stop condition (an end node reaching its end temperature, or a maximum time) and solver options.
 
-**Engine**: The generic numerical layer. It knows components, states, equations and events.
+**State**: The quantities the solver integrates: one flat array of node temperatures, ordered by the graph. Link heat flows are computed from the state.
+
+**Result**: The output of a run: its status, the model, and every node's temperature and every link's heat flows over time.
+
+**Engine**: The generic numerical layer. It knows components, states and equations.
 
 **DR library**: The physics layer. It holds the dilution-refrigerator component types (plates, pulse tube, gas-gap switches, …) and the templates that wire them into a fridge.
 
@@ -28,10 +32,12 @@ A ground-up rebuild of the pulse-tube cooldown model for dilution refrigerators.
 - The model reports a (time, temperature) trajectory for every node. Link heat flows are also recorded over time.
 - It is a design tool for R&D first, moving toward a per-unit twin of individual fridges.
 - It models dilution refrigerators, including future DR architectures that may be very different and are not yet known.
-- The engine is generic, and the dilution-fridge knowledge lives in the DR library. Physics is kept separate from numerical methods.
+- The DR library depends on the engine, never the reverse, so the solver is testable with stand-in components and new link types need no engine changes. The data model (materials, nodes, links, graph, model) is shared by both.
 - The architecture supports parameter sensitivities, e.g. of cooldown time to a component parameter.
 - Use is one run at a time. Runs should be efficient enough to group a handful together.
 - Linked masses are nodes.
+- Temperature is the only integrated field in v1. A part with its own thermal dynamics, such as a sorption pump, is a node.
+- Changes in a link's behavior during a run are state-dependent and live inside the link. Exchange-gas pressure is an empirical function of CFP temperature, zero below the pumpout cutoff (default 70 K).
 - The v1 DR link types are the brownfield set: cooler, gas-gap switch, exchange gas, radiation shields, strut conduction, MLI, bolted-joint contact resistance.
 - The design spec covers v1: 300 K to MXP turn-on, the 6-plate reference system, the CLI. It feeds a task list detailed enough for agents to work autonomously, without aligning with the user at each step.
 - The design spec defines the cooler link's interface only. The cooler model is a later decision.
@@ -43,7 +49,7 @@ A ground-up rebuild of the pulse-tube cooldown model for dilution refrigerators.
 - Every system has thermometers (up to ~6). Their positions vary between systems.
 - Calibration is reserved for cases where it is necessary. Each calibrated value absorbs uncertainty that could belong to whatever is under test.
 - The brownfield's external gas-gap switch model becomes a link type in the DR library.
-- The engine supports arbitrary initial conditions and events, so a warm-up simulation can be added later.
+- The engine supports arbitrary initial conditions, so a warm-up simulation can be added later.
 - Configs are written fresh in TOML. A one-time converter from brownfield saved systems is a nice-to-have.
 - Material and cooler libraries are data files in the repo, each with a recorded source.
 - A saved run is one folder holding the config used, the results, and metadata (code version, git commit).
