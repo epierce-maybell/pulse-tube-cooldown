@@ -234,6 +234,9 @@ def exchange_gas_cutoff(graph: Graph, node: str, cutoff: float) -> Callable[[flo
 Some decisions are not obvious, but have leverage over the rest of the design.
 
 #### Coupled Capacity Maps
+We do not have extended load map data during cooldown for our pulse tubes. What we do have is one run per unit, post-tuning, on a test stand for exactly one cooldown curve. This gives us T1 and T2 with respect to time over one path. We also have a load map for each unit, but only for T2 $\in [2, 5]$ K and T1 $\in [40, 68]$ K. 
+
+This is an ongoing question, but for now, we can set up a first-order uncoupled model, where each $Q(T)$ path is separable. For each stage $i$ and heat flow $Q_i(T_i)$, we have $Q_i(t) = -C_i(T_i(t)) \frac{dT_i}{dt} + Qp_i(t)$ for heat flow $Q$, thermal capacity $C$, temperature $T$, and parasitic heat load $Qp$. Conduction to the regenerator can be modeled simply as $Q_R = G_R (T_{RGP} - T_R)$, where $Q_R$ is the heat flow, $G_R(T_R)$ is the regenerator conductance, $T_{RGP}$ is the temperature of the RGP node, and $T_R = T1 + x_R (T2 - T1)$ is the temperature of the regenerator tube at the normalized clamp position $x_R$. This assumes that $Q_R$ is an independent sink, so it does not influence $Q1$ or $Q2$ (which is almost certainly only an approximation of reality).
 
 #### Gas Pushing
 
