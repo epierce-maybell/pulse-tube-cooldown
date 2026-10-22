@@ -1,7 +1,7 @@
 # Design Specification: Pulse Tube Cooldown Simulation
 
 ## Scope
-Simulate temperature and heat fluxes in a Maybell dilution refrigerator during cooldown, roughly from 300 K to when the MXP turns on (40-50 K). Version 1.0.0 targets a full cooldown simulation of a 6-plate system (SNX, where X is whichever system we can get good data for), with error comparable to or lower than the legacy model. For this task, we'll define "error" more precisely as the least-squares residual to log-temperature across all thermometers mounted on the system (except for MXP). 
+Simulate temperature and heat fluxes in a Maybell dilution refrigerator during cooldown, from room temperature to when condensing begins. Version 1.0.0 targets a full cooldown simulation of a 6-plate system (SNX, where X is whichever system we can get good data for), with error comparable to or lower than the legacy model. For this task, we'll define "error" more precisely as the least-squares residual to log-temperature across all thermometers mounted on the system (except for MXP). 
 
 ## Public API
 For now, we'll call the library Pulse Tube Cooldown, and we can have a canonical import statement:
@@ -32,9 +32,14 @@ name = "PRP-RGP Switch 1"
 type = "gas_gap_switch"
 nodes = ["PRP", "RGP"] # order matters
 
+[[procedure.phases]]
+name = "precool"
+disable = ""
+enable = ""
+until = { condition = "exchange_gas_cutoff", node = "EXAMPLE", cutoff = 70.0 }
+
 [simulation]
-end_node = "MXP"
-end_temperature = 50.0 # K
+solver = "Radau"
 max_time = 0.0 # s
 ```
 
@@ -62,7 +67,7 @@ python3 run_pulse_tube_cooldown.py --config "path_to_config" --output "path_to_o
 ```
 
 ## Data Model
-The important structures are listed here. The Model holds information about the simulation. The Graph describes the connectivity between components of the system, Nodes and Links, which may be made of Materials that are responsible for their own thermal properties. Simulation output is stored in a Result.
+The important structures are listed here. The Model holds information about the simulation, including the order of operations (see Phases and Procedure, below). The Graph describes the connectivity between components of the system, Nodes and Links, which may be made of Materials that are responsible for their own thermal properties. Simulation output is stored in a Result.
 
 ```python
 @dataclass(frozen = True, slots = True, kw_only = True)
@@ -90,24 +95,41 @@ class Graph:
     nodes: tuple[Node, ...]
     links: tuple[Link, ...]
     connectivity: tuple[tuple[int, ...], ...]
+    def get_node_index(self, name: str) -> int: ...
+    def get_link_index(self, name: str) -> int: ...
 
 @dataclass(frozen = True, slots = True)
 class Model:
-    graph: Graph
+    procedure: Procedure
     initial_temperature: NDArray[np.float64]
     fixed_boundary_nodes: tuple[int, ...]
-    end_node: int
-    end_temperature: float
-    max_time: float
     solver_options: Mapping[str, Any]
 
 @dataclass(frozen = True, slots = True)
 class Result:
     status: str
     model: Model
-    time: NDArray[np.float64]
+    time: NDArray[np.float64] # at a phase switch, time should store a duplicate entry
+    phase: NDArray[np.intp] # at a phase switch, keep both before and after (see above)
     temperature: NDArray[np.float64]
     heat_flow: NDArray[np.float64]
+```
+
+## Phases and Procedure
+During different phases of the cooldown, the simulation needs to activate different physics for certain components. A Procedure holds a sequence of Phases, each of which specifies the Graph that is operating during that Phase. It has a defined stopping point, which should be a function that takes (time, temperature) and returns a float that equals zero when the phase should end. The Procedure has a stop_condition that operates the same way.
+
+The design follows from this:
+```python
+@dataclass(frozen = True, slots = True)
+class Phase:
+    name: str
+    graph: Graph
+    until: Callable[[float, NDArray[np.float64]], float]
+
+@dataclass(frozen = True, slots = True)
+class Procedure:
+    phases: tuple[Phase, ...]
+    stop_condition: Callable[[float, NDArray[np.float64]], float]
 ```
 
 ## Engine
@@ -120,17 +142,17 @@ def calc_link_heat_flows(graph: Graph, temperature: NDArray[np.float64]) -> NDAr
 
 def calc_net_heat_flow(graph: Graph, temperature: NDArray[np.float64]) -> NDArray[np.float64]: ...
 
-def calc_temperature_rate_of_change(model: Model, time: float, temperature: NDArray[np.float64]) -> NDArray[np.float64]: ...
+def calc_temperature_rate_of_change(graph: Graph, fixed_boundary_nodes: tuple[int, ...],  time: float, temperature: NDArray[np.float64]) -> NDArray[np.float64]: ...
 
-def find_dist_until_stop(model: Model, time: float, temperature: NDArray[np.float64]) -> float: ...
+def build_jacobian(graph: Graph, fixed_boundary_nodes: tuple[int, ...], temperature: NDArray[np.float64]) -> NDArray[np.float64]: ...
 
-def build_jacobian(model: Model, temperature: NDArray[np.float64]) -> NDArray[np.float64]: ...
+def integrate_phase(model: Model, phase: Phase, time: float, temperature: NDArray[np.float64]) -> scipy.integrate.OdeResult: ...
 
-def integrate_temperature(model: Model) -> scipy.integrate.OdeResult: ...
+def run_procedure(model: Model) -> list[OdeResult]: ...
 
 def reconstruct_heat_flow(graph: Graph, temperature: NDArray[np.float64]) -> NDArray[np.float64]: ...
 
-def build_result(model: Model, solution: scipy.integrate.OdeResult, heat_flow: NDArray[np.float64]) -> Result: ...
+def build_result(model: Model, solutions: Sequence[OdeResult]) -> Result: ...
 ```
 
 ## Dilution Refrigerator Library
@@ -171,6 +193,12 @@ MATERIAL_FITS = {
     "table": eval_fit_from_table,
     ...
 }
+
+CONDITIONS = {
+    "exchange_gas_cutoff": exchange_gas_cutoff,
+    "condensing_start": condensing_start,
+    ...
+}
 ```
 
 Specific Links are frozen dataclasses that match the Link Protocol, where their fields are set by the TOML configuration file. There is a generic loader:
@@ -193,6 +221,22 @@ class SpecificLinkTemplate:
     def calc_heat_flow(self, temperature_at_nodes: NDArray[np.float64]) -> NDArray[np.float64]: ...
         """Temperature only on this link's nodes. Positive values indicate heat flow into node."""
 ```    
+
+Conditions should generate functions that are positive before the condition is met (during cooldown), negative after, and zero where the switch happens. To stay agnostic to the specific Graph, the condition generator should map a node name rather than an index. For example:
+```python
+def exchange_gas_cutoff(graph: Graph, node: str, cutoff: float) -> Callable[[float, NDArray[np.float64]], float]:
+    """Exchange gas is pumped out once a certain node hits a certain cutoff."""
+    idx = graph.get_node_index(node)
+    return lambda time, temperature: temperature[idx] - cutoff
+```
+
+## Specific Physical Processes
+Some decisions are not obvious, but have leverage over the rest of the design.
+
+#### Coupled Capacity Maps
+
+#### Gas Pushing
+
 
 ## Validation and Testing
 Validation experiments should live in simulations/validation/identifier, where identifier is usually a subdirectory that stores the runner script, the configuration file(s), and output.
