@@ -142,12 +142,12 @@ source = "NIST Cryogenic Material Properties"
 
 [specific_heat]
 form = "log_poly"
-coefficients = [...]
+coefficients = []
 range = [4.0, 300.0]
 
 [thermal_conductivity]
 form = "rational_poly"
-coefficients = [...]
+coefficients = []
 range = [4.0, 300.0]
 ```
 
