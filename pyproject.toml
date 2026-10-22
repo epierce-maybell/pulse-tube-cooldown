@@ -1,0 +1,32 @@
+[project]
+name = "pulse-tube-cooldown"
+version = "0.1.0"
+description = "Pulse-tube cooldown simulator for dilution refrigerators."
+readme = "README.md"
+authors = [
+    { name = "Ethan Pierce", email = "ethan.pierce@maybellquantum.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "matplotlib>=3.11.2",
+    "numpy>=2.5.4",
+    "scipy>=1.18.1",
+]
+
+[build-system]
+requires = ["uv_build>=0.13.5,<0.14.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.17.1",
+]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "N", "D", "UP", "B"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"

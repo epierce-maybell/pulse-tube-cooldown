@@ -67,8 +67,8 @@ The important structures are listed here. The Model holds information about the 
 @dataclass(frozen = True, slots = True, kw_only = True)
 class Material:
     name: str
-    specific_heat: Callable[[float], float]
-    thermal_conductivity: Callable[[float], float]
+    specific_heat: Callable[[NDArray[np.float64]], NDArray[np.float64]]
+    thermal_conductivity: Callable[[NDArray[np.float64]], NDArray[np.float64]]
 
 @dataclass(frozen = True, slots = True)
 class Node:
@@ -123,7 +123,7 @@ def calc_temperature_rate_of_change(model: Model, time: float, temperature: NDAr
 
 def find_dist_until_stop(model: Model, time: float, temperature: NDArray[np.float64]) -> float: ...
 
-def build_jacobian_sparsity(graph: Graph) -> scipy.sparse.csr_array: ...
+def build_jacobian(model: Model, temperature: NDArray[np.float64]) -> NDArray[np.float64]: ...
 
 def integrate_temperature(model: Model) -> scipy.integrate.OdeResult: ...
 
