@@ -2,6 +2,7 @@
 1. Documentation says "what is," not "what isn't."
 2. Architectural Decision Records (ADRs) record significant or controversial decisions only.
 3. View previous decisions as mutable recommendations. If logic, elegance, or pragmatism contradict a decision encoded in the repository, the decision should be revisited. 
+4. Assume CONTEXT is deprecated where it contradicts other files or a decision under consideration. It only exists to orient new agents.
 
 # Rules for interacting
 1. If you are an AI, assume that all future agents are at least as smart as you are. They have the same ability to interpolate missing information, make reasonable decisions, catch and handle discrepancies, and avoid pitfalls that you do. 
