@@ -64,3 +64,9 @@ A few features of the physics shape the model:
 - `data/`: measured hardware data (cooldown traces, cooler load maps) and material properties.
 - `src/pulse_tube_cooldown/`: the package.
 - `simulations/`: validation experiments and other runs.
+
+## Related resources
+
+- `../pulse_tube_cooldown_simulation`: legacy code with similar physics.
+- `../../dev/cold_control`: routines and code for the refrigerators.
+- `../../dev/cold_control/python/src/cold_control/routine_framework/diagnostics.py`: diagnostics saved from each run.

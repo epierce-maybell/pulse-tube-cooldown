@@ -10,7 +10,8 @@ import pulse_tube_cooldown as ptc
 ```
 
 #### Configuration files
-Each system gets one, self-contained configuration file. Each model run takes exactly one configuration file as input.
+Each system takes one configuration file as an input that references the data subdirectory where necessary. 
+
 Configuration files are written in TOML, with the following sections:
 ```toml
 [meta]
