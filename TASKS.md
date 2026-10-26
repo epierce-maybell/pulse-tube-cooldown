@@ -20,7 +20,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
 
 ## 1. Core types and equations — first slice
 
-- [ ] **1.1 Material, gas, node, and link types** · Auto
+- [x] **1.1 Material, gas, node, and link types** · Auto
   - Context: DESIGN "Data model" and "Dilution refrigerator library"; `src/pulse_tube_cooldown/core/types.py`.
   - Do: Define Material, Gas, Node, and the Link protocol with the specified fields and link-local heat-flow convention.
   - Verified by: Constructed components evaluate material properties and return signed flows in their declared node order.
