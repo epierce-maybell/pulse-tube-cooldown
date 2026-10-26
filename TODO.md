@@ -6,7 +6,7 @@
     [x] c. Decide how to model cooler capacity.
 
 [x] 2. Discretize design specification into task list.
-    [ ] a. Make a /skill so the process is repeatable.
+    [x] a. Make a /skill so the process is repeatable.
 
 [ ] 3. Carry out task list
     [ ] a. Do the work
