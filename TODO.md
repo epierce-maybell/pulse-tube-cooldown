@@ -5,9 +5,15 @@
     [x] b. Decide how to model gas pushing.
     [x] c. Decide how to model cooler capacity.
 
-[ ] 2. Discretize design specification into task list.
+[x] 2. Discretize design specification into task list.
     [ ] a. Make a /skill so the process is repeatable.
 
-[ ] 3. Summarize major changes between current design and legacy code.
+[ ] 3. Carry out task list
+    [ ] a. Do the work
+    [ ] b. Bundle repeated actions into skills
 
-[ ] 4. Port over software design skills for "night shift" factory.
+[ ] 4. Summarize major changes between current design and legacy code.
+    [ ] a. Produce written summary
+    [ ] b. Run for legacy baseline
+    [ ] c. Make slides to illustrate comparison
+    [ ] d. Add plotting code for presentation-ready figures
