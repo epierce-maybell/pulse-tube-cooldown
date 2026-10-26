@@ -1,7 +1,7 @@
 # Design Specification: Pulse Tube Cooldown Simulation
 
 ## Scope
-Simulate temperature and heat fluxes in a Maybell dilution refrigerator during cooldown, from room temperature to when condensing begins. Version 1.0.0 targets a full cooldown simulation of a 6-plate system (SNX, where X is whichever system we can get good data for), with error comparable to or lower than the legacy model. For this task, we'll define "error" more precisely as the least-squares residual to log-temperature across all thermometers mounted on the system (except for MXP). 
+Simulate temperature and heat fluxes in a Maybell dilution refrigerator during cooldown, from room temperature to when condensing begins. Version 1.0.0 targets a full cooldown simulation of two 6-plate systems (SN09 for the standard model and FP1 for the fridge-plus model), with error comparable to or lower than the legacy model. For this task, we'll define "error" more precisely as the least-squares residual to log-temperature across all thermometers mounted on the system (except for MXP). 
 
 ## Public API
 For now, we'll call the library Pulse Tube Cooldown, and we can have a canonical import statement:

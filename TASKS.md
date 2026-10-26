@@ -1,6 +1,6 @@
 # Tasks
 
-Build the v1 simulator specified in `docs/DESIGN.md`: a six-plate system from room temperature until condensing begins, with least-squares log-temperature residual comparable to or lower than the legacy model's across system thermometers except MXP. Select the validation system for the quality and completeness of its available data.
+Build the v1 simulator specified in `docs/DESIGN.md`: the six-plate systems SN09 and FP1 from room temperature until condensing begins, each with least-squares log-temperature residual comparable to or lower than the legacy model's across system thermometers except MXP.
 
 ## How to use this list
 
@@ -122,8 +122,8 @@ Identifiers retain the original task number as a prefix. Context paths are relat
 
 - [ ] **4.1 Enumerate required material ports** · Auto
   - Needs: 20.2.
-  - Context: DESIGN material library; selected inventory; legacy material database.
-  - Do: Identify additional materials required by the selected system. Add one Auto task per material with its source and verification reference, and a Discuss task for any unsettled property representation.
+  - Context: DESIGN material library; each validation system's inventory; legacy material database.
+  - Do: Identify additional materials required by each validation system. Add one Auto task per material with its source and verification reference, and a Discuss task for any unsettled property representation.
   - Verified by: Each required material has a usable definition or an individually actionable port task. Add these ports as explicit dependencies of 24.1.
 
 ## 5. Configuration decisions — first slice
@@ -298,7 +298,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
 
 - [ ] **14.1 Audit available cooler data** · Auto
   - Context: DESIGN "Coupled capacity maps"; `data/`, legacy cooler data, available test-stand records.
-  - Do: Identify available bare-head cooldown and load-map records, cooler identities, channels, units, and metadata. List missing capacity-derivation inputs.
+  - Do: Identify available bare-head cooldown and load-map records, cooler identities, channels, units, and metadata, including the pulse tubes installed in each validation system. List missing capacity-derivation inputs.
   - Verified by: An inventory distinguishes cooler characterization from fridge validation and identifies records belonging together.
 
 - [ ] **14.2 Supply missing characterization inputs** · Human
@@ -385,24 +385,27 @@ Identifiers retain the original task number as a prefix. Context paths are relat
 
 ## 20. Validation case and inventory — beyond first slice
 
-- [ ] **20.1 Select the v1 validation case** · Discuss
+- [x] **20.1 Select the v1 validation case** · Discuss
   - Context: DESIGN "Scope"; available repository and legacy measurements and inventories; 14.1's data identification where relevant.
   - Decide: Which six-plate system has suitable paired inventory and measurements for a legacy comparison. Record identity, evidence, data locations, and remaining gaps.
+  - Outcome: Validate on SN09 and FP1, which share the six-plate architecture with one pulse tube each. Run the new and legacy models on both systems; legacy runs are regenerated as needed. Builds are documented for every fridge, and cold_control's `cooldown` and `condense` routines define each run's procedure.
+  - SN09 data: `data/SN09_cooldown_time.dat` covers 2026-06-04 00:01 to 2026-06-06 23:00 UTC at 60 s, with PRP, RGP, CFP, STP, ICP, MXP, and DHX. MXP reaches 10 K, where condensing starts, at 63.1 h. `data/SN9_PTR_load_map.png` is the load map for SN09's pulse tube.
+  - Gaps: FP1 cooldown record; SN09 and FP1 build inventories at their run dates; routine logs for each run; bare-head cooldowns for both pulse tubes and FP1's load map.
 
 - [ ] **20.2 Supply missing system inventory** · Human
-  - Context: 20.1's selected case and gaps; DESIGN nodes, links, and configuration.
-  - Input: Supply or confirm missing nodes, masses, materials, link parameters, cooler configuration, and cooldown procedure, starting from available legacy inventory.
+  - Context: 20.1's outcome and gaps; DESIGN nodes, links, and configuration.
+  - Input: For each validation system, supply or confirm the build at its run date: nodes, masses, materials, link parameters, and cooler configuration, starting from available legacy inventory.
 
 - [ ] **20.3 Supply missing validation measurements** · Human
-  - Context: 20.1's selected case and trace metadata.
-  - Input: Supply the matching fridge cooldown and missing acquisition/channel metadata identified in 20.1. Record existing adequate inputs by reference.
+  - Context: 20.1's outcome and trace metadata.
+  - Input: For each validation system, supply the cooldown record, the cold_control routine logs for that run, and missing acquisition/channel metadata. Record existing adequate inputs, including `data/SN09_cooldown_time.dat`, by reference.
 
 ## 21. Measurement interpretation — beyond first slice
 
 - [ ] **21.1 Map and align measured temperatures** · Discuss
   - Needs: 20.3.
-  - Context: DESIGN "Scope"; selected inventory and measured cooldown.
-  - Decide: Thermometer-to-node mapping, cooldown time origin, comparison window, and invalid-reading treatment. Identify MXP for its specified residual exclusion.
+  - Context: DESIGN "Scope"; each validation system's inventory and measured cooldown.
+  - Decide: For each validation system, thermometer-to-node mapping, cooldown time origin, comparison window, and invalid-reading treatment. Identify MXP for its specified residual exclusion.
 
 - [ ] **21.2 Residual sampling convention** · Discuss
   - Context: DESIGN least-squares log-temperature residual; outcome of 21.1.
@@ -412,8 +415,8 @@ Identifiers retain the original task number as a prefix. Context paths are relat
 
 - [ ] **22.1 Measurement preparation** · Auto
   - Needs: 21.2.
-  - Context: Selected measured cooldown and recorded interpretation; `simulations/validation/<identifier>/`.
-  - Do: Prepare mapped, aligned measurements with units, valid comparison samples, and provenance.
+  - Context: Each validation system's measured cooldown and recorded interpretation; `simulations/validation/<identifier>/`.
+  - Do: For each validation system, prepare mapped, aligned measurements with units, valid comparison samples, and provenance.
   - Verified by: A fixture with known channel mapping, invalid samples, and time origin yields expected comparison series.
 
 - [ ] **22.2 Log-temperature residual** · Auto
@@ -424,42 +427,42 @@ Identifiers retain the original task number as a prefix. Context paths are relat
 
 ## 23. Legacy baseline — beyond first slice
 
-- [ ] **23.1 Reproduce the selected legacy cooldown** · Auto
+- [ ] **23.1 Reproduce the legacy cooldowns** · Auto
   - Needs: 20.2, 20.3.
-  - Context: Legacy `Advanced_Feature_SIM`; selected inventory and procedure; `simulations/validation/<identifier>/`.
-  - Do: Run the legacy model for the selected case and record its version, inputs, and temperature traces.
-  - Verified by: The archived run matches the selected system and contains enough inputs to reproduce its traces.
+  - Context: Legacy `Advanced_Feature_SIM`; each validation system's inventory and procedure; `simulations/validation/<identifier>/`.
+  - Do: Run the legacy model for each validation system and record its version, inputs, and temperature traces.
+  - Verified by: Each archived run matches its system and contains enough inputs to reproduce its traces.
 
 - [ ] **23.2 Score the legacy baseline** · Auto
   - Needs: 22.2.
-  - Context: Legacy run and prepared measurements.
-  - Do: Apply the agreed residual calculation to legacy traces and record the baseline and comparison coverage.
-  - Verified by: Repeated scoring reproduces the baseline on the same measurements and window used for the new model.
+  - Context: Legacy runs and prepared measurements.
+  - Do: Apply the agreed residual calculation to each system's legacy traces and record its baseline and comparison coverage.
+  - Verified by: Repeated scoring reproduces each baseline on the same measurements and window used for the new model.
 
 ## 24. Full-system validation — beyond first slice
 
-- [ ] **24.1 Selected-system configuration** · Auto
+- [ ] **24.1 Validation-system configurations** · Auto
   - Needs: 4.1 and its required material ports, 6.5, 7.4, 9.2, 10.3, 11.3, 12.4, 13.2, 16.4, 20.2.
-  - Context: DESIGN configuration and validation; selected inventory; `simulations/validation/<identifier>/`.
-  - Do: Write the selected system's TOML and reproducible runner from its inventory, procedure, and cooler data.
+  - Context: DESIGN configuration and validation; each validation system's inventory; `simulations/validation/<identifier>/`.
+  - Do: Write each validation system's TOML and reproducible runner from its inventory, procedure, and cooler data.
   - Verified by: Loaded compositions, connectivity, activation, and parameters match the supplied inventory.
 
 - [ ] **24.2 Full cooldown execution** · Auto
-  - Context: Selected-system configuration and runner.
-  - Do: Execute through the specified cooldown window and archive inputs, version, output, and solver outcome.
-  - Verified by: A reproducible run reaches intended termination with finite temperatures and inspectable phase/flow records. An execution failure yields a specific follow-up task before progressing to comparison.
+  - Context: Validation-system configurations and runners.
+  - Do: Execute each validation system through its cooldown window and archive inputs, version, output, and solver outcome.
+  - Verified by: Each reproducible run reaches intended termination with finite temperatures and inspectable phase/flow records. An execution failure yields a specific follow-up task before progressing to comparison.
 
 - [ ] **24.3 Baseline comparison** · Auto
   - Needs: 18.3, 22.2, 23.2.
-  - Context: Completed new-model run, measured traces, and legacy baseline.
-  - Do: Score the new run with the shared residual convention and produce measurement overlays and baseline comparisons.
-  - Verified by: A report establishes whether the run meets the v1 target and identifies temperatures/time regions dominating excess residual.
+  - Context: Completed new-model runs, measured traces, and legacy baselines.
+  - Do: Score each system's new run with the shared residual convention and produce measurement overlays and baseline comparisons.
+  - Verified by: A report establishes whether each system meets the v1 target and identifies temperatures/time regions dominating excess residual.
 
 - [ ] **24.4 Resolve the validation outcome** · Discuss
   - Context: 24.3's comparison and DESIGN v1 target.
-  - Decide: Accept a qualifying run, or identify the next bounded investigation or correction for the discrepancy. Add individually scoped follow-up tasks and repeat the comparison after their completion until the target is met.
+  - Decide: Accept once both systems have qualifying runs, or identify the next bounded investigation or correction for the discrepancy. Add individually scoped follow-up tasks and repeat the comparison after their completion until the target is met.
 
 - [ ] **24.5 Regression coverage for the accepted run** · Auto
-  - Context: DESIGN testing; accepted validation run; `tests/regression/`.
-  - Do: Preserve the accepted case as regression coverage with reproducible inputs and justified checks on residual and relevant behavior.
-  - Verified by: The test passes for the accepted run and detects meaningful degradation in the validated outcome.
+  - Context: DESIGN testing; accepted validation runs; `tests/regression/`.
+  - Do: Preserve each accepted run as regression coverage with reproducible inputs and justified checks on residual and relevant behavior.
+  - Verified by: The tests pass for the accepted runs and detect meaningful degradation in the validated outcomes.
