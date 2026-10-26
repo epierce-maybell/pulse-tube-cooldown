@@ -1,159 +1,455 @@
 # Tasks
 
-The work from an empty package to v1, as specified in `docs/DESIGN.md`. v1 is a full cooldown simulation whose log-temperature residual is at or below the legacy model's.
+Build the v1 simulator specified in `docs/DESIGN.md`: a six-plate system from room temperature until condensing begins, with least-squares log-temperature residual comparable to or lower than the legacy model's across system thermometers except MXP. Select the validation system for the quality and completeness of its available data.
 
 ## How to use this list
 
-Tasks are grouped by area. Within an area, tasks run in order. Each area marks where the **first vertical slice** ends: the full canonical run (configure, simulate, save, CLI) on a toy configuration, checked against an analytic or hand-computed answer. Slice tasks come first.
+`docs/DESIGN.md` is authoritative; `AGENTS.md` governs contributions. Proposals supply discussion context. The legacy repository at `../pulse_tube_cooldown_simulation`, branch `Advanced_Feature_SIM`, supplies physics and data references. Ethan records agreed DESIGN changes; agents can propose wording during discussion.
 
-The next task is the first unchecked task in its area whose earlier tasks are done and whose **Needs** are met. Use an [o] to denote a task that has been claimed and is in-progress and an [x] to denote a complete task.
+The **first slice** is a toy thermal network through configuration, simulation, saved output, and CLI, checked against a known reference. It includes a phase switch and a fixed boundary node. It ends at 7.4; areas mark their slice membership. Discussions 5.1 and 5.2 gate this slice.
 
-There are three task types:
+Each task has one focused review outcome and includes relevant tests. Constructed inputs allow checking a task before its production caller exists.
 
-- **Auto**: fully scoped. An agent implements it unattended, and the work is reviewed afterwards.
-- **Discuss**: starts with a working session with Ethan to settle the listed decisions. A short session goes on to implementation in the same session and updates `docs/DESIGN.md` afterwards. A longer one ends with the decisions written into `docs/DESIGN.md`. The entry then becomes **Auto**, points at that section, and a later agent implements it.
-- **Human**: data or information only Ethan can supply.
+- **Auto**: an agent carries out the assignment unattended for subsequent review.
+- **Discuss**: settle the named choices with Ethan and record the outcome; a separate implementation task follows the recorded decision.
+- **Human**: supply the specific missing input after checking available sources.
 
-Each entry lists the context it touches, what to do, and how the work is verified. Unit tests are part of every implementation task. `docs/DESIGN.md` is the authority. Where it and `docs/proposals/` disagree, `docs/DESIGN.md` holds. The brownfield at `../pulse_tube_cooldown_simulation` is a reference for physics and data, not for structure.
+Within each numbered area, work in order. **Needs** states dependencies across areas. Choose an unchecked task whose earlier tasks in its area and explicit dependencies are complete, preferring first-slice work. Mark claimed work `[o]` and completed work `[x]`. Conditional tasks complete when their condition is resolved and the outcome recorded.
 
-## Core
+Identifiers retain the original task number as a prefix. Context paths are relative to `src/pulse_tube_cooldown/` unless another repository location is given. Follow-up tasks receive new identifiers and concrete outcomes before implementation starts, with dependencies checked against the existing order. A discussion that exposes missing human inputs adds explicit Human dependencies to its implementation task.
 
-- [ ] **1. Data model and equations** · Auto
-  - Context: DESIGN.md "Data model", "Phases and Procedure", "Engine"; `core/types.py`, `core/errors.py`, `engine/equations.py`.
-  - Do: Define the data model types, including `Gas`, and the package's error types. Implement heat capacity, link and net heat flows, temperature rate of change with fixed boundary nodes, and the Jacobian.
-  - Verified by: Hand-computed heat flows and rates on small graphs; the Jacobian agrees with finite differences.
+## 1. Core types and equations — first slice
 
-- [ ] **2. Integration** · Auto
-  - Context: DESIGN.md "Engine", "Phases and Procedure"; `engine/solver.py`.
-  - Do: Implement `integrate_phase`, `run_procedure` with phase-ending and stop events, `reconstruct_heat_flow` and `build_result`, including duplicate entries at phase switches.
-  - Verified by: Analytic multi-node relaxation; a two-phase run switches at the expected time and records both sides of the switch.
+- [ ] **1.1 Material, gas, node, and link types** · Auto
+  - Context: DESIGN "Data model" and "Dilution refrigerator library"; `src/pulse_tube_cooldown/core/types.py`.
+  - Do: Define Material, Gas, Node, and the Link protocol with the specified fields and link-local heat-flow convention.
+  - Verified by: Constructed components evaluate material properties and return signed flows in their declared node order.
 
-*End of first vertical slice.*
+- [ ] **1.2 Graph connectivity and lookups** · Auto
+  - Context: DESIGN "Data model"; `core/types.py`, `core/errors.py`.
+  - Do: Define Graph and name lookups, mapping link-local node order to graph indices. Introduce errors needed by these operations.
+  - Verified by: Differently ordered, overlapping links resolve correctly; invalid references produce useful errors.
 
-## Materials
+- [ ] **1.3 Procedure and run types** · Auto
+  - Context: DESIGN "Data model" and "Phases and Procedure"; `core/types.py`.
+  - Do: Define Phase, Procedure, Model, and Result. Document array axes and node/link correspondence across phases.
+  - Verified by: Constructed multi-phase model and result examples represent phase identities, node ordering, and link identities unambiguously.
 
-- [ ] **3. Property fits and material loading** · Auto
-  - Context: DESIGN.md "Dilution refrigerator library"; `library/property_fits.py`, `library/materials/`; brownfield `ptc_material_properties.json`.
-  - Do: Implement the property-fit forms in `PROPERTY_FITS`, the material TOML format and `load_material`. Port OFHC copper and 304 stainless steel.
-  - Verified by: Ported materials reproduce reference values at spot temperatures.
+- [ ] **1.4 Node heat capacities** · Auto
+  - Context: DESIGN "Engine"; `engine/equations.py`.
+  - Do: Implement `calc_heat_capacity` by summing mass times specific heat over each node's composition.
+  - Verified by: Single-material and mixed-material nodes match hand-computed temperature-dependent capacities.
 
-*End of first vertical slice.*
+- [ ] **1.5 Link flows and node heat balances** · Auto
+  - Context: DESIGN "Engine" and Link convention; `engine/equations.py`.
+  - Do: Implement `calc_link_heat_flows` and `calc_net_heat_flow`, routing link-local outputs through connectivity.
+  - Verified by: Networks with overlapping links, a multi-node link, and a source or sink give the expected signed node totals.
 
-- [ ] **4. Remaining materials** · Auto
-  - Context: `library/materials/data/`; brownfield `ptc_material_properties.json`.
-  - Do: Port the remaining brownfield materials, recording each source.
-  - Verified by: Every material loads and matches brownfield values at spot temperatures.
+- [ ] **1.6 Temperature derivatives and fixed boundaries** · Auto
+  - Context: DESIGN "Engine"; `engine/equations.py`.
+  - Do: Implement `calc_temperature_rate_of_change` from net heat flows and capacities, with zero derivatives at fixed boundary nodes.
+  - Verified by: A small network matches hand-computed rates while retaining heat transfer to fixed boundaries.
 
-## Configuration and API
+- [ ] **1.7 Jacobian** · Auto
+  - Context: DESIGN "Engine"; `engine/equations.py`.
+  - Do: Implement `build_jacobian`, including temperature-dependent capacities and fixed boundaries.
+  - Verified by: A nonlinear network agrees with independent finite differences and has the expected fixed-boundary rows.
 
-- [ ] **5. Phase semantics** · Discuss
-  - Context: DESIGN.md "Configuration files", "Phases and Procedure"; brownfield phase handling in `ptc_cooldown_simulator.py`.
-  - Decide: How `enable` and `disable` become a per-phase graph, and how the procedure's stop condition is configured.
+*End of this area's first-slice work.*
 
-- [ ] **6. Configuration loading** · Auto
-  - Needs: 3, 5.
-  - Context: DESIGN.md "Configuration files", "Dilution refrigerator library"; `config.py`, `library/conditions.py`, `library/links/__init__.py`.
-  - Do: Load a TOML configuration into a `Model` through `configure_model`, with the `LINK_TYPES` and `CONDITIONS` registries, `load_link`, and the `exchange_gas_cutoff` and `condensing_start` conditions.
-  - Verified by: A toy configuration loads into the expected model; malformed configurations raise the package's errors.
+## 2. Integration and results — first slice
 
-- [ ] **7. Public API and CLI** · Auto
-  - Needs: 2, 8.
-  - Context: DESIGN.md "Public functions", "Command-Line Interface"; `__init__.py`, `__main__.py`, `output.py`, `pyproject.toml`.
-  - Do: Implement `simulate_cooldown` and `save_output`, export the public functions, and add `__main__.py` and a `run-ptc` console script.
-  - Verified by: The canonical run and `run-ptc` on the toy configuration produce saved output that matches an analytic or hand-computed answer.
+- [ ] **2.1 Single-phase integration** · Auto
+  - Needs: 1.7.
+  - Context: DESIGN "Engine" and "Phases and Procedure"; `engine/solver.py`.
+  - Do: Implement `integrate_phase` with solver options, phase and procedure events, time limits, and observable solver failures.
+  - Verified by: Analytic relaxation integrates correctly; each termination mechanism and solver failure is observable.
 
-*End of first vertical slice.*
+- [ ] **2.2 Procedure execution** · Auto
+  - Context: DESIGN "Phases and Procedure"; `engine/solver.py`.
+  - Do: Implement `run_procedure`, handing the ending state to each subsequent phase and respecting procedure termination and solver outcomes.
+  - Verified by: A two-phase run switches at the expected state and continues from it; a procedure stop prevents further integration.
 
-## Links
+- [ ] **2.3 Heat-flow reconstruction** · Auto
+  - Needs: 1.5.
+  - Context: DESIGN "Engine"; `engine/solver.py`.
+  - Do: Implement `reconstruct_heat_flow` over sampled temperatures using the phase graph and documented result axes.
+  - Verified by: Samples agree with direct evaluations, including a link whose flow changes across phases.
 
-- [ ] **8. Conduction** · Auto
-  - Needs: 6.
-  - Context: DESIGN.md "Dilution refrigerator library"; `library/links/conduction.py`.
-  - Do: Implement conduction through a member of given material and geometry, integrating thermal conductivity over temperature.
-  - Verified by: Constant-conductivity case matches the analytic heat flow; temperature-dependent case matches numerical integration.
+- [ ] **2.4 Result assembly** · Auto
+  - Context: DESIGN "Data model" and "Engine"; `engine/solver.py`.
+  - Do: Implement `build_result`, assembling solutions, temperatures, heat flows, and status. Preserve duplicate switch times and the identities of both phases.
+  - Verified by: A two-phase result retains both switch-side states and distinct flows, with consistent axes and final status.
 
-*End of first vertical slice.*
+*End of this area's first-slice work.*
 
-- [ ] **9. Gas pushing** · Auto
-  - Context: DESIGN.md "Gas pushing"; `library/links/gas_pushing.py`, `library/gases/`.
-  - Do: Implement `gas_pushing_pm5` as specified, with the gas loader and helium data it uses.
-  - Verified by: Hand-computed conductance and heat flow for a chain of nodes.
+## 3. Material loading — first slice
 
-- [ ] **10. Gas-gap switch** · Discuss
-  - Context: `library/links/gas_gap_switch.py`; brownfield `ptc_cooldown_simulator.py`, `thermal_link_library.json`.
-  - Decide: Physics and parameters of the switch in its on and off states, and how its state follows the phase.
+- [ ] **3.1 Log-polynomial fits** · Auto
+  - Context: DESIGN "Dilution refrigerator library"; `library/property_fits.py`; legacy fit definitions.
+  - Do: Implement `eval_log_poly` for temperature arrays and register it in `PROPERTY_FITS`.
+  - Verified by: Constant and nonconstant examples match hand calculations.
 
-- [ ] **11. Exchange gas** · Discuss
-  - Context: `library/links/exchange_gas.py`, `library/gases/`; brownfield `ptc_cooldown_simulator.py`, `user_gas_links.json`.
-  - Decide: Physics of heat transfer through exchange gas shared by several nodes, and its parameters.
+- [ ] **3.2 Rational-polynomial fits** · Auto
+  - Context: DESIGN property-fit registry; `library/property_fits.py`; legacy rational-polynomial definition.
+  - Do: Implement and register `eval_rational_poly`.
+  - Verified by: Hand-computed examples and representative copper values match independent evaluation.
 
-- [ ] **12. Radiation and MLI** · Discuss
-  - Context: `library/links/radiation.py`, `library/links/multi_layer_insulation.py`; brownfield `ptc_cooldown_simulator.py`.
-  - Decide: Radiation physics between plates and shields, how MLI modifies it, and their parameters.
+- [ ] **3.3 Tabulated properties** · Auto
+  - Context: DESIGN property-fit registry; `library/property_fits.py`.
+  - Do: Implement and register `eval_fit_from_table`, documenting interpolation and range behavior.
+  - Verified by: Knots and intermediate values behave as documented; invalid tables receive useful errors.
 
-- [ ] **13. Joint contact** · Discuss
-  - Context: `library/links/joint_contact.py`; brownfield `ptc_cooldown_simulator.py`, `conductance_systems.json`, `thermal_conductance_calc.py`.
-  - Decide: Physics and parameters of contact conductance at bolted joints.
+- [ ] **3.4 Material TOML loader** · Auto
+  - Needs: 1.1.
+  - Context: DESIGN material TOML example; `library/materials/load.py`, `library/materials/data/`.
+  - Do: Implement `load_material` using `PROPERTY_FITS`. Retain sources and validity ranges in material data and document range handling.
+  - Verified by: Fixtures for supported forms load and evaluate correctly; missing or malformed materials produce useful errors.
 
-## Cooler
+- [ ] **3.5 Copper reference material** · Auto
+  - Context: DESIGN material example; `library/materials/data/`; legacy material database.
+  - Do: Port OFHC copper RRR100 with property definitions, ranges, and sources.
+  - Verified by: Loaded values match references at representative temperatures.
 
-- [ ] **14. Test-stand stage masses** · Human
-  - Context: `docs/proposals/cooler-capacity-from-existing-curves.md` "Data needed"; `data/`.
-  - Do: Add masses and materials of stage 1 and stage 2 on the test stand, and the test-stand cooldown trace they belong to.
+- [ ] **3.6 Stainless steel reference material** · Auto
+  - Context: DESIGN material example; `library/materials/data/`; legacy material database.
+  - Do: Port 304 stainless steel with property definitions, ranges, and sources.
+  - Verified by: Loaded values match references at representative temperatures.
 
-- [ ] **15. Path-derived capacity curves** · Auto
-  - Needs: 3.
-  - Context: DESIGN.md "Coupled capacity maps"; the proposal's "Capacity along the measured path"; `data/`, `data/LoadMap-SN019-08-07-2026.dat`.
-  - Do: Derive `Q1(T1)` and `Q2(T2)` from the test-stand cooldown using the proposal's processing steps, and store them as table-form data with their source.
-  - Verified by: Derived capacity agrees with the load map where the path enters it, within heat-capacity uncertainty.
+*End of this area's first-slice work.*
 
-- [ ] **16. Cooler link** · Auto
-  - Context: DESIGN.md "Coupled capacity maps"; `library/links/cooler.py`.
-  - Do: Implement the uncoupled cooler link: `Q1` and `Q2` from the path-derived curves, and `Q_R` from regenerator conduction as specified in DESIGN.md.
-  - Verified by: Heat flows match the curves at the stage nodes and the hand-computed `Q_R` at the RGP node.
+## 4. Validation-system materials — beyond first slice
 
-- [ ] **17. Coupling bracket** · Auto
-  - Needs: 24.
-  - Context: the proposal's "Coupling bracket"; `library/links/cooler.py`, `simulations/validation/sn019/`.
-  - Do: Implement the coupled-bracket variant of the cooler and compare it with the uncoupled run on SN019 by residual and time to end temperature.
-  - Verified by: A short write-up of the comparison in `simulations/` stating which side of the error budget the difference falls on.
+- [ ] **4.1 Enumerate required material ports** · Auto
+  - Needs: 20.2.
+  - Context: DESIGN material library; selected inventory; legacy material database.
+  - Do: Identify additional materials required by the selected system. Add one Auto task per material with its source and verification reference, and a Discuss task for any unsettled property representation.
+  - Verified by: Each required material has a usable definition or an individually actionable port task. Add these ports as explicit dependencies of 24.1.
 
-## Plot
+## 5. Configuration decisions — first slice
 
-- [ ] **18. Result plots** · Auto
-  - Context: DESIGN.md "Data model"; `plot/result.py`.
-  - Do: Plot temperatures and heat flows over time from a `Result`, with phase switches marked and measured traces overlaid when provided.
-  - Verified by: Plots render for the toy configuration with and without a measured overlay.
+- [ ] **5.1 Phase activation semantics** · Discuss
+  - Context: DESIGN "Configuration files" and "Phases and Procedure"; `enable` and `disable` placeholders.
+  - Decide: How activation references links, carries between phases, and produces phase graphs with shared node ordering. Record a concrete configuration example.
 
-- [ ] **19. Graph plot** · Auto
-  - Context: DESIGN.md "Data model"; `plot/graph.py`.
-  - Do: Draw a graph's nodes and links, labelled by name and link type.
-  - Verified by: The toy configuration's graph renders with every node and link present.
+- [ ] **5.2 Run inputs and termination configuration** · Discuss
+  - Context: DESIGN configuration example, Model fields, Procedure stop condition, and condition registry.
+  - Decide: How TOML supplies initial temperatures, fixed boundary nodes, and the procedure stop condition; define `condensing_start` inputs and meaning. Settle enough to specify a complete toy run.
 
-## Validation
+*End of this area's first-slice work.*
 
-- [ ] **20. SN019 fridge inventory** · Human
-  - Context: DESIGN.md "Configuration files"; brownfield `ptc_systems.json`.
-  - Do: Supply SN019's nodes, masses, materials and links.
+## 6. Configuration loading — first slice
 
-- [ ] **21. Measured-data alignment** · Discuss
-  - Context: DESIGN.md "Scope"; `data/Cooldown-SN019-08-06-2026.dat`.
-  - Decide: Which thermometer maps to which node, and how t = 0 is defined in the measured cooldown.
+- [ ] **6.1 Fridge graph loading** · Auto
+  - Needs: 1.2, 3.6, 8.1.
+  - Context: DESIGN configuration and library loading; `config.py`, `library/links/__init__.py`.
+  - Do: Load compositions and links into a graph. Implement `LINK_TYPES` and `load_link`, initially registering conduction and using the shared material loader.
+  - Verified by: A toy fridge section yields expected nodes, parameters, and connectivity; bad references and type names produce useful errors.
 
-- [ ] **22. Residual metric** · Auto
-  - Needs: 21.
-  - Context: DESIGN.md "Scope".
-  - Do: Implement the least-squares log-temperature residual between a `Result` and a measured cooldown, across all thermometers except MXP.
-  - Verified by: Zero residual for identical traces; hand-computed residual for a known offset.
+- [ ] **6.2 Condition factories** · Auto
+  - Needs: 5.2.
+  - Context: DESIGN condition example; `library/conditions.py`.
+  - Do: Implement `CONDITIONS`, `exchange_gas_cutoff`, and the agreed `condensing_start`, resolving node names against a graph.
+  - Verified by: Conditions have the specified signs on either side of their thresholds and equal zero at the thresholds.
 
-- [ ] **23. Legacy baseline** · Auto
-  - Needs: 20, 22.
-  - Context: `../pulse_tube_cooldown_simulation`; `simulations/validation/`.
-  - Do: Run the legacy model on SN019 and record its residual as the v1 target.
-  - Verified by: The baseline residual and the run that produced it are recorded in `simulations/validation/`.
+- [ ] **6.3 Phase and procedure loading** · Auto
+  - Needs: 1.3, 5.1.
+  - Context: DESIGN "Phases and Procedure"; `config.py`; area 5 decisions.
+  - Do: Build phase graphs and Procedure from TOML using the agreed activation rules and condition factories.
+  - Verified by: A two-phase fixture activates expected links and binds the expected phase and procedure conditions.
 
-- [ ] **24. SN019 validation** · Auto
-  - Needs: all of Links, 16, 18.
-  - Context: DESIGN.md "Validation and testing"; `simulations/validation/sn019/`, `tests/regression/`.
-  - Do: Write the SN019 configuration, run it, and compare with the measured cooldown and the legacy baseline. Once its residual is at or below the baseline, promote it to a regression test.
-  - Verified by: The validation run's residual is at or below the legacy baseline, with comparison plots, and the regression test passes.
+- [ ] **6.4 Complete model configuration** · Auto
+  - Context: DESIGN `configure_model` and Model fields; `config.py`.
+  - Do: Implement `configure_model(path_to_config)`, assembling the procedure, initial temperatures, boundary indices, solver options, and configuration-relative data references where used.
+  - Verified by: A complete toy TOML loads into the expected Model; malformed run inputs fail with useful context.
+
+*End of this area's first-slice work.*
+
+## 7. Public run, persistence, and CLI — first slice
+
+- [ ] **7.1 Simulation entry point** · Auto
+  - Needs: 2.4.
+  - Context: DESIGN "Public functions"; `src/pulse_tube_cooldown/__init__.py`.
+  - Do: Implement `simulate_cooldown(model)` by executing the procedure and assembling its Result.
+  - Verified by: A constructed model returns expected temperatures, switch records, heat flows, and status through the public call.
+
+- [ ] **7.2 Saved output** · Auto
+  - Context: DESIGN `save_output`; `output.py`.
+  - Do: Implement `save_output` with a documented representation retaining identities, units, phases, status, and numerical results.
+  - Verified by: Saved values can be read back and matched to their Result, including both sides of a phase switch.
+
+- [ ] **7.3 CLI and public exports** · Auto
+  - Needs: 6.4.
+  - Context: DESIGN public API and CLI; `__init__.py`, `__main__.py`, existing console-script declaration in `pyproject.toml`.
+  - Do: Export the three public functions and implement `run-ptc --config ... --output ...`, including useful failures and exit status.
+  - Verified by: An installed CLI configures, simulates, and saves a run; a bad configuration reports a failing exit status.
+
+- [ ] **7.4 Canonical toy run** · Auto
+  - Context: DESIGN canonical run and testing; `simulations/validation/`, integration tests.
+  - Do: Add a reproducible toy configuration and reference calculation exercising conduction, a fixed boundary, and a phase switch. Run through both the three public calls and CLI.
+  - Verified by: Both paths save equivalent results agreeing with the reference and preserving switch-side records.
+
+*First vertical slice complete.*
+
+## 8. Conduction — first slice
+
+- [ ] **8.1 Conduction Link** · Auto
+  - Needs: 1.1, 3.4.
+  - Context: DESIGN Link library; `library/links/conduction.py`; legacy `conductive_link_heat`.
+  - Do: Implement conduction for a material, area, and length by integrating conductivity between node temperatures.
+  - Verified by: Constant conductivity matches analytic flow; temperature-dependent conductivity matches independent integration and conserves energy under reversed temperatures.
+
+*End of this area's first-slice work.*
+
+## 9. Gas data and gas pushing — beyond first slice
+
+- [ ] **9.1 Gas loader and helium data** · Auto
+  - Needs: 1.1.
+  - Context: DESIGN Gas type and library; `library/gases/`; legacy gas data.
+  - Do: Implement the gas loader and a sourced helium definition for the Gas fields.
+  - Verified by: Helium loads with expected SI properties; invalid or missing definitions produce useful errors.
+
+- [ ] **9.2 PM5 gas-pushing Link** · Auto
+  - Needs: 6.1.
+  - Context: DESIGN "Gas pushing"; `library/links/gas_pushing.py`.
+  - Do: Implement and register `gas_pushing_pm5`, calculating adjacent-pair conductances from downstream volumes and temperatures and accumulating node flows.
+  - Verified by: A hand-computed chain has expected conductances and signed flows, with conserved total energy.
+
+## 10. Gas-gap switch — beyond first slice
+
+- [ ] **10.1 Switch physics and parameters** · Discuss
+  - Context: DESIGN Link and phase interfaces; legacy `build_gghs_switch`, `gas_link_heat_transfer`, and thermal-link data.
+  - Decide: On-state and off-state heat-transfer models, their parameters, and how phase activation selects the intended state.
+
+- [ ] **10.2 Switch heat transfer** · Auto
+  - Needs: 9.1.
+  - Context: 10.1's recorded design; `library/links/gas_gap_switch.py`.
+  - Do: Implement the agreed switch Link for its defined states and parameters.
+  - Verified by: Independent reference calculations establish flow in each state, heat-flow direction, and energy balance.
+
+- [ ] **10.3 Switch configuration and phase use** · Auto
+  - Needs: 6.4.
+  - Context: 10.1's activation rules; link registry and configuration fixtures.
+  - Do: Register the switch and load a configuration changing its effective state at a phase transition.
+  - Verified by: A configured two-phase run uses expected switch behavior on each side of the transition.
+
+## 11. Exchange gas — beyond first slice
+
+- [ ] **11.1 Exchange-gas physics and parameters** · Discuss
+  - Context: DESIGN multi-node Link; legacy `exchange_gas_link`, pressure handling, and gas-link data.
+  - Decide: The shared-gas heat-transfer model, pressure and geometry inputs, participating nodes, and phase activation.
+
+- [ ] **11.2 Exchange-gas Link** · Auto
+  - Needs: 9.1.
+  - Context: 11.1's recorded design; `library/links/exchange_gas.py`.
+  - Do: Implement the agreed exchange-gas transfer across participating nodes.
+  - Verified by: Independent small-network calculations establish signed flows and the agreed gas energy balance.
+
+- [ ] **11.3 Exchange-gas configuration and cutoff** · Auto
+  - Needs: 6.4.
+  - Context: 11.1's recorded design; link registry and configuration fixtures.
+  - Do: Register the Link and configure its removal at the agreed cutoff.
+  - Verified by: A configured run includes gas heat transfer before cutoff and the intended graph afterwards.
+
+## 12. Radiation and insulation — beyond first slice
+
+- [ ] **12.1 Radiation physics and parameters** · Discuss
+  - Context: DESIGN radiation Link; legacy `radiation_parallel_plates` and `radiation_enclosed`.
+  - Decide: Supported plate/shield geometries and area, emissivity, and enclosure parameters.
+
+- [ ] **12.2 Radiation Link** · Auto
+  - Needs: 6.1.
+  - Context: 12.1's recorded design; `library/links/radiation.py`.
+  - Do: Implement and register the agreed radiation Link.
+  - Verified by: Reference calculations cover agreed geometries, equal temperatures, and reversed temperature ordering.
+
+- [ ] **12.3 MLI physics and parameters** · Discuss
+  - Context: DESIGN MLI Link; legacy MLI functions; outcome of 12.1.
+  - Decide: How insulation modifies transfer, its parameters, and its relationship to the radiation Link.
+
+- [ ] **12.4 MLI Link** · Auto
+  - Context: 12.3's recorded design; `library/links/multi_layer_insulation.py`.
+  - Do: Implement and register the agreed insulation heat-transfer behavior.
+  - Verified by: Reference cases establish the temperature and insulation-parameter dependence, including a loaded configuration.
+
+## 13. Joint contact — beyond first slice
+
+- [ ] **13.1 Contact physics and parameters** · Discuss
+  - Context: DESIGN joint-contact Link; legacy `thermal_conductance_calc.py` and `conductance_systems.json`.
+  - Decide: Contact-conductance physics for bolted joints and the parameters or measured data it requires.
+
+- [ ] **13.2 Joint-contact Link** · Auto
+  - Needs: 6.1.
+  - Context: 13.1's recorded design; `library/links/joint_contact.py`.
+  - Do: Implement and register the agreed contact Link.
+  - Verified by: Independent cases establish flow and temperature dependence, including configuration loading.
+
+## 14. Cooler characterization inputs — beyond first slice
+
+- [ ] **14.1 Audit available cooler data** · Auto
+  - Context: DESIGN "Coupled capacity maps"; `data/`, legacy cooler data, available test-stand records.
+  - Do: Identify available bare-head cooldown and load-map records, cooler identities, channels, units, and metadata. List missing capacity-derivation inputs.
+  - Verified by: An inventory distinguishes cooler characterization from fridge validation and identifies records belonging together.
+
+- [ ] **14.2 Supply missing characterization inputs** · Human
+  - Context: 14.1's inventory and DESIGN stage energy balance.
+  - Input: Supply identified gaps, including stage masses/materials and attached masses, trace identity/channels, and relevant test-stand parasitic-load information. Record existing adequate inputs by reference.
+
+## 15. Path-derived capacity curves — beyond first slice
+
+- [ ] **15.1 Capacity derivation choices** · Discuss
+  - Needs: 14.2.
+  - Context: DESIGN "Coupled capacity maps"; characterization inputs. `docs/proposals/cooler-capacity-from-existing-curves.md` supplies candidate methods.
+  - Decide: Cleaning, thermometer alignment, differentiation, parasitic-load estimation, and temperature-range treatment for Q1(T1) and Q2(T2). Define evidence for assessing consistency with the matching load map.
+
+- [ ] **15.2 Prepare characterization traces** · Auto
+  - Context: 15.1's processing choices; characterization data; `simulations/validation/`.
+  - Do: Implement reproducible loading and preparation of the identified stage traces.
+  - Verified by: Prepared traces have agreed channels, units, alignment, and sample handling, with raw-data provenance.
+
+- [ ] **15.3 Characterization heat loads** · Auto
+  - Needs: 3.4.
+  - Context: 15.1's model; test-stand inventory and materials.
+  - Do: Calculate stage C_i(T) and agreed Qp_i(t), adding individually scoped material-port dependencies first where needed.
+  - Verified by: Known-inventory examples match hand calculations; mass, material, and parasitic-load assumptions are recorded.
+
+- [ ] **15.4 Derive and store stage capacity curves** · Auto
+  - Needs: 3.3.
+  - Context: DESIGN Q_i = -C_i(T_i) * dT_i/dt + Qp_i; prepared traces and heat loads.
+  - Do: Derive Q1(T1) and Q2(T2) and save sourced table data using the agreed processing and range treatment.
+  - Verified by: A synthetic trace recovers its known capacity; saved curves reproduce derived stage values.
+
+- [ ] **15.5 Capacity consistency assessment** · Auto
+  - Context: Matching load map; 15.1's assessment criteria; derived curves.
+  - Do: Compare capacities with load-map evidence in their shared measured region and record uncertainties and discrepancies.
+  - Verified by: A reproducible comparison establishes supported temperature ranges and identifies any specific follow-up needed before using the curves.
+
+## 16. Cooler Link — beyond first slice
+
+- [ ] **16.1 Uncoupled stage cooling** · Auto
+  - Needs: 15.5, 6.1.
+  - Context: DESIGN "Coupled capacity maps"; `library/links/cooler.py`.
+  - Do: Implement stage heat sinks from supported Q1(T1) and Q2(T2) curves, resolving any blockers identified in 15.5 first.
+  - Verified by: Each stage's signed flow matches its curve independently of the other stage's temperature.
+
+- [ ] **16.2 Regenerator conduction inputs** · Discuss
+  - Context: DESIGN Q_R = G_R(T_R) * (T_RGP - T_R), with T_R = T1 + x_R * (T2 - T1); available cooler data.
+  - Decide: The source or parameterization of G_R and x_R; identify any specific human input needed before implementation.
+
+- [ ] **16.3 Regenerator heat transfer** · Auto
+  - Context: 16.2's recorded parameters; `library/links/cooler.py`.
+  - Do: Add the specified independent regenerator heat sink using the interpolated regenerator temperature.
+  - Verified by: Hand calculations establish Q_R and its sign while Q1 and Q2 retain their specified independent behavior.
+
+- [ ] **16.4 Cooler configuration** · Auto
+  - Context: DESIGN Link loading; link registry and configuration fixtures.
+  - Do: Register the complete cooler Link and load node references, capacity data, and regenerator parameters from configuration.
+  - Verified by: A configured graph evaluates expected flows at all three cooled points with identifiable data sources.
+
+## 18. Result plots — beyond first slice
+
+- [ ] **18.1 Temperature plot** · Auto
+  - Needs: 2.4.
+  - Context: DESIGN Result; `plot/result.py`.
+  - Do: Plot node temperatures with units, node labels, and phase-switch markers.
+  - Verified by: A multi-phase result renders expected traces and switch positions.
+
+- [ ] **18.2 Heat-flow plot** · Auto
+  - Context: DESIGN Result; `plot/result.py`.
+  - Do: Plot heat flows with link/node identities, sign convention, units, and phase-switch markers.
+  - Verified by: A multi-phase example displays identifiable flows on both sides of a switch.
+
+- [ ] **18.3 Measured-temperature overlay** · Auto
+  - Needs: 22.1.
+  - Context: Measurement mapping and prepared traces; `plot/result.py`.
+  - Do: Overlay measured temperatures on corresponding simulated node traces.
+  - Verified by: A mapped, aligned fixture places each measured series at its expected node and time.
+
+## 19. Graph plot — beyond first slice
+
+- [ ] **19.1 Graph rendering** · Auto
+  - Needs: 1.2.
+  - Context: DESIGN Graph; `plot/graph.py`.
+  - Do: Draw nodes and links labelled by name and type, including multi-node links.
+  - Verified by: A toy graph renders every node, link, and intended connection with readable labels.
+
+## 20. Validation case and inventory — beyond first slice
+
+- [ ] **20.1 Select the v1 validation case** · Discuss
+  - Context: DESIGN "Scope"; available repository and legacy measurements and inventories; 14.1's data identification where relevant.
+  - Decide: Which six-plate system has suitable paired inventory and measurements for a legacy comparison. Record identity, evidence, data locations, and remaining gaps.
+
+- [ ] **20.2 Supply missing system inventory** · Human
+  - Context: 20.1's selected case and gaps; DESIGN nodes, links, and configuration.
+  - Input: Supply or confirm missing nodes, masses, materials, link parameters, cooler configuration, and cooldown procedure, starting from available legacy inventory.
+
+- [ ] **20.3 Supply missing validation measurements** · Human
+  - Context: 20.1's selected case and trace metadata.
+  - Input: Supply the matching fridge cooldown and missing acquisition/channel metadata identified in 20.1. Record existing adequate inputs by reference.
+
+## 21. Measurement interpretation — beyond first slice
+
+- [ ] **21.1 Map and align measured temperatures** · Discuss
+  - Needs: 20.3.
+  - Context: DESIGN "Scope"; selected inventory and measured cooldown.
+  - Decide: Thermometer-to-node mapping, cooldown time origin, comparison window, and invalid-reading treatment. Identify MXP for its specified residual exclusion.
+
+- [ ] **21.2 Residual sampling convention** · Discuss
+  - Context: DESIGN least-squares log-temperature residual; outcome of 21.1.
+  - Decide: Sampling/interpolation and aggregation conventions for computing the same residual for the new and legacy models.
+
+## 22. Measured data and residual — beyond first slice
+
+- [ ] **22.1 Measurement preparation** · Auto
+  - Needs: 21.2.
+  - Context: Selected measured cooldown and recorded interpretation; `simulations/validation/<identifier>/`.
+  - Do: Prepare mapped, aligned measurements with units, valid comparison samples, and provenance.
+  - Verified by: A fixture with known channel mapping, invalid samples, and time origin yields expected comparison series.
+
+- [ ] **22.2 Log-temperature residual** · Auto
+  - Needs: 2.4.
+  - Context: DESIGN "Scope"; 21.2's convention.
+  - Do: Calculate the least-squares log-temperature residual over specified thermometers and comparison samples.
+  - Verified by: Identical traces give zero; a known temperature ratio gives the hand-computed residual; MXP is excluded.
+
+## 23. Legacy baseline — beyond first slice
+
+- [ ] **23.1 Reproduce the selected legacy cooldown** · Auto
+  - Needs: 20.2, 20.3.
+  - Context: Legacy `Advanced_Feature_SIM`; selected inventory and procedure; `simulations/validation/<identifier>/`.
+  - Do: Run the legacy model for the selected case and record its version, inputs, and temperature traces.
+  - Verified by: The archived run matches the selected system and contains enough inputs to reproduce its traces.
+
+- [ ] **23.2 Score the legacy baseline** · Auto
+  - Needs: 22.2.
+  - Context: Legacy run and prepared measurements.
+  - Do: Apply the agreed residual calculation to legacy traces and record the baseline and comparison coverage.
+  - Verified by: Repeated scoring reproduces the baseline on the same measurements and window used for the new model.
+
+## 24. Full-system validation — beyond first slice
+
+- [ ] **24.1 Selected-system configuration** · Auto
+  - Needs: 4.1 and its required material ports, 7.4, 9.2, 10.3, 11.3, 12.4, 13.2, 16.4, 20.2.
+  - Context: DESIGN configuration and validation; selected inventory; `simulations/validation/<identifier>/`.
+  - Do: Write the selected system's TOML and reproducible runner from its inventory, procedure, and cooler data.
+  - Verified by: Loaded compositions, connectivity, activation, and parameters match the supplied inventory.
+
+- [ ] **24.2 Full cooldown execution** · Auto
+  - Context: Selected-system configuration and runner.
+  - Do: Execute through the specified cooldown window and archive inputs, version, output, and solver outcome.
+  - Verified by: A reproducible run reaches intended termination with finite temperatures and inspectable phase/flow records. An execution failure yields a specific follow-up task before progressing to comparison.
+
+- [ ] **24.3 Baseline comparison** · Auto
+  - Needs: 18.3, 22.2, 23.2.
+  - Context: Completed new-model run, measured traces, and legacy baseline.
+  - Do: Score the new run with the shared residual convention and produce measurement overlays and baseline comparisons.
+  - Verified by: A report establishes whether the run meets the v1 target and identifies temperatures/time regions dominating excess residual.
+
+- [ ] **24.4 Resolve the validation outcome** · Discuss
+  - Context: 24.3's comparison and DESIGN v1 target.
+  - Decide: Accept a qualifying run, or identify the next bounded investigation or correction for the discrepancy. Add individually scoped follow-up tasks and repeat the comparison after their completion until the target is met.
+
+- [ ] **24.5 Regression coverage for the accepted run** · Auto
+  - Context: DESIGN testing; accepted validation run; `tests/regression/`.
+  - Do: Preserve the accepted case as regression coverage with reproducible inputs and justified checks on residual and relevant behavior.
+  - Verified by: The test passes for the accepted run and detects meaningful degradation in the validated outcome.
