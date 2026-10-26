@@ -25,7 +25,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Do: Define Material, Gas, Node, and the Link protocol with the specified fields and link-local heat-flow convention.
   - Verified by: Constructed components evaluate material properties and return signed flows in their declared node order.
 
-- [ ] **1.2 Graph connectivity and lookups** · Auto
+- [x] **1.2 Graph connectivity and lookups** · Auto
   - Context: DESIGN "Data model"; `core/types.py`, `core/errors.py`.
   - Do: Define Graph and name lookups, mapping link-local node order to graph indices. Introduce errors needed by these operations.
   - Verified by: Differently ordered, overlapping links resolve correctly; invalid references produce useful errors.

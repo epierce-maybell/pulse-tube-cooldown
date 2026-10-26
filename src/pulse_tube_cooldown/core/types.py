@@ -14,13 +14,15 @@ All physical quantities are in SI units, for example:
 """
 
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Protocol
 
 import numpy as np
 from numpy.typing import NDArray
 
-__all__ = ["Gas", "Link", "Material", "Node"]
+from pulse_tube_cooldown.core.errors import ConfigurationError
+
+__all__ = ["Gas", "Graph", "Link", "Material", "Node"]
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -93,3 +95,68 @@ class Link(Protocol):
             Heat flows in W, in the order of `nodes`. Positive values indicate heat flow into the node.
         """
         ...
+
+
+@dataclass(frozen=True, slots=True)
+class Graph:
+    """Nodes and the links acting on them.
+
+    Node order defines the graph's temperature indices. Links refer to nodes by name, and `connectivity` translates
+    those names into indices.
+
+    Attributes:
+        nodes: Nodes with unique names, in index order.
+        links: Links with unique names, in index order. Each refers only to nodes in `nodes`.
+        connectivity: For each link, the graph indices of its nodes in link-local order, derived from `nodes` and
+            `links`. `temperature[connectivity[i]]` is the input to `links[i].calc_heat_flow`, and its output adds
+            to the nodes at those same indices.
+
+    Raises:
+        ConfigurationError: A node or link name is duplicated, or a link refers to an unknown node.
+    """
+
+    nodes: tuple[Node, ...]
+    links: tuple[Link, ...]
+    connectivity: tuple[tuple[int, ...], ...] = field(init=False)
+
+    def __post_init__(self) -> None:
+        """Validates names and derives connectivity."""
+        node_names = [node.name for node in self.nodes]
+
+        for kind, names in (("node", node_names), ("link", [link.name for link in self.links])):
+            if len(set(names)) < len(names):
+                raise ConfigurationError(f"{kind.capitalize()} names are not unique: {names}.")
+
+        for link in self.links:
+            unknown = [name for name in link.nodes if name not in node_names]
+            if unknown:
+                raise ConfigurationError(f"Link {link.name!r} references unknown nodes {unknown}.")
+
+        connectivity = tuple(tuple(node_names.index(name) for name in link.nodes) for link in self.links)
+        object.__setattr__(self, "connectivity", connectivity)
+
+    def get_node_index(self, name: str) -> int:
+        """Returns the index of the node named `name`.
+
+        Raises:
+            ConfigurationError: No node has this name.
+        """
+        names = [node.name for node in self.nodes]
+
+        if name not in names:
+            raise ConfigurationError(f"No node named {name!r}; nodes are {names}.")
+
+        return names.index(name)
+
+    def get_link_index(self, name: str) -> int:
+        """Returns the index of the link named `name`.
+
+        Raises:
+            ConfigurationError: No link has this name.
+        """
+        names = [link.name for link in self.links]
+
+        if name not in names:
+            raise ConfigurationError(f"No link named {name!r}; links are {names}.")
+
+        return names.index(name)
