@@ -125,11 +125,11 @@ class Graph:
 @dataclass(frozen=True, slots=True)
 class Model:
     nodes: tuple[Node, ...]
-    graphs: tuple[Graph, ...]
     procedure: Procedure
     initial_temperature: NDArray[np.float64]
     fixed_boundary_nodes: tuple[int, ...]
     solver_options: Mapping[str, Any]
+    graphs: tuple[Graph, ...]
 
 
 @dataclass(frozen=True, slots=True)
