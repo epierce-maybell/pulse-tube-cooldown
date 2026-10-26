@@ -6,7 +6,7 @@ The work from an empty package to v1, as specified in `docs/DESIGN.md`. v1 is a 
 
 Tasks are grouped by area. Within an area, tasks run in order. Each area marks where the **first vertical slice** ends: the full canonical run (configure, simulate, save, CLI) on a toy configuration, checked against an analytic or hand-computed answer. Slice tasks come first.
 
-The next task is the first unchecked task in its area whose earlier tasks are done and whose **Needs** are met. Every link task after Conduction needs task 6 (config loader), because each link adds its own registry entry and configuration schema.
+The next task is the first unchecked task in its area whose earlier tasks are done and whose **Needs** are met. Use an [o] to denote a task that has been claimed and is in-progress and an [x] to denote a complete task.
 
 There are three task types:
 
