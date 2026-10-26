@@ -125,11 +125,10 @@ class Model:
 class Result:
     status: str
     model: Model
-    time: NDArray[np.float64] # at a phase switch, time should store a duplicate entry
-    phase: NDArray[np.intp] # at a phase switch, keep both before and after (see above)
-    temperature: NDArray[np.float64]
-    heat_flow: NDArray[np.float64] # sized as (length(time), length(links)), NaN when link inactive
+    data: xr.Dataset
 ```
+
+A Result's data is an xarray Dataset, saved as netCDF by `save_output`. The dimensions of `data` are `time`, `node`, and `link`, using node and link names as coordinates. The variables are `phase(time)` (Phase names), `temperature(time, node)` (K), `heat_flow(time, link, node)` (W into the node, NaN where link does not touch node or is inactive), and `connected(link, node)` (bool). At a phase switch, time holds a duplicate entry, one for each phase. Attributes record status, units, and run provenance.
 
 ## Phases and Procedure
 During different phases of the cooldown, the simulation needs to activate different physics for certain components. A Procedure holds a sequence of Phases, each of which specifies the Graph that is operating during that Phase. It has a defined stopping point, which should be a function that takes (time, temperature) and returns a float that equals zero when the phase should end. The Procedure has a stop_condition that operates the same way.
@@ -140,7 +139,7 @@ The design follows from this:
 class Phase:
     name: str
     graph: Graph
-    until: Callable[[float, NDArray[np.float64]], float]
+    until: Callable[[float, NDArray[np.float64]], float] | None
 
 @dataclass(frozen = True, slots = True)
 class Procedure:

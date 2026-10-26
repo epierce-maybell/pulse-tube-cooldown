@@ -32,8 +32,8 @@ Identifiers retain the original task number as a prefix. Context paths are relat
 
 - [ ] **1.3 Procedure and run types** · Auto
   - Context: DESIGN "Data model" and "Phases and Procedure"; `core/types.py`.
-  - Do: Define Phase, Procedure, Model, and Result. Document array axes and node/link correspondence across phases.
-  - Verified by: Constructed multi-phase model and result examples represent phase identities, node ordering, and link identities unambiguously.
+  - Do: Define Phase, Procedure, Model, and Result, adding the `xarray` dependency. Procedure raises ConfigurationError when it has no phases, phase names repeat, a phase other than the last lacks `until`, the last phase has `until`, or phase graphs differ in node order. Model and Result document their contents without validating them.
+  - Verified by: A constructed multi-phase Procedure and Model are accepted; each invalid Procedure produces a useful error; a Result holds its status, model, and Dataset.
 
 - [ ] **1.4 Node heat capacities** · Auto
   - Context: DESIGN "Engine"; `engine/equations.py`.
@@ -73,13 +73,13 @@ Identifiers retain the original task number as a prefix. Context paths are relat
 - [ ] **2.3 Heat-flow reconstruction** · Auto
   - Needs: 1.5.
   - Context: DESIGN "Engine"; `engine/solver.py`.
-  - Do: Implement `reconstruct_heat_flow` over sampled temperatures using the phase graph and documented result axes.
-  - Verified by: Samples agree with direct evaluations, including a link whose flow changes across phases.
+  - Do: Implement `reconstruct_heat_flow` over sampled temperatures using the phase graph, producing flows on the DESIGN `heat_flow(time, link, node)` axes.
+  - Verified by: Samples agree with direct evaluations; a link inactive in one phase is NaN there, and unconnected link-node pairs are NaN.
 
 - [ ] **2.4 Result assembly** · Auto
   - Context: DESIGN "Data model" and "Engine"; `engine/solver.py`.
-  - Do: Implement `build_result`, assembling solutions, temperatures, heat flows, and status. Preserve duplicate switch times and the identities of both phases.
-  - Verified by: A two-phase result retains both switch-side states and distinct flows, with consistent axes and final status.
+  - Do: Implement `build_result`, assembling the DESIGN Result Dataset from solutions, temperatures, heat flows, and status. Preserve duplicate switch times with each side's phase name.
+  - Verified by: A two-phase result retains both switch-side rows with their phase names and distinct flows; coordinates match graph names, `connected` matches connectivity, and attributes record status and units.
 
 *End of this area's first-slice work.*
 
@@ -185,8 +185,8 @@ Identifiers retain the original task number as a prefix. Context paths are relat
 
 - [ ] **7.2 Saved output** · Auto
   - Context: DESIGN `save_output`; `output.py`.
-  - Do: Implement `save_output` with a documented representation retaining identities, units, phases, status, and numerical results.
-  - Verified by: Saved values can be read back and matched to their Result, including both sides of a phase switch.
+  - Do: Implement `save_output`, writing the Result Dataset as netCDF with run provenance, and add the netCDF backend dependency.
+  - Verified by: Opening the file with xarray reproduces the Result's data and attributes, including both sides of a phase switch.
 
 - [ ] **7.3 CLI and public exports** · Auto
   - Needs: 6.4.
