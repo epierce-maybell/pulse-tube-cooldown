@@ -206,9 +206,9 @@ LINK_TYPES = {
 }
 
 PROPERTY_FITS = {
-    "log_poly": eval_log_poly,
-    "rational_poly": eval_rational_poly,
-    "table": eval_fit_from_table,
+    "log_poly": make_log_poly,
+    "rational_poly": make_rational_poly,
+    "table": make_fit_from_table,
     ...
 }
 

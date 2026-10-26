@@ -85,17 +85,17 @@ Identifiers retain the original task number as a prefix. Context paths are relat
 
 ## 3. Material loading — first slice
 
-- [o] **3.1 Log-polynomial fits** · Auto
+- [x] **3.1 Log-polynomial fits** · Auto
   - Context: DESIGN "Dilution refrigerator library"; `library/property_fits.py`; legacy fit definitions.
   - Do: Implement `eval_log_poly` for temperature arrays and register it in `PROPERTY_FITS`.
   - Verified by: Constant and nonconstant examples match hand calculations.
 
-- [ ] **3.2 Rational-polynomial fits** · Auto
+- [x] **3.2 Rational-polynomial fits** · Auto
   - Context: DESIGN property-fit registry; `library/property_fits.py`; legacy rational-polynomial definition.
   - Do: Implement and register `eval_rational_poly`.
   - Verified by: Hand-computed examples and representative copper values match independent evaluation.
 
-- [ ] **3.3 Tabulated properties** · Auto
+- [x] **3.3 Tabulated properties** · Auto
   - Context: DESIGN property-fit registry; `library/property_fits.py`.
   - Do: Implement and register `eval_fit_from_table`, documenting interpolation and range behavior.
   - Verified by: Knots and intermediate values behave as documented; invalid tables receive useful errors.
@@ -138,7 +138,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
 
 *End of this area's first-slice work.*
 
-- [ ] **5.3 Condensing start condition** · Discuss
+- [x] **5.3 Condensing start condition** · Discuss
   - Context: DESIGN "Scope" and condition registry; the operating procedure for starting condensing.
   - Decide: The physical state that starts condensing and the inputs `condensing_start` takes.
 
