@@ -33,7 +33,7 @@ type = "gas_gap_switch"
 nodes = ["PRP", "RGP"] # order matters
 
 [procedure]
-until = { condition = "condensing_start", node = "MXP", *args }
+until = { condition = "condensing_start", node = "MXP", threshold = 10.0 }
 
 [[procedure.phases]]
 name = "precool"
@@ -247,6 +247,7 @@ def exchange_gas_cutoff(graph: Graph, node: str, cutoff: float) -> Callable[[flo
     idx = graph.get_node_index(node)
     return lambda time, temperature: temperature[idx] - cutoff
 ```
+Conditions and their arguments should be named for the physical event they mark, and for that reason, they are allowed to share implementations between two functions with different names.
 
 ## Specific physical processes
 Some decisions are not obvious, but have leverage over the rest of the design.
