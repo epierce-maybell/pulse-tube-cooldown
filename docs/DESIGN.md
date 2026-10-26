@@ -63,10 +63,10 @@ ptc.save_output(result, path_to_output)
 #### Command-Line Interface
 V1 includes a command-line interface (CLI) to run simulations for a given configuration file. It should be easy to invoke, with only a few options:
 ```bash
-python3 run_pulse_tube_cooldown.py --config "path_to_config" --output "path_to_output"
+run-ptc --config "path_to_config" --output "path_to_output"
 ```
 
-## Data Model
+## Data model
 The important structures are listed here. The Model holds information about the simulation, including the order of operations (see Phases and Procedure, below). The Graph describes the connectivity between components of the system, Nodes and Links, which may be made of Materials that are responsible for their own thermal properties. Simulation output is stored in a Result.
 
 ```python
@@ -75,6 +75,12 @@ class Material:
     name: str
     specific_heat: Callable[[NDArray[np.float64]], NDArray[np.float64]]
     thermal_conductivity: Callable[[NDArray[np.float64]], NDArray[np.float64]]
+
+@dataclass(frozen = True, slots = True, kw_only = True)
+class Gas:
+    name: str
+    molar_mass: float
+    heat_capacity_ratio: float
 
 @dataclass(frozen = True, slots = True)
 class Node:
@@ -155,10 +161,10 @@ def reconstruct_heat_flow(graph: Graph, temperature: NDArray[np.float64]) -> NDA
 def build_result(model: Model, solutions: Sequence[OdeResult]) -> Result: ...
 ```
 
-## Dilution Refrigerator Library
+## Dilution refrigerator library
 As a general rule, physical values should always be specified in SI units.
 
-Materials are stored in TOML files, in data/materials. Each one should take the format:
+Materials are specified in individual TOML files in materials/data. Each entry should take the format:
 ```toml
 name = "OFHC Cu RRR100"
 source = "NIST Cryogenic Material Properties"
@@ -187,7 +193,7 @@ LINK_TYPES = {
     ...
 }
 
-MATERIAL_FITS = {
+PROPERTY_FITS = {
     "log_poly": eval_log_poly,
     "rational_poly": eval_rational_poly,
     "table": eval_fit_from_table,
@@ -230,10 +236,10 @@ def exchange_gas_cutoff(graph: Graph, node: str, cutoff: float) -> Callable[[flo
     return lambda time, temperature: temperature[idx] - cutoff
 ```
 
-## Specific Physical Processes
+## Specific physical processes
 Some decisions are not obvious, but have leverage over the rest of the design.
 
-#### Coupled Capacity Maps
+#### Coupled capacity maps
 We do not have extended load map data during cooldown for our pulse tubes. What we do have is one run per unit, post-tuning, on a test stand for exactly one cooldown curve. This gives us T1 and T2 with respect to time over one path. We also have a load map for each unit, but only for T2 $\in (2, 5)$ K and T1 $\in (40, 68)$ K. 
 
 This is an ongoing question, but for now, we can set up a first-order uncoupled model, where each $Q(T)$ path is separable. For each stage $i$ and heat flow $Q_i(T_i)$, we have
@@ -250,7 +256,7 @@ $$
 
 where $Q_R$ is the heat flow, $G_R(T_R)$ is the regenerator conductance, $T_{RGP}$ is the temperature of the RGP node, and $T_R = T1 + x_R (T2 - T1)$ is the temperature of the regenerator tube at the normalized clamp position $x_R$. This assumes that $Q_R$ is an independent sink, so it does not influence $Q1$ or $Q2$ (which is almost certainly only an approximation of reality).
 
-#### Gas Pushing
+#### Gas pushing
 Gas pushing is its own specific link type, although future scenarios may extend this to consider different methods. Here, we focus on `gas_pushing_pm5`, which is currently deployed. Rather than fit to data, we derive a simple model from first principles, where gas pushing is effectively a conductance between two nodes. Pressure varies on short time scales relative to heat flow, so we average over the pumping cycle. Then, the effective conductance $G$ between two nodes $k$ and $k + 1$ is given by
 
 $$
@@ -259,9 +265,62 @@ $$
 
 where $\Delta p$ is the pressure swing for each cycle, $P$ is the period of the cycle, and $V_j$ and $T_j$ are the gas volume and temperature at each node $j$ that the gas fills. Heat flow is then simply: $Q = \pm G(\Delta T)$ where $\Delta T$ is the difference in temperature between each node.
 
-## Validation and Testing
+## Validation and testing
 Validation experiments should live in simulations/validation/identifier, where identifier is usually a subdirectory that stores the runner script, the configuration file(s), and output.
 
 In the future, we will want regression tests. The first validation experiment(s) that pass, leading us to v1 release, will become the regression tests for later iterations of the model.
 
 Our test suite should include unit tests for each discrete unit of code that is worth testing (e.g., could reasonably not do what we expect it to). Analytic tests are appropriate where we have access to analytic solutions
+
+## Package layout
+The repository structure should have the following shape, although this is not a comprehensive description (specific files may be added or removed later, during implementation):
+```bash
+src/pulse_tube_cooldown/
+    __init__.py
+    __main__.py
+    config.py
+    output.py
+    core/
+        __init__.py
+        types.py
+        errors.py
+    engine/
+        __init__.py
+        equations.py
+        solver.py
+    library/
+        __init__.py
+        conditions.py
+        property_fits.py
+        materials/
+            __init__.py
+            load.py
+            data/
+                ofhc_cu_rrr100.toml
+                ss_304.toml
+                ...
+        gases/
+            __init__.py
+            load.py
+            data/...
+        links/
+            __init__.py
+            conduction.py
+            radiation.py
+            cooler.py
+            gas_gap_switch.py
+            gas_pushing.py
+            exchange_gas.py
+            multi_layer_insulation.py
+            joint_contact.py
+    plot/
+        __init__.py
+        graph.py
+        result.py
+
+tests/
+    core/...
+    engine/...
+    library/...
+    regression/...
+```
