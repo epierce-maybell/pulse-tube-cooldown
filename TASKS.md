@@ -158,7 +158,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
 - [ ] **6.3 Phase and procedure loading** · Auto
   - Needs: 1.3, 5.1.
   - Context: DESIGN "Phases and Procedure"; `config.py`; area 5 decisions.
-  - Do: Build phase graphs and Procedure from TOML using the agreed activation rules and condition factories.
+  - Do: Build each phase's links and the Procedure from TOML using the agreed activation rules and condition factories.
   - Verified by: A two-phase fixture activates expected links and binds the expected phase and procedure conditions.
 
 - [ ] **6.4 Complete model configuration** · Auto
