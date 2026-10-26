@@ -3,14 +3,19 @@
 import numpy as np
 import pytest
 
-from pulse_tube_cooldown.library.property_fits import PROPERTY_FITS, eval_log_poly, eval_rational_poly
+from pulse_tube_cooldown.library.property_fits import (
+    PROPERTY_FITS,
+    make_fit_from_table,
+    make_log_poly_fit,
+    make_rational_poly_fit,
+)
 
 
 def test_log_poly_constant_is_independent_of_temperature():
-    temperature = np.array([4.0, 77.0, 300.0])
+    fit = make_log_poly_fit([2.0])
 
     # log10(y) = 2 everywhere, so y = 100.
-    np.testing.assert_allclose(eval_log_poly(temperature, [2.0]), [100.0, 100.0, 100.0])
+    np.testing.assert_allclose(fit(np.array([4.0, 77.0, 300.0])), [100.0, 100.0, 100.0])
 
 
 @pytest.mark.parametrize(
@@ -25,19 +30,21 @@ def test_log_poly_constant_is_independent_of_temperature():
     ],
 )
 def test_log_poly_nonconstant_matches_hand_calculation(coefficients, temperature, expected):
-    np.testing.assert_allclose(eval_log_poly(np.array(temperature), coefficients), expected, rtol=1e-12)
+    fit = make_log_poly_fit(coefficients)
+
+    np.testing.assert_allclose(fit(np.array(temperature)), expected, rtol=1e-12)
 
 
 def test_log_poly_preserves_temperature_array_shape():
     temperature = np.array([[10.0, 100.0], [1000.0, 10.0]])
 
-    result = eval_log_poly(temperature, [0.0, 1.0])
+    result = make_log_poly_fit([0.0, 1.0])(temperature)
 
     np.testing.assert_allclose(result, temperature, rtol=1e-12)
 
 
 def test_log_poly_is_registered():
-    assert PROPERTY_FITS["log_poly"] is eval_log_poly
+    assert PROPERTY_FITS["log_poly"] is make_log_poly_fit
 
 
 # Coefficients are ordered a through i in
@@ -58,7 +65,9 @@ def test_log_poly_is_registered():
     ],
 )
 def test_rational_poly_matches_hand_calculation(coefficients, temperature, expected):
-    np.testing.assert_allclose(eval_rational_poly(np.array(temperature), coefficients), expected, rtol=1e-12)
+    fit = make_rational_poly_fit(coefficients)
+
+    np.testing.assert_allclose(fit(np.array(temperature)), expected, rtol=1e-12)
 
 
 def test_rational_poly_matches_nist_copper_conductivity():
@@ -71,14 +80,76 @@ def test_rational_poly_matches_nist_copper_conductivity():
     # legacy scalar `eval_rational_poly` in branch Advanced_Feature_SIM.
     expected = [642.2969607429585, 2422.510264536503, 547.1996980793672, 396.3239590150121]
 
-    np.testing.assert_allclose(eval_rational_poly(temperature, coefficients), expected, rtol=1e-12)
+    np.testing.assert_allclose(make_rational_poly_fit(coefficients)(temperature), expected, rtol=1e-12)
 
 
 @pytest.mark.parametrize("count", [8, 10])
-def test_rational_poly_rejects_wrong_coefficient_count(count):
+def test_rational_poly_rejects_wrong_coefficient_count_when_built(count):
     with pytest.raises(ValueError, match=rf"9 coefficients.*got {count}"):
-        eval_rational_poly(np.array([10.0]), [0.0] * count)
+        make_rational_poly_fit([0.0] * count)
 
 
 def test_rational_poly_is_registered():
-    assert PROPERTY_FITS["rational_poly"] is eval_rational_poly
+    assert PROPERTY_FITS["rational_poly"] is make_rational_poly_fit
+
+
+_TABLE = [[10.0, 1.0], [20.0, 3.0], [40.0, 7.0]]
+
+
+def test_table_returns_values_at_points():
+    fit = make_fit_from_table(_TABLE)
+
+    np.testing.assert_allclose(fit(np.array([10.0, 20.0, 40.0])), [1.0, 3.0, 7.0])
+
+
+def test_table_interpolates_linearly_in_temperature():
+    fit = make_fit_from_table(_TABLE)
+
+    # Midpoints of each segment: (1 + 3) / 2 at 15 K and (3 + 7) / 2 at 30 K; a quarter of the way along the second
+    # segment, 3 + 0.25 * 4 at 25 K.
+    np.testing.assert_allclose(fit(np.array([15.0, 25.0, 30.0])), [2.0, 4.0, 5.0])
+
+
+def test_table_holds_end_values_outside_points():
+    fit = make_fit_from_table(_TABLE)
+
+    np.testing.assert_allclose(fit(np.array([1.0, 9.9, 40.1, 300.0])), [1.0, 1.0, 7.0, 7.0])
+
+
+def test_table_accepts_array_and_preserves_temperature_shape():
+    fit = make_fit_from_table(np.array(_TABLE))
+
+    result = fit(np.array([[10.0, 15.0], [30.0, 40.0]]))
+
+    np.testing.assert_allclose(result, [[1.0, 2.0], [5.0, 7.0]])
+
+
+def test_table_is_unaffected_by_later_changes_to_its_source():
+    source = np.array(_TABLE)
+    fit = make_fit_from_table(source)
+
+    source[:, 1] = 0.0
+
+    np.testing.assert_allclose(fit(np.array([15.0])), [2.0])
+
+
+@pytest.mark.parametrize(
+    ("table", "message"),
+    [
+        ([], "at least 2 points"),
+        ([[10.0, 1.0]], "at least 2 points"),
+        ([[10.0, 1.0], [20.0]], "2 values"),
+        ([[10.0, 1.0, 0.0], [20.0, 3.0, 0.0]], "2 values"),
+        ([[20.0, 1.0], [10.0, 3.0]], "strictly increasing"),
+        ([[10.0, 1.0], [10.0, 3.0]], "strictly increasing"),
+        ([[10.0, 1.0], [20.0, np.nan]], "finite"),
+        ([[10.0, 1.0], [np.inf, 3.0]], "finite"),
+    ],
+)
+def test_table_rejects_invalid_tables_when_built(table, message):
+    with pytest.raises(ValueError, match=message):
+        make_fit_from_table(table)
+
+
+def test_table_is_registered():
+    assert PROPERTY_FITS["table"] is make_fit_from_table
