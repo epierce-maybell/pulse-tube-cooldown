@@ -67,6 +67,6 @@ A few features of the physics shape the model:
 
 ## Related resources
 
-- `../pulse_tube_cooldown_simulation`: legacy code with similar physics.
+- `../pulse_tube_cooldown_simulation`: legacy code with similar physics. The reference version is the `Advanced_Feature_SIM` branch.
 - `../../dev/cold_control`: routines and code for the refrigerators.
 - `../../dev/cold_control/python/src/cold_control/routine_framework/diagnostics.py`: diagnostics saved from each run.
