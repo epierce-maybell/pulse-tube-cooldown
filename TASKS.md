@@ -85,7 +85,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
 
 ## 3. Material loading — first slice
 
-- [ ] **3.1 Log-polynomial fits** · Auto
+- [o] **3.1 Log-polynomial fits** · Auto
   - Context: DESIGN "Dilution refrigerator library"; `library/property_fits.py`; legacy fit definitions.
   - Do: Implement `eval_log_poly` for temperature arrays and register it in `PROPERTY_FITS`.
   - Verified by: Constant and nonconstant examples match hand calculations.
@@ -128,15 +128,19 @@ Identifiers retain the original task number as a prefix. Context paths are relat
 
 ## 5. Configuration decisions — first slice
 
-- [ ] **5.1 Phase activation semantics** · Discuss
+- [x] **5.1 Phase activation semantics** · Discuss
   - Context: DESIGN "Configuration files" and "Phases and Procedure"; `enable` and `disable` placeholders.
   - Decide: How activation references links, carries between phases, and produces phase graphs with shared node ordering. Record a concrete configuration example.
 
-- [ ] **5.2 Run inputs and termination configuration** · Discuss
+- [x] **5.2 Run inputs and termination configuration** · Discuss
   - Context: DESIGN configuration example, Model fields, Procedure stop condition, and condition registry.
-  - Decide: How TOML supplies initial temperatures, fixed boundary nodes, and the procedure stop condition; define `condensing_start` inputs and meaning. Settle enough to specify a complete toy run.
+  - Decide: How TOML supplies initial temperatures, fixed boundary nodes, and the procedure stop condition. Settle enough to specify a complete toy run.
 
 *End of this area's first-slice work.*
+
+- [ ] **5.3 Condensing start condition** · Discuss
+  - Context: DESIGN "Scope" and condition registry; the operating procedure for starting condensing.
+  - Decide: The physical state that starts condensing and the inputs `condensing_start` takes.
 
 ## 6. Configuration loading — first slice
 
@@ -149,7 +153,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
 - [ ] **6.2 Condition factories** · Auto
   - Needs: 5.2.
   - Context: DESIGN condition example; `library/conditions.py`.
-  - Do: Implement `CONDITIONS`, `exchange_gas_cutoff`, and the agreed `condensing_start`, resolving node names against a graph.
+  - Do: Implement `CONDITIONS` and `exchange_gas_cutoff`, resolving node names against a graph.
   - Verified by: Conditions have the specified signs on either side of their thresholds and equal zero at the thresholds.
 
 - [ ] **6.3 Phase and procedure loading** · Auto
@@ -164,6 +168,12 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Verified by: A complete toy TOML loads into the expected Model; malformed run inputs fail with useful context.
 
 *End of this area's first-slice work.*
+
+- [ ] **6.5 Condensing start condition** · Auto
+  - Needs: 5.3.
+  - Context: 5.3's recorded design; `library/conditions.py`.
+  - Do: Implement and register `condensing_start`, resolving node names against a graph.
+  - Verified by: The condition has the specified sign on either side of its threshold and equals zero at the threshold.
 
 ## 7. Public run, persistence, and CLI — first slice
 
@@ -429,7 +439,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
 ## 24. Full-system validation — beyond first slice
 
 - [ ] **24.1 Selected-system configuration** · Auto
-  - Needs: 4.1 and its required material ports, 7.4, 9.2, 10.3, 11.3, 12.4, 13.2, 16.4, 20.2.
+  - Needs: 4.1 and its required material ports, 6.5, 7.4, 9.2, 10.3, 11.3, 12.4, 13.2, 16.4, 20.2.
   - Context: DESIGN configuration and validation; selected inventory; `simulations/validation/<identifier>/`.
   - Do: Write the selected system's TOML and reproducible runner from its inventory, procedure, and cooler data.
   - Verified by: Loaded compositions, connectivity, activation, and parameters match the supplied inventory.

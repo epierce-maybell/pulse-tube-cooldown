@@ -32,15 +32,25 @@ name = "PRP-RGP Switch 1"
 type = "gas_gap_switch"
 nodes = ["PRP", "RGP"] # order matters
 
+[procedure]
+until = { condition = "condensing_start", node = "MXP", *args }
+
 [[procedure.phases]]
 name = "precool"
-disable = ""
-enable = ""
-until = { condition = "exchange_gas_cutoff", node = "EXAMPLE", cutoff = 70.0 }
+disable = ["PRP-RGP Switch 1"]
+until = { condition = "exchange_gas_cutoff", node = "CFP", cutoff = 70.0 }
+
+[[procedure.phases]]
+name = "cooldown"
+enable = ["PRP-RGP Switch 1"]
+disable = ["Exchange gas"]
 
 [simulation]
 solver = "Radau"
-max_time = 0.0 # s
+max_time = 604800.0 # still returns a Result
+save_every = 100.0
+initial_temperature = 300.0 # scalar or array of size [nodes]
+fixed_boundary_nodes = ["Vacuum can"]
 ```
 
 #### Public functions
@@ -118,7 +128,7 @@ class Result:
     time: NDArray[np.float64] # at a phase switch, time should store a duplicate entry
     phase: NDArray[np.intp] # at a phase switch, keep both before and after (see above)
     temperature: NDArray[np.float64]
-    heat_flow: NDArray[np.float64]
+    heat_flow: NDArray[np.float64] # sized as (length(time), length(links)), NaN when link inactive
 ```
 
 ## Phases and Procedure
@@ -135,8 +145,10 @@ class Phase:
 @dataclass(frozen = True, slots = True)
 class Procedure:
     phases: tuple[Phase, ...]
-    stop_condition: Callable[[float, NDArray[np.float64]], float]
+    stop_condition: Callable[[float, NDArray[np.float64]], float] | None
 ```
+
+The [fridge] part of the configuration defines the full graph, with every link active. Each phase specifies which links should activate or deactivate in each phase, cumulatively, including an initial phase (which should only deactivate links) and an end phase (which should not have an `until` condition). Link names are unique. Redundant enables or disables should raise an error rather than silently succeeding. 
 
 ## Engine
 The engine is responsible for constructing the thermal properties, heat flows, and linear system. 
