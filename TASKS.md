@@ -30,10 +30,11 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Do: Define Graph and name lookups, mapping link-local node order to graph indices. Introduce errors needed by these operations.
   - Verified by: Differently ordered, overlapping links resolve correctly; invalid references produce useful errors.
 
-- [ ] **1.3 Procedure and run types** · Auto
+- [x] **1.3 Procedure and run types** · Auto
   - Context: DESIGN "Data model" and "Phases and Procedure"; `core/types.py`.
-  - Do: Define Phase, Procedure, Model, and Result, adding the `xarray` dependency. Procedure raises ConfigurationError when it has no phases, phase names repeat, a phase other than the last lacks `until`, the last phase has `until`, or phase graphs differ in node order. Model and Result document their contents without validating them.
-  - Verified by: A constructed multi-phase Procedure and Model are accepted; each invalid Procedure produces a useful error; a Result holds its status, model, and Dataset.
+  - Do: Define Phase, Procedure, Model, and Result, adding the `xarray` dependency. Phases carry their links; Model carries the shared nodes and builds one Graph per phase. Procedure raises ConfigurationError when it has no phases, phase names repeat, a phase other than the last lacks `until`, the last phase has `until`, or a link name refers to different nodes in different phases. Model raises ConfigurationError, naming the phase, when a phase graph is invalid.
+  - Verified by: A constructed multi-phase Procedure and Model are accepted, with one graph per phase over the shared nodes; each invalid Procedure or phase graph produces a useful error; a Result holds its status, model, and Dataset.
+  - Pending: DESIGN records Phase with `links` instead of `graph`, and Model with `nodes` and derived per-phase `graphs`.
 
 - [ ] **1.4 Node heat capacities** · Auto
   - Context: DESIGN "Engine"; `engine/equations.py`.

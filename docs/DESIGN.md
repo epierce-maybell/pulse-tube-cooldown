@@ -57,8 +57,10 @@ fixed_boundary_nodes = ["Vacuum can"]
 The library exposes the following public functions:
 ```python
 def configure_model(path_to_config) -> Model: ...
-    
+
+
 def simulate_cooldown(model) -> Result: ...
+
 
 def save_output(result, path_to_output) -> None: ...
 ```
@@ -77,25 +79,28 @@ run-ptc --config "path_to_config" --output "path_to_output"
 ```
 
 ## Data model
-The important structures are listed here. The Model holds information about the simulation, including the order of operations (see Phases and Procedure, below). The Graph describes the connectivity between components of the system, Nodes and Links, which may be made of Materials that are responsible for their own thermal properties. Simulation output is stored in a Result.
+The important structures are listed here. The Model holds information about the simulation, including the order of operations (see Phases and Procedure, below), and is responsible for constructing graphs. A Graph describes the connectivity between components of the system, Nodes and Links, which may be made of Materials that are responsible for their own thermal properties. Simulation output is stored in a Result.
 
 ```python
-@dataclass(frozen = True, slots = True, kw_only = True)
+@dataclass(frozen=True, slots=True, kw_only=True)
 class Material:
     name: str
     specific_heat: Callable[[NDArray[np.float64]], NDArray[np.float64]]
     thermal_conductivity: Callable[[NDArray[np.float64]], NDArray[np.float64]]
 
-@dataclass(frozen = True, slots = True, kw_only = True)
+
+@dataclass(frozen=True, slots=True, kw_only=True)
 class Gas:
     name: str
     molar_mass: float
     heat_capacity_ratio: float
 
-@dataclass(frozen = True, slots = True)
+
+@dataclass(frozen=True, slots=True)
 class Node:
     name: str
     composition: tuple[tuple[Material, float], ...]
+
 
 class Link(Protocol):
     @property
@@ -103,25 +108,31 @@ class Link(Protocol):
 
     @property
     def nodes(self) -> tuple[str, ...]: ...
-    
+
     def calc_heat_flow(self, temperature: NDArray[np.float64]) -> NDArray[np.float64]: ...
 
-@dataclass(frozen = True, slots = True)
+
+@dataclass(frozen=True, slots=True)
 class Graph:
     nodes: tuple[Node, ...]
     links: tuple[Link, ...]
     connectivity: tuple[tuple[int, ...], ...]
+
     def get_node_index(self, name: str) -> int: ...
     def get_link_index(self, name: str) -> int: ...
 
-@dataclass(frozen = True, slots = True)
+
+@dataclass(frozen=True, slots=True)
 class Model:
+    nodes: tuple[Node, ...]
+    graphs: tuple[Graph, ...]
     procedure: Procedure
     initial_temperature: NDArray[np.float64]
     fixed_boundary_nodes: tuple[int, ...]
     solver_options: Mapping[str, Any]
 
-@dataclass(frozen = True, slots = True)
+
+@dataclass(frozen=True, slots=True)
 class Result:
     status: str
     model: Model
@@ -131,17 +142,18 @@ class Result:
 A Result's data is an xarray Dataset, saved as netCDF by `save_output`. The dimensions of `data` are `time`, `node`, and `link`, using node and link names as coordinates. The variables are `phase(time)` (Phase names), `temperature(time, node)` (K), `heat_flow(time, link, node)` (W into the node, NaN where link does not touch node or is inactive), and `connected(link, node)` (bool). At a phase switch, time holds a duplicate entry, one for each phase. Attributes record status, units, and run provenance.
 
 ## Phases and Procedure
-During different phases of the cooldown, the simulation needs to activate different physics for certain components. A Procedure holds a sequence of Phases, each of which specifies the Graph that is operating during that Phase. It has a defined stopping point, which should be a function that takes (time, temperature) and returns a float that equals zero when the phase should end. The Procedure has a stop_condition that operates the same way.
+During different phases of the cooldown, the simulation needs to activate different physics for certain components. A Procedure holds a sequence of Phases, each of which specifies the Links that are operating during that Phase (note that these are instantiated Links, not Link types, so a Phase can change detailed information during the run). It has a defined stopping point, which should be a function that takes (time, temperature) and returns a float that equals zero when the phase should end. The Procedure has a stop_condition that operates the same way.
 
 The design follows from this:
 ```python
-@dataclass(frozen = True, slots = True)
+@dataclass(frozen=True, slots=True)
 class Phase:
     name: str
-    graph: Graph
+    links: tuple[Link, ...]
     until: Callable[[float, NDArray[np.float64]], float] | None
 
-@dataclass(frozen = True, slots = True)
+
+@dataclass(frozen=True, slots=True)
 class Procedure:
     phases: tuple[Phase, ...]
     stop_condition: Callable[[float, NDArray[np.float64]], float] | None
@@ -155,19 +167,33 @@ The engine is responsible for constructing the thermal properties, heat flows, a
 ```python
 def calc_heat_capacity(nodes: Sequence[Node], temperature: NDArray[np.float64]) -> NDArray[np.float64]: ...
 
+
 def calc_link_heat_flows(graph: Graph, temperature: NDArray[np.float64]) -> NDArray[np.float64]: ...
+
 
 def calc_net_heat_flow(graph: Graph, temperature: NDArray[np.float64]) -> NDArray[np.float64]: ...
 
-def calc_temperature_rate_of_change(graph: Graph, fixed_boundary_nodes: tuple[int, ...],  time: float, temperature: NDArray[np.float64]) -> NDArray[np.float64]: ...
 
-def build_jacobian(graph: Graph, fixed_boundary_nodes: tuple[int, ...], temperature: NDArray[np.float64]) -> NDArray[np.float64]: ...
+def calc_temperature_rate_of_change(
+    graph: Graph, fixed_boundary_nodes: tuple[int, ...], time: float, temperature: NDArray[np.float64]
+) -> NDArray[np.float64]: ...
 
-def integrate_phase(model: Model, phase: Phase, time: float, temperature: NDArray[np.float64]) -> scipy.integrate.OdeResult: ...
+
+def build_jacobian(
+    graph: Graph, fixed_boundary_nodes: tuple[int, ...], temperature: NDArray[np.float64]
+) -> NDArray[np.float64]: ...
+
+
+def integrate_phase(
+    model: Model, phase: Phase, time: float, temperature: NDArray[np.float64]
+) -> scipy.integrate.OdeResult: ...
+
 
 def run_procedure(model: Model) -> list[OdeResult]: ...
 
+
 def reconstruct_heat_flow(graph: Graph, temperature: NDArray[np.float64]) -> NDArray[np.float64]: ...
+
 
 def build_result(model: Model, solutions: Sequence[OdeResult]) -> Result: ...
 ```
