@@ -1,15 +1,18 @@
 """Conduction through a solid of uniform cross-section."""
 
 import math
+from collections.abc import Mapping
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
 
 from pulse_tube_cooldown.core.errors import ConfigurationError
 from pulse_tube_cooldown.core.types import Material
+from pulse_tube_cooldown.library.materials.load import load_material
 
-__all__ = ["Conduction"]
+__all__ = ["Conduction", "load_conduction"]
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -54,3 +57,22 @@ class Conduction:
         first, second = self.material.conductivity_integral(temperature)
         flow = self.area / self.length * (second - first)
         return np.array([flow, -flow], dtype=np.float64)
+
+
+def load_conduction(config: Mapping[str, Any]) -> Conduction:
+    """Builds a conduction link from its configuration table.
+
+    Args:
+        config: The link's `name`, `type`, `nodes`, `material` name, `area` in m^2, and `length` in m.
+
+    Raises:
+        KeyError: A key is missing.
+        ConfigurationError: The material is unknown, or the link is invalid.
+    """
+    return Conduction(
+        name=config["name"],
+        nodes=tuple(config["nodes"]),
+        material=load_material(config["material"]),
+        area=config["area"],
+        length=config["length"],
+    )

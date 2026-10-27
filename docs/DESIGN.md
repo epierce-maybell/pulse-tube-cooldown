@@ -242,13 +242,13 @@ source = "NIST Cryogenic Material Properties"
 This library has to handle some mapping from the config file to actual objects:
 ```python
 LINK_TYPES = {
-    "cooler": Cooler,
-    "gas_gap_switch": GasGapSwitch,
-    "exchange_gas": ExchangeGas,
-    "radiation": Radiation,
-    "multi_layer_insulation": MultiLayerInsulation,
-    "conduction": Conduction,
-    "joint_contact": JointContact
+    "cooler": load_cooler,
+    "gas_gap_switch": load_gas_gap_switch,
+    "exchange_gas": load_exchange_gas,
+    "radiation": load_radiation,
+    "multi_layer_insulation": load_multi_layer_insulation,
+    "conduction": load_conduction,
+    "joint_contact": load_joint_contact
     ...
 }
 
