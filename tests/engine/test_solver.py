@@ -7,8 +7,8 @@ import pytest
 from numpy.typing import NDArray
 
 from pulse_tube_cooldown.core.errors import ConfigurationError
-from pulse_tube_cooldown.core.types import Material, Model, Node, Phase, PhaseSolution, Procedure
-from pulse_tube_cooldown.engine.solver import integrate_phase, run_procedure
+from pulse_tube_cooldown.core.types import Graph, Material, Model, Node, Phase, PhaseSolution, Procedure
+from pulse_tube_cooldown.engine.solver import integrate_phase, reconstruct_heat_flow, run_procedure
 
 _CONSTANT = Material(
     name="Constant",
@@ -235,3 +235,27 @@ def test_run_ends_without_further_phases_unless_until_ends_the_phase(first_phase
     solutions = run_procedure(model)
 
     assert [(solution.phase, solution.end) for solution in solutions] == [(first_phase, expected)]
+
+
+_SAMPLES = np.array([[300.0, 4.0], [100.0, 4.0], [10.0, 4.0]])
+_HEATER = _Runaway("heater", ("stage",), 1e-3)
+
+
+def test_reconstructed_flows_match_each_link_at_each_sample():
+    graph = Graph(nodes=(_STAGE, _BATH), links=(_LINK, _HEATER))
+
+    flows = reconstruct_heat_flow(graph, _SAMPLES)
+
+    # Strap: 0.5 W/K * (4 K - T) into the stage and the opposite into the bath. Heater: 1e-3 * T^2 into the stage.
+    expected = [
+        [[-148.0, 148.0], [90.0, np.nan]],
+        [[-48.0, 48.0], [10.0, np.nan]],
+        [[-3.0, 3.0], [0.1, np.nan]],
+    ]
+    np.testing.assert_allclose(flows, expected)
+
+
+def test_phase_without_links_reconstructs_an_empty_link_axis():
+    graph = Graph(nodes=(_STAGE, _BATH), links=())
+
+    assert reconstruct_heat_flow(graph, _SAMPLES).shape == (3, 0, 2)

@@ -8,10 +8,10 @@ from numpy.typing import NDArray
 from scipy.integrate import solve_ivp
 
 from pulse_tube_cooldown.core.errors import ConfigurationError
-from pulse_tube_cooldown.core.types import Model, Phase, PhaseSolution
-from pulse_tube_cooldown.engine.equations import calc_temperature_rate_of_change
+from pulse_tube_cooldown.core.types import Graph, Model, Phase, PhaseSolution
+from pulse_tube_cooldown.engine.equations import calc_link_heat_flows, calc_temperature_rate_of_change
 
-__all__ = ["integrate_phase", "run_procedure"]
+__all__ = ["integrate_phase", "reconstruct_heat_flow", "run_procedure"]
 
 
 def integrate_phase(model: Model, phase: Phase, time: float, temperature: NDArray[np.float64]) -> PhaseSolution:
@@ -99,6 +99,20 @@ def run_procedure(model: Model) -> list[PhaseSolution]:
         time, temperature = solution.time[-1], solution.temperature[-1]
 
     return solutions
+
+
+def reconstruct_heat_flow(graph: Graph, temperature: NDArray[np.float64]) -> NDArray[np.float64]:
+    """Calculates the heat flow from each link into each node at sampled temperatures.
+
+    Args:
+        graph: The phase's nodes and active links.
+        temperature: Temperature in K of each node, with one row per sample.
+
+    Returns:
+        Heat flow in W, indexed by sample, link, and node, with links and nodes in `graph` index order. Positive values
+        indicate heat flow into the node; entries are NaN where a link does not touch a node.
+    """
+    return np.stack([calc_link_heat_flows(graph, sample) for sample in temperature])
 
 
 def _terminal(

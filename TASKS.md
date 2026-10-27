@@ -1,4 +1,4 @@
-# Tasks — 23/76 done
+# Tasks — 26/76 done
 
 Build the v1 simulator specified in `docs/DESIGN.md`: the six-plate systems SN09 and FP1 from room temperature until condensing begins, each with least-squares log-temperature residual comparable to or lower than the legacy model's across system thermometers except MXP.
 
@@ -59,7 +59,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
 
 *End of this area's first-slice work.*
 
-## 2. [2/4, 1 claimed] Integration and results
+## 2. [3/4] Integration and results
 
 - [x] **2.1 Single-phase integration** · Auto
   - Context: DESIGN "Engine" and "Phases and Procedure"; `engine/solver.py`.
@@ -72,16 +72,16 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Do: Implement `run_procedure`, handing the ending state to each subsequent phase and respecting procedure termination and solver outcomes.
   - Verified by: A two-phase run switches at the expected state and continues from it; a procedure stop prevents further integration.
 
-- [o] **2.3 Heat-flow reconstruction** · Auto
+- [x] **2.3 Heat-flow reconstruction** · Auto
   - Needs: 1.5.
   - Context: DESIGN "Engine"; `engine/solver.py`.
-  - Do: Implement `reconstruct_heat_flow` over sampled temperatures using the phase graph, producing flows on the DESIGN `heat_flow(time, link, node)` axes.
-  - Verified by: Samples agree with direct evaluations; a link inactive in one phase is NaN there, and unconnected link-node pairs are NaN.
+  - Do: Implement `reconstruct_heat_flow` over sampled temperatures using the phase graph, producing flows on the phase graph's (sample, link, node) axes.
+  - Verified by: Samples agree with direct evaluations, and unconnected link-node pairs are NaN.
 
 - [ ] **2.4 Result assembly** · Auto
   - Context: DESIGN "Data model" and "Engine"; `engine/solver.py`.
-  - Do: Implement `build_result`, assembling the DESIGN Result Dataset from solutions, temperatures, heat flows, and status. Preserve duplicate switch times with each side's phase name.
-  - Verified by: A two-phase result retains both switch-side rows with their phase names and distinct flows; coordinates match graph names, `connected` matches connectivity, and attributes record status and units.
+  - Do: Implement `build_result`, assembling the DESIGN Result Dataset from solutions, temperatures, heat flows, and status. Place each phase's flows on the link axis of every link used in any phase. Preserve duplicate switch times with each side's phase name.
+  - Verified by: A two-phase result retains both switch-side rows with their phase names and distinct flows; a link inactive in one phase is NaN there; coordinates match graph names, `connected` matches connectivity, and attributes record status and units.
 
 *End of this area's first-slice work.*
 
