@@ -10,13 +10,15 @@ negative after it.
 """
 
 from collections.abc import Callable, Mapping
+from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
 
+from pulse_tube_cooldown.core.errors import ConfigurationError
 from pulse_tube_cooldown.core.types import Graph
 
-__all__ = ["CONDITIONS", "gas_pushing_begins"]
+__all__ = ["CONDITIONS", "gas_pushing_begins", "load_condition"]
 
 
 def gas_pushing_begins(graph: Graph, node: str, threshold: float) -> Callable[[float, NDArray[np.float64]], float]:
@@ -37,3 +39,26 @@ def gas_pushing_begins(graph: Graph, node: str, threshold: float) -> Callable[[f
 CONDITIONS: Mapping[str, Callable[..., Callable[[float, NDArray[np.float64]], float]]] = {
     "gas_pushing_begins": gas_pushing_begins,
 }
+
+
+def load_condition(config: Mapping[str, Any], graph: Graph) -> Callable[[float, NDArray[np.float64]], float]:
+    """Builds a condition from its configuration table with the factory registered for its name.
+
+    Args:
+        config: The condition's `condition` and the arguments its factory takes after the graph.
+        graph: A graph that holds the condition's nodes, with the node ordering the condition will see.
+
+    Returns:
+        The condition, a function of time in s and node temperatures in K.
+
+    Raises:
+        ConfigurationError: The condition is unknown or refers to a node the graph does not have.
+    """
+    name = config.get("condition")
+
+    if name not in CONDITIONS:
+        raise ConfigurationError(f"Unknown condition {name!r}; known conditions are {', '.join(CONDITIONS)}.")
+
+    arguments = {key: value for key, value in config.items() if key != "condition"}
+
+    return CONDITIONS[name](graph, **arguments)

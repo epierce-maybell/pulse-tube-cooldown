@@ -2,9 +2,10 @@
 
 import tomllib
 
+import numpy as np
 import pytest
 
-from pulse_tube_cooldown.config import load_fridge
+from pulse_tube_cooldown.config import load_fridge, load_procedure
 from pulse_tube_cooldown.core.errors import ConfigurationError
 from pulse_tube_cooldown.core.types import Graph
 from pulse_tube_cooldown.library.links.conduction import Conduction
@@ -108,3 +109,136 @@ def test_duplicate_node_names_are_rejected():
 def test_node_missing_a_key_is_rejected(node):
     with pytest.raises(ConfigurationError, match="name|composition"):
         load_fridge({"nodes": [node]})
+
+
+_GRAPH = load_fridge(
+    _FRIDGE
+    | {
+        "links": _FRIDGE["links"]
+        + [
+            {
+                "name": "Rod C",
+                "type": "conduction",
+                "nodes": ["Plate", "Mixed"],
+                "material": "304 SS",
+                "area": 1e-4,
+                "length": 0.1,
+            }
+        ]
+    }
+)
+
+_PROCEDURE = tomllib.loads(
+    """
+    until = { condition = "gas_pushing_begins", node = "Mixed", threshold = 10.0 }
+
+    [[phases]]
+    name = "precool"
+    disable = ["Rod B"]
+    until = { condition = "gas_pushing_begins", node = "Plate", threshold = 100.0 }
+
+    [[phases]]
+    name = "swap"
+    enable = ["Rod B"]
+    disable = ["Rod C"]
+    """
+)
+
+
+def _phases(*phases):
+    return {"phases": list(phases)}
+
+
+def _temperatures(**by_node):
+    return np.array([by_node.get(node.name, 300.0) for node in _GRAPH.nodes])
+
+
+def test_phases_activate_links_cumulatively_in_fridge_order():
+    procedure = load_procedure(_PROCEDURE, _GRAPH)
+    rod_a, rod_b, rod_c = _GRAPH.links
+
+    assert [phase.name for phase in procedure.phases] == ["precool", "swap"]
+    assert procedure.phases[0].links == (rod_a, rod_c)
+    assert procedure.phases[1].links == (rod_a, rod_b)
+
+
+def test_phase_without_changes_keeps_the_previous_links():
+    until = _PROCEDURE["phases"][0]["until"]
+    procedure = load_procedure(
+        _phases(
+            {"name": "precool", "disable": ["Rod B"], "until": until},
+            {"name": "hold", "until": until},
+            {"name": "final", "enable": ["Rod B"]},
+        ),
+        _GRAPH,
+    )
+
+    assert [link.name for link in procedure.phases[1].links] == ["Rod A", "Rod C"]
+    assert [link.name for link in procedure.phases[2].links] == ["Rod A", "Rod B", "Rod C"]
+
+
+@pytest.mark.parametrize(("plate", "sign"), [(120.0, 1.0), (100.0, 0.0), (80.0, -1.0)])
+def test_phase_until_is_bound_to_its_node_and_threshold(plate, sign):
+    procedure = load_procedure(_PROCEDURE, _GRAPH)
+
+    assert np.sign(procedure.phases[0].until(0.0, _temperatures(Plate=plate, Mixed=1.0))) == sign
+    assert procedure.phases[1].until is None
+
+
+@pytest.mark.parametrize(("mixed", "sign"), [(20.0, 1.0), (10.0, 0.0), (5.0, -1.0)])
+def test_procedure_until_is_bound_as_the_stop_condition(mixed, sign):
+    procedure = load_procedure(_PROCEDURE, _GRAPH)
+
+    assert np.sign(procedure.stop_condition(0.0, _temperatures(Mixed=mixed, Plate=1.0))) == sign
+
+
+def test_procedure_without_until_has_no_stop_condition():
+    procedure = load_procedure(_phases({"name": "only"}), _GRAPH)
+
+    assert procedure.stop_condition is None
+    assert procedure.phases[0].links == _GRAPH.links
+
+
+@pytest.mark.parametrize(
+    "phases",
+    [
+        pytest.param([{"name": "swap", "enable": ["Rod B"]}], id="enable-in-first-phase"),
+        pytest.param(
+            [
+                {"name": "precool", "disable": ["Rod B"], "until": _PROCEDURE["phases"][0]["until"]},
+                {"name": "swap", "disable": ["Rod B"]},
+            ],
+            id="disable-inactive",
+        ),
+        pytest.param(
+            [
+                {"name": "precool", "disable": ["Rod B"], "until": _PROCEDURE["phases"][0]["until"]},
+                {"name": "swap", "enable": ["Rod B"], "disable": ["Rod B"]},
+            ],
+            id="enable-and-disable",
+        ),
+    ],
+)
+def test_redundant_activation_names_the_phase_and_link(phases):
+    with pytest.raises(ConfigurationError, match=r"(?s)swap.*Rod B"):
+        load_procedure(_phases(*phases), _GRAPH)
+
+
+def test_unknown_link_names_the_phase_and_link():
+    with pytest.raises(ConfigurationError, match=r"(?s)swap.*Rod D"):
+        load_procedure(_phases({"name": "swap", "disable": ["Rod D"]}), _GRAPH)
+
+
+@pytest.mark.parametrize(
+    ("until", "named"),
+    [
+        ({"condition": "plate_melts", "node": "Plate", "threshold": 1.0}, "plate_melts"),
+        ({"condition": "gas_pushing_begins", "node": "Tub", "threshold": 1.0}, "Tub"),
+        ({"node": "Plate", "threshold": 1.0}, "condition"),
+    ],
+)
+def test_bad_condition_names_the_problem(until, named):
+    phases = _phases({"name": "precool", "until": until}, {"name": "final"})
+
+    with pytest.raises(ConfigurationError, match=named):
+        load_procedure(phases, _GRAPH)

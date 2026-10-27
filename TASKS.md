@@ -1,4 +1,4 @@
-# Tasks — 32/77 done
+# Tasks — 33/77 done
 
 Build the v1 simulator specified in `docs/DESIGN.md`: the six-plate systems SN09 and FP1 from room temperature until condensing begins, each with least-squares log-temperature residual comparable to or lower than the legacy model's across system thermometers except MXP.
 
@@ -152,7 +152,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Context: DESIGN "Scope" and condition registry; the operating procedure for starting condensing.
   - Decide: The physical state that starts condensing and the inputs `condensing_begins` takes.
 
-## 6. [2/5] Configuration loading
+## 6. [3/5] Configuration loading
 
 - [x] **6.1 Fridge graph loading** · Auto
   - Needs: 1.2, 3.6, 8.2.
@@ -166,11 +166,12 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Do: Implement `CONDITIONS` and `gas_pushing_begins`, resolving node names against a graph.
   - Verified by: Conditions have the specified signs on either side of their thresholds and equal zero at the thresholds.
 
-- [ ] **6.3 Phase and procedure loading** · Auto
+- [x] **6.3 Phase and procedure loading** · Auto
   - Needs: 1.3, 5.1.
   - Context: DESIGN "Phases and Procedure"; `config.py`; area 5 decisions.
   - Do: Build each phase's links and the Procedure from TOML using the agreed activation rules and condition factories.
   - Verified by: A two-phase fixture activates expected links and binds the expected phase and procedure conditions.
+  - Outcome: `load_procedure(procedure, graph)` takes the `[procedure]` table and `load_fridge`'s full graph, and binds conditions against that graph through `load_condition` in `library/conditions.py`. A phase may disable only active links and enable only inactive ones; an unknown name fails the same check.
 
 - [ ] **6.4 Complete model configuration** · Auto
   - Context: DESIGN `configure_model` and Model fields; `config.py`.
