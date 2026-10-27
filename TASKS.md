@@ -64,7 +64,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Do: Implement `integrate_phase` with solver options, phase and procedure events, time limits, and observable solver failures.
   - Verified by: Analytic relaxation integrates correctly; each termination mechanism and solver failure is observable.
 
-- [ ] **2.2 Procedure execution** · Auto
+- [x] **2.2 Procedure execution** · Auto
   - Context: DESIGN "Phases and Procedure"; `engine/solver.py`.
   - Do: Implement `run_procedure`, handing the ending state to each subsequent phase and respecting procedure termination and solver outcomes.
   - Verified by: A two-phase run switches at the expected state and continues from it; a procedure stop prevents further integration.

@@ -11,7 +11,7 @@ from pulse_tube_cooldown.core.errors import ConfigurationError
 from pulse_tube_cooldown.core.types import Model, Phase, PhaseSolution
 from pulse_tube_cooldown.engine.equations import calc_temperature_rate_of_change
 
-__all__ = ["integrate_phase"]
+__all__ = ["integrate_phase", "run_procedure"]
 
 
 def integrate_phase(model: Model, phase: Phase, time: float, temperature: NDArray[np.float64]) -> PhaseSolution:
@@ -68,6 +68,27 @@ def integrate_phase(model: Model, phase: Phase, time: float, temperature: NDArra
     return PhaseSolution(
         phase=phase, end=end, time=sample_time, temperature=sample_temperature, message=solution.message
     )
+
+
+def run_procedure(model: Model) -> list[PhaseSolution]:
+    """Integrates a model's phases in order from time zero.
+
+    Args:
+        model: The model to run, starting from its `initial_temperature`.
+
+    Returns:
+        The solution of each integrated phase, in order.
+    """
+    solutions = []
+    time, temperature = 0.0, model.initial_temperature
+    for phase in model.procedure.phases:
+        solution = integrate_phase(model, phase, time, temperature)
+        solutions.append(solution)
+        if solution.end != "until":
+            break
+        time, temperature = solution.time[-1], solution.temperature[-1]
+
+    return solutions
 
 
 def _terminal(

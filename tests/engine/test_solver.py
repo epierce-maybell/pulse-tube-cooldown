@@ -8,7 +8,7 @@ from numpy.typing import NDArray
 
 from pulse_tube_cooldown.core.errors import ConfigurationError
 from pulse_tube_cooldown.core.types import Material, Model, Node, Phase, PhaseSolution, Procedure
-from pulse_tube_cooldown.engine.solver import integrate_phase
+from pulse_tube_cooldown.engine.solver import integrate_phase, run_procedure
 
 _CONSTANT = Material(
     name="Constant",
@@ -174,3 +174,48 @@ def test_missing_required_solver_option_is_a_configuration_error(missing):
 
     with pytest.raises(ConfigurationError, match=missing):
         integrate_phase(model, phase, 0.0, model.initial_temperature)
+
+
+def test_two_phase_run_switches_at_until_and_continues_from_the_switch_state():
+    # Precool relaxes with tau = 4 s until the stage reaches 100 K at t = 4 ln(296 / 96). The cooldown phase's
+    # 1 W/K strap then relaxes it with tau = 2 s from 100 K at that time.
+    crossing = _TAU * np.log(296.0 / 96.0)
+    precool = Phase("precool", (_LINK,), _stage_below(100.0))
+    cooldown = Phase("cooldown", (_Conductance("strap", ("stage", "bath"), 1.0),), None)
+    model = _model((precool, cooldown))
+
+    first, second = run_procedure(model)
+
+    assert (first.phase, first.end) == (precool, "until")
+    assert (second.phase, second.end) == (cooldown, "max_time")
+    np.testing.assert_allclose(first.time[-1], crossing, rtol=1e-6)
+    np.testing.assert_allclose(second.time[0], first.time[-1])
+    np.testing.assert_allclose(second.temperature[0], first.temperature[-1])
+    np.testing.assert_allclose(second.time[-1], 20.0)
+    expected = 4.0 + 96.0 * np.exp(-(second.time - crossing) / 2.0)
+    np.testing.assert_allclose(second.temperature[:, 0], expected, rtol=1e-6)
+
+
+def test_run_starts_at_zero_from_the_initial_temperature():
+    model = _model((_final_phase(),))
+
+    (solution,) = run_procedure(model)
+
+    assert solution.time[0] == 0.0
+    np.testing.assert_array_equal(solution.temperature[0], model.initial_temperature)
+
+
+@pytest.mark.parametrize(
+    ("first_phase", "stop_condition", "expected"),
+    [
+        (Phase("precool", (_LINK,), _after(10.0)), _after(3.0), "stop_condition"),
+        (Phase("precool", (_LINK,), _after(50.0)), None, "max_time"),
+        (Phase("runaway", (_Runaway("heater", ("stage",), 1.0),), _after(10.0)), None, "solver_failure"),
+    ],
+)
+def test_run_ends_without_further_phases_unless_until_ends_the_phase(first_phase, stop_condition, expected):
+    model = _model((first_phase, _final_phase()), stop_condition=stop_condition)
+
+    solutions = run_procedure(model)
+
+    assert [(solution.phase, solution.end) for solution in solutions] == [(first_phase, expected)]
