@@ -1,7 +1,7 @@
 # Design Specification: Pulse Tube Cooldown Simulation
 
 ## Scope
-Simulate temperature and heat fluxes in a Maybell dilution refrigerator during cooldown, from room temperature to when condensing begins. Version 1.0.0 targets a full cooldown simulation of two 6-plate systems (SN09 for the standard model and FP1 for the fridge-plus model), with error comparable to or lower than the legacy model. For this task, we'll define "error" more precisely as the least-squares residual to log-temperature across all thermometers mounted on the system (except for MXP). 
+Simulate temperature and heat fluxes in a Maybell dilution refrigerator during cooldown, from room temperature to when condensing begins. Version 1.0.0 targets a full cooldown simulation of two 6-plate systems (SN09 for the standard model and FP1 for the fridge-plus model), with error comparable to or lower than the legacy model. For this task, we'll define "error" more precisely as the least-squares residual to log-temperature across all thermometers mounted on the system (except for MXP).
 
 ## Public API
 For now, we'll call the library Pulse Tube Cooldown, and we can have a canonical import statement:
@@ -10,7 +10,7 @@ import pulse_tube_cooldown as ptc
 ```
 
 #### Configuration files
-Each system takes one configuration file as an input that references the data subdirectory where necessary. 
+Each system takes one configuration file as an input that references the data subdirectory where necessary.
 
 Configuration files are written in TOML, with the following sections:
 ```toml
@@ -90,6 +90,7 @@ class Material:
     name: str
     specific_heat: Callable[[NDArray[np.float64]], NDArray[np.float64]]
     thermal_conductivity: Callable[[NDArray[np.float64]], NDArray[np.float64]]
+    conductivity_integral: Callable[[NDArray[np.float64]], NDArray[np.float64]]
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -145,10 +146,10 @@ class Model:
 class PhaseSolution:
     phase: Phase
     end: Literal["until", "stop_condition", "max_time", "solver_failure"]
-    time: NDArray[np.float64]  
-    temperature: NDArray[np.float64] 
+    time: NDArray[np.float64]
+    temperature: NDArray[np.float64]
     message: str
-    
+
 
 @dataclass(frozen=True, slots=True)
 class Result:
@@ -177,10 +178,10 @@ class Procedure:
     stop_condition: Callable[[float, NDArray[np.float64]], float] | None
 ```
 
-The [fridge] part of the configuration defines the full graph, with every link active. Each phase specifies which links should activate or deactivate in each phase, cumulatively, including an initial phase (which should only deactivate links) and an end phase (which should not have an `until` condition). Link names are unique. Redundant enables or disables should raise an error rather than silently succeeding. 
+The [fridge] part of the configuration defines the full graph, with every link active. Each phase specifies which links should activate or deactivate in each phase, cumulatively, including an initial phase (which should only deactivate links) and an end phase (which should not have an `until` condition). Link names are unique. Redundant enables or disables should raise an error rather than silently succeeding.
 
 ## Engine
-The engine is responsible for constructing the thermal properties, heat flows, and linear system. 
+The engine is responsible for constructing the thermal properties, heat flows, and linear system.
 
 ```python
 def calc_heat_capacity(nodes: Sequence[Node], temperature: NDArray[np.float64]) -> NDArray[np.float64]: ...
@@ -195,6 +196,7 @@ def calc_net_heat_flow(graph: Graph, temperature: NDArray[np.float64]) -> NDArra
 def calc_temperature_rate_of_change(
     graph: Graph, fixed_boundary_nodes: tuple[int, ...], time: float, temperature: NDArray[np.float64]
 ) -> NDArray[np.float64]: ...
+
 
 def integrate_phase(
     model: Model, phase: Phase, time: float, temperature: NDArray[np.float64]
@@ -268,16 +270,16 @@ def load_material(name: str) -> Material: ...
 ```
 Links share a common schema, even though there is considerable variation in physics between specific types. Shared quantities should have shared names between types. This should look something like:
 ```python
-@dataclass(frozen = True, slots = True)
+@dataclass(frozen=True, slots=True)
 class SpecificLinkTemplate:
     name: str
     nodes: tuple[str, ...]
     example_arg1: ...
     example_arg2: ...
-    
-    def calc_heat_flow(self, temperature_at_nodes: NDArray[np.float64]) -> NDArray[np.float64]: ...
+
+    def calc_heat_flow(self, temperature_at_nodes: NDArray[np.float64]) -> NDArray[np.float64]:
         """Temperature only on this link's nodes. Positive values indicate heat flow into node."""
-```    
+```
 
 Conditions should generate functions that are positive before the condition is met (during cooldown), negative after, and zero where the switch happens. To stay agnostic to the specific Graph, the condition generator should map a node name rather than an index. For example:
 ```python
@@ -292,7 +294,7 @@ Conditions and their arguments should be named for the physical event they mark,
 Some decisions are not obvious, but have leverage over the rest of the design.
 
 #### Coupled capacity maps
-We do not have extended load map data during cooldown for our pulse tubes. What we do have is one run per unit, post-tuning, on a test stand for exactly one cooldown curve. This gives us T1 and T2 with respect to time over one path. We also have a load map for each unit, but only for T2 $\in (2, 5)$ K and T1 $\in (40, 68)$ K. 
+We do not have extended load map data during cooldown for our pulse tubes. What we do have is one run per unit, post-tuning, on a test stand for exactly one cooldown curve. This gives us T1 and T2 with respect to time over one path. We also have a load map for each unit, but only for T2 $\in (2, 5)$ K and T1 $\in (40, 68)$ K.
 
 This is an ongoing question, but for now, we can set up a first-order uncoupled model, where each $Q(T)$ path is separable. For each stage $i$ and heat flow $Q_i(T_i)$, we have
 
@@ -329,7 +331,7 @@ $$
 \frac{1}{h} = \frac{d}{k_g} + \frac{1}{h_m}, \qquad h_m = \alpha \frac{\gamma + 1}{\gamma - 1} \sqrt{\frac{R}{8 \pi M \bar{T}}} P,
 $$
 
-for gap width $d$, gas thermal conductivity $k_g$, accommodation coefficient $\alpha$, heat capacity ratio $\gamma$, molar mass $M$, and ideal gas constant $R$. 
+for gap width $d$, gas thermal conductivity $k_g$, accommodation coefficient $\alpha$, heat capacity ratio $\gamma$, molar mass $M$, and ideal gas constant $R$.
 
 The pressure $P$ follows from conservation. Each switch seals after filling to pressure $P_{fill}$ at temperature $T_{fill}$, so the total amount of gas is $n = P_{fill} V / (R T_{fill})$. The gas is either free or held by the charcoal, so we have:
 
@@ -337,7 +339,7 @@ $$
 n = \frac{P V}{R \bar{T}} + n_s \frac{K P}{1 + K P}, \qquad K = K_0 \, e^{E / R \bar{T}},
 $$
 
-where $n_s$ is the charcoal mass times its capacity and $K_0$ and $E$ are the gas adsorption constants on the charcoal. $P$ is the positive root of this quadratic, capped at some $P_{sat}(T_c)$. Gas properties and $k_b$ are evaluated at the mean temperature $\bar{T} = (T_h + T_c) / 2$. 
+where $n_s$ is the charcoal mass times its capacity and $K_0$ and $E$ are the gas adsorption constants on the charcoal. $P$ is the positive root of this quadratic, capped at some $P_{sat}(T_c)$. Gas properties and $k_b$ are evaluated at the mean temperature $\bar{T} = (T_h + T_c) / 2$.
 
 The configuration for the switch should look something like:
 ```toml
