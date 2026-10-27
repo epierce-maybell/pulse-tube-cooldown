@@ -111,7 +111,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Do: Port OFHC copper RRR100 with property definitions, ranges, and sources.
   - Verified by: Loaded values match references at representative temperatures.
 
-- [ ] **3.6 Stainless steel reference material** · Auto
+- [x] **3.6 Stainless steel reference material** · Auto
   - Context: DESIGN material example; `library/materials/data/`; legacy material database.
   - Do: Port 304 stainless steel with property definitions, ranges, and sources.
   - Verified by: Loaded values match references at representative temperatures.

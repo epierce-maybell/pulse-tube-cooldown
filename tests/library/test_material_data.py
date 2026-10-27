@@ -2,6 +2,7 @@
 
 import numpy as np
 import pytest
+from scipy.integrate import quad
 
 from pulse_tube_cooldown.library.materials.load import load_material
 
@@ -74,4 +75,57 @@ def test_copper_is_valid_from_4_to_300_kelvin(recwarn):
     with pytest.warns(RuntimeWarning, match=r"OFHC Cu RRR100.*specific_heat.*below.*4.*300"):
         material.specific_heat(np.array([3.9]))
     with pytest.warns(RuntimeWarning, match=r"OFHC Cu RRR100.*thermal_conductivity.*above.*4.*300"):
+        material.thermal_conductivity(np.array([301.0]))
+
+
+def test_stainless_steel_specific_heat_matches_nist_fit():
+    material = load_material("304 SS")
+    temperature = np.array([4.0, 20.0, 77.0, 300.0])
+
+    # NIST Cryogenic Material Properties, 304 Stainless (UNS S30400), specific heat log-polynomial with coefficients
+    # a through i = 22.0061, -127.5528, 303.647, -381.0098, 274.0328, -112.9212, 24.7593, -2.239153, 0. Expected
+    # values in J/(kg K) evaluate NIST's equation with the legacy scalar `eval_log_poly` in branch Advanced_Feature_SIM.
+    expected = [2.0659856848217872, 13.452478061309394, 204.49302744915207, 469.448840674266]
+
+    # The large alternating coefficients cancel, so different evaluation orders agree to about 1e-11.
+    np.testing.assert_allclose(material.specific_heat(temperature), expected, rtol=1e-9)
+
+
+def test_stainless_steel_thermal_conductivity_matches_nist_fit():
+    material = load_material("304 SS")
+    temperature = np.array([1.0, 4.0, 20.0, 77.0, 300.0])
+
+    # NIST Cryogenic Material Properties, 304 Stainless (UNS S30400), thermal conductivity log-polynomial with
+    # coefficients a through i = -1.4087, 1.3982, 0.2543, -0.6260, 0.2334, 0.4256, -0.4658, 0.1650, -0.0199. Expected
+    # values in W/(m K) evaluate NIST's equation with the legacy scalar `eval_log_poly` in branch Advanced_Feature_SIM.
+    expected = [0.03902114421141359, 0.2723961889664811, 2.168622406294646, 7.920651602258382, 15.308653824348552]
+
+    np.testing.assert_allclose(material.thermal_conductivity(temperature), expected, rtol=1e-12)
+
+
+@pytest.mark.parametrize(("temperature", "expected"), [(20.0, 16.3), (80.0, 349.0), (290.0, 3060.0)])
+def test_stainless_steel_conductivity_integral_agrees_with_independent_compilation(temperature, expected):
+    material = load_material("304 SS")
+
+    # Conductivity integrals in W/m from 4.2 K for AISI 304: V. Parma, "Cryostat Design," CERN Accelerator School
+    # (2014), arXiv:1501.07154, Table 3. Compilations of 304 conductivity from different samples differ by more than
+    # NIST's 2% fit error, up to about 15% at low temperature, so this checks for gross transcription or unit errors.
+    integral, _ = quad(lambda t: material.thermal_conductivity(np.array([t]))[0], 4.2, temperature, limit=200)
+
+    assert integral == pytest.approx(expected, rel=0.15)
+
+
+def test_stainless_steel_specific_heat_is_valid_from_4_and_conductivity_from_1_to_300_kelvin(recwarn):
+    material = load_material("304 SS")
+
+    # NIST gives the specific heat equation from 4 K to 300 K and the conductivity equation from 1 K to 300 K.
+    material.specific_heat(np.array([4.0, 300.0]))
+    material.thermal_conductivity(np.array([1.0, 300.0]))
+    assert not recwarn.list
+
+    with pytest.warns(RuntimeWarning, match=r"304 SS.*specific_heat.*below.*4.*300"):
+        material.specific_heat(np.array([3.9]))
+    with pytest.warns(RuntimeWarning, match=r"304 SS.*thermal_conductivity.*below.*1.*300"):
+        material.thermal_conductivity(np.array([0.9]))
+    with pytest.warns(RuntimeWarning, match=r"304 SS.*thermal_conductivity.*above.*1.*300"):
         material.thermal_conductivity(np.array([301.0]))
