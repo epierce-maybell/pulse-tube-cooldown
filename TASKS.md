@@ -59,7 +59,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
 
 *End of this area's first-slice work.*
 
-## 2. [2/4] Integration and results
+## 2. [2/4, 1 claimed] Integration and results
 
 - [x] **2.1 Single-phase integration** · Auto
   - Context: DESIGN "Engine" and "Phases and Procedure"; `engine/solver.py`.
@@ -72,7 +72,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Do: Implement `run_procedure`, handing the ending state to each subsequent phase and respecting procedure termination and solver outcomes.
   - Verified by: A two-phase run switches at the expected state and continues from it; a procedure stop prevents further integration.
 
-- [ ] **2.3 Heat-flow reconstruction** · Auto
+- [o] **2.3 Heat-flow reconstruction** · Auto
   - Needs: 1.5.
   - Context: DESIGN "Engine"; `engine/solver.py`.
   - Do: Implement `reconstruct_heat_flow` over sampled temperatures using the phase graph, producing flows on the DESIGN `heat_flow(time, link, node)` axes.
@@ -162,7 +162,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
 - [ ] **6.2 Condition factories** · Auto
   - Needs: 5.2.
   - Context: DESIGN condition example; `library/conditions.py`.
-  - Do: Implement `CONDITIONS` and `exchange_gas_cutoff`, resolving node names against a graph.
+  - Do: Implement `CONDITIONS` and `gas_pushing_start`, resolving node names against a graph.
   - Verified by: Conditions have the specified signs on either side of their thresholds and equal zero at the thresholds.
 
 - [ ] **6.3 Phase and procedure loading** · Auto
@@ -258,25 +258,24 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Do: Register the switch and load it from configuration, requiring exactly two nodes.
   - Verified by: A configured run shows the switch carrying heat early and shutting off as it cools, without a phase change; a switch with other than two nodes fails to load.
 
-## 11. [0/3] Exchange gas
+## 11. [1/3] Exchange gas
 
-- [ ] **11.1 Exchange-gas physics and parameters** · Discuss
-  - Needs: 20.3, including the cooldown routine deployed in each validation system's `/etc/cold_control/routines` at its run date.
-  - Context: DESIGN multi-node Link; legacy `exchange_gas_link`, pressure handling, and gas-link data.
+- [x] **11.1 Exchange-gas physics and parameters** · Discuss
+  - Context: DESIGN multi-node Link; legacy `exchange_gas_link`, pressure handling, and gas-link data; `../../dev/cc_routines` `monitor_ovc`.
   - Decide: The shared-gas heat-transfer model, pressure and geometry inputs, participating nodes, and phase activation.
-  - Progress: The gas carries no state. One multi-node link sums gas conduction over pairs of surfaces, so its flows sum to zero. The pressure source and the cutoff event remain open and depend on the deployed routines. The last routines in the cold_control repository (June 2025, removed as out of date) admit no exchange gas: they pump the OVC continuously from atmosphere, start the pulse tubes below `p1 < 5e-3`, and stop pumping at STP < 200 K with `p1 < 5e-4`, in unstated units. No source has been found for the legacy P(T_CFP) fit or its 70 K CFP cutoff.
+  - Outcome: One multi-node link sums the gas-gap switch's gap conductance over facing surface pairs (`nodes`, `area`, `gap`), including vacuum can to PRP, with N2 standing in for air. Pressure is `monitor_ovc`'s P1(T_CFP) cubic, in mbar rather than legacy's torr, clamped at zero, so the link shuts itself off near 68 K without a phase change.
 
 - [ ] **11.2 Exchange-gas Link** · Auto
-  - Needs: 9.1.
+  - Needs: 9.1, 10.2.
   - Context: 11.1's recorded design; `library/links/exchange_gas.py`.
-  - Do: Implement the agreed exchange-gas transfer across participating nodes.
-  - Verified by: Independent small-network calculations establish signed flows and the agreed gas energy balance.
+  - Do: Implement the agreed exchange-gas transfer across participating pairs, sharing the gap conductance with the gas-gap switch.
+  - Verified by: Independent small-network calculations establish signed flows that sum to zero, in both the viscous and free-molecular limits; flows vanish where the pressure curve reaches zero.
 
-- [ ] **11.3 Exchange-gas configuration and cutoff** · Auto
+- [ ] **11.3 Exchange-gas configuration** · Auto
   - Needs: 6.4.
   - Context: 11.1's recorded design; link registry and configuration fixtures.
-  - Do: Register the Link and configure its removal at the agreed cutoff.
-  - Verified by: A configured run includes gas heat transfer before cutoff and the intended graph afterwards.
+  - Do: Register the Link and load its pairs, gas, reference node, and pressure coefficients from configuration.
+  - Verified by: A configured run carries gas heat transfer while the reference node is warm and none once the pressure reaches zero, without a phase change; a pair naming a node outside the link fails to load.
 
 ## 12. [0/4] Radiation and insulation
 
@@ -416,7 +415,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
 
 - [ ] **20.3 Supply missing validation measurements** · Human
   - Context: 20.1's outcome and trace metadata.
-  - Input: For each validation system, supply the cooldown record, the cold_control routine logs for that run, and missing acquisition/channel metadata. Record existing adequate inputs, including `data/SN09_cooldown_time.dat`, by reference.
+  - Input: For each validation system, supply the cooldown record, the cold_control routine logs for that run, the `monitor_ovc` P1 diagnostics, and missing acquisition/channel metadata. Record existing adequate inputs, including `data/SN09_cooldown_time.dat`, by reference.
 
 ## 21. [0/2] Measurement interpretation
 

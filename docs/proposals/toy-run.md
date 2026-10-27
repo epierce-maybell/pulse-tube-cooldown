@@ -33,7 +33,7 @@ length = 0.1
 [[procedure.phases]]
 name = "single rod"
 disable = ["Rod B"]
-until = { condition = "exchange_gas_cutoff", node = "Plate", cutoff = 100.0 }
+until = { condition = "gas_pushing_start", node = "Plate", threshold = 100.0 }
 
 [[procedure.phases]]
 name = "both rods"
@@ -48,4 +48,4 @@ fixed_boundary_nodes = ["Bath"]
 
 The Plate cools through Rod A toward the Bath, held at 4 K. When the Plate reaches 100 K, Rod B activates and the Plate cools faster. The run has no stop condition, so it ends at `max_time` with the time-limit status.
 
-The conduction parameter names (`material`, `area`, `length`) are placeholders until task 8.1 defines the conduction Link. `exchange_gas_cutoff` serves as a generic temperature threshold because it is the only condition registered in the first slice.
+The conduction parameter names (`material`, `area`, `length`) are placeholders until task 8.1 defines the conduction Link. `gas_pushing_start` serves as a generic temperature threshold because it is the only condition registered in the first slice.

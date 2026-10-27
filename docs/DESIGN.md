@@ -35,18 +35,24 @@ nodes = ["PRP", "RGP"] # order matters
 [[fridge.links]]
 name = "Exchange gas"
 type = "exchange_gas"
-nodes = ["PRP", "RGP", "CFP", "STP", "ICP", "MXP"]
+nodes = ["Vacuum can", "PRP", "RGP", "CFP", "STP", "ICP", "MXP"]
+
+[[fridge.links]]
+name = "Gas pushing"
+type = "gas_pushing_pm5"
+nodes = ["STP", "ICP", "MXP"]
 
 [procedure]
 until = { condition = "condensing_start", node = "MXP", threshold = 10.0 }
 
 [[procedure.phases]]
 name = "precool"
-until = { condition = "exchange_gas_cutoff", node = "CFP", cutoff = 70.0 }
+disable = ["Gas pushing"]
+until = { condition = "gas_pushing_start", node = "CFP", threshold = 70.0 }
 
 [[procedure.phases]]
-name = "cooldown"
-disable = ["Exchange gas"]
+name = "gas pushing"
+enable = ["Gas pushing"]
 
 [simulation]
 solver = "Radau"
@@ -254,7 +260,7 @@ PROPERTY_FITS = {
 }
 
 CONDITIONS = {
-    "exchange_gas_cutoff": exchange_gas_cutoff,
+    "gas_pushing_start": gas_pushing_start,
     "condensing_start": condensing_start,
     ...
 }
@@ -283,10 +289,10 @@ class SpecificLinkTemplate:
 
 Conditions should generate functions that are positive before the condition is met (during cooldown), negative after, and zero where the switch happens. To stay agnostic to the specific Graph, the condition generator should map a node name rather than an index. For example:
 ```python
-def exchange_gas_cutoff(graph: Graph, node: str, cutoff: float) -> Callable[[float, NDArray[np.float64]], float]:
-    """Exchange gas is pumped out once a certain node hits a certain cutoff."""
+def gas_pushing_start(graph: Graph, node: str, threshold: float) -> Callable[[float, NDArray[np.float64]], float]:
+    """Gas pushing starts once a certain node cools to a certain threshold."""
     idx = graph.get_node_index(node)
-    return lambda time, temperature: temperature[idx] - cutoff
+    return lambda time, temperature: temperature[idx] - threshold
 ```
 Conditions and their arguments should be named for the physical event they mark, and for that reason, they are allowed to share implementations between two functions with different names.
 
