@@ -106,7 +106,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Verified by: Fixtures for supported forms load and evaluate correctly; missing or malformed materials produce useful errors.
   - Outcome: `load_material(name, /, *, directory=...)` matches the `name` field across `*.toml` files. Each property table requires `form`, `range`, and `source`; other keys are the fit's arguments. Outside its range, a property takes its value at the nearest end and issues a RuntimeWarning once per side.
 
-- [ ] **3.5 Copper reference material** · Auto
+- [x] **3.5 Copper reference material** · Auto
   - Context: DESIGN material example; `library/materials/data/`; legacy material database.
   - Do: Port OFHC copper RRR100 with property definitions, ranges, and sources.
   - Verified by: Loaded values match references at representative temperatures.

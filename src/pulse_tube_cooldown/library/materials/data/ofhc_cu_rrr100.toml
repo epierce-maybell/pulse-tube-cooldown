@@ -1,0 +1,15 @@
+name = "OFHC Cu RRR100"
+
+# Specific heat in J/(kg K), independent of RRR.
+[specific_heat]
+form = "log_poly"
+coefficients = [-1.91844, -0.15973, 8.61013, -18.996, 21.9661, -12.7328, 3.54322, -0.3797, 0.0]
+range = [4.0, 300.0]
+source = "NIST Cryogenic Material Properties, OFHC Copper (UNS C10100/C10200), revised 2010-02-03, https://trc.nist.gov/cryogenics/materials/OFHC%20Copper/OFHC_Copper_rev1.htm; fit error 10% below 15 K, 5% above"
+
+# Thermal conductivity in W/(m K) for RRR = 100.
+[thermal_conductivity]
+form = "rational_poly"
+coefficients = [2.2154, -0.47461, -0.88068, 0.13871, 0.29505, -0.02043, -0.04831, 0.001281, 0.003207]
+range = [4.0, 300.0]
+source = "NIST Cryogenic Material Properties, OFHC Copper (UNS C10100/C10200), RRR = 100, revised 2010-02-03, https://trc.nist.gov/cryogenics/materials/OFHC%20Copper/OFHC_Copper_rev1.htm; fit error 1%"
