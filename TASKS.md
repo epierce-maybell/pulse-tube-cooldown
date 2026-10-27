@@ -44,7 +44,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Do: Implement `calc_link_heat_flows` and `calc_net_heat_flow`, routing link-local outputs through connectivity.
   - Verified by: Networks with overlapping links, a multi-node link, and a source or sink give the expected signed node totals.
 
-- [ ] **1.6 Temperature derivatives and fixed boundaries** · Auto
+- [x] **1.6 Temperature derivatives and fixed boundaries** · Auto
   - Context: DESIGN "Engine"; `engine/equations.py`.
   - Do: Implement `calc_temperature_rate_of_change` from net heat flows and capacities, with zero derivatives at fixed boundary nodes.
   - Verified by: A small network matches hand-computed rates while retaining heat transfer to fixed boundaries.

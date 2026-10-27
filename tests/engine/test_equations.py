@@ -6,7 +6,12 @@ import numpy as np
 from numpy.typing import NDArray
 
 from pulse_tube_cooldown.core.types import Graph, Material, Node
-from pulse_tube_cooldown.engine.equations import calc_heat_capacity, calc_link_heat_flows, calc_net_heat_flow
+from pulse_tube_cooldown.engine.equations import (
+    calc_heat_capacity,
+    calc_link_heat_flows,
+    calc_net_heat_flow,
+    calc_temperature_rate_of_change,
+)
 
 
 def _material(name: str, specific_heat) -> Material:
@@ -134,3 +139,42 @@ def test_graph_without_links_has_no_heat_flow():
 
     assert calc_link_heat_flows(graph, np.array([10.0, 20.0])).shape == (0, 2)
     np.testing.assert_allclose(calc_net_heat_flow(graph, np.array([10.0, 20.0])), [0.0, 0.0])
+
+
+def _boundary_network() -> Graph:
+    nodes = (
+        Node("PT", ((LINEAR, 3.0),)),
+        Node("RGP", ((QUADRATIC, 2.0),)),
+        Node("CFP", ((CONSTANT, 0.5),)),
+    )
+    links = (
+        _Conductance("PT-RGP", ("PT", "RGP"), 2.0),
+        _Conductance("RGP-CFP", ("RGP", "CFP"), 1.0),
+        _Source("heater", ("CFP",), 5.0),
+    )
+    return Graph(nodes=nodes, links=links)
+
+
+# Node temperatures PT, RGP, CFP in K.
+# Net heat flow: PT 2 * (10 - 300) = -580. RGP 580 + 1 * (4 - 10) = 574. CFP 6 + 5 = 11.
+# Heat capacity: PT 3 * 2 * 300 = 1800. RGP 2 * 0.5 * 10^2 = 100. CFP 0.5 * 400 = 200.
+_BOUNDARY_TEMPERATURE = np.array([300.0, 10.0, 4.0])
+
+
+def test_temperature_rate_of_change_divides_net_heat_flow_by_capacity():
+    rate = calc_temperature_rate_of_change(_boundary_network(), (), 0.0, _BOUNDARY_TEMPERATURE)
+
+    np.testing.assert_allclose(rate, [-580.0 / 1800.0, 5.74, 0.055])
+
+
+def test_fixed_boundary_node_holds_while_its_neighbors_exchange_heat_with_it():
+    rate = calc_temperature_rate_of_change(_boundary_network(), (0,), 0.0, _BOUNDARY_TEMPERATURE)
+
+    # RGP still receives 580 W from PT.
+    np.testing.assert_allclose(rate, [0.0, 5.74, 0.055])
+
+
+def test_every_fixed_boundary_node_holds():
+    rate = calc_temperature_rate_of_change(_boundary_network(), (2, 0), 0.0, _BOUNDARY_TEMPERATURE)
+
+    np.testing.assert_allclose(rate, [0.0, 5.74, 0.0])

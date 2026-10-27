@@ -10,7 +10,7 @@ from numpy.typing import NDArray
 
 from pulse_tube_cooldown.core.types import Graph, Node
 
-__all__ = ["calc_heat_capacity", "calc_link_heat_flows", "calc_net_heat_flow"]
+__all__ = ["calc_heat_capacity", "calc_link_heat_flows", "calc_net_heat_flow", "calc_temperature_rate_of_change"]
 
 
 def calc_heat_capacity(nodes: Sequence[Node], temperature: NDArray[np.float64]) -> NDArray[np.float64]:
@@ -70,3 +70,23 @@ def calc_net_heat_flow(graph: Graph, temperature: NDArray[np.float64]) -> NDArra
         net[list(indices)] += flows[row, list(indices)]
 
     return net
+
+
+def calc_temperature_rate_of_change(
+    graph: Graph, fixed_boundary_nodes: tuple[int, ...], time: float, temperature: NDArray[np.float64]
+) -> NDArray[np.float64]:
+    """Calculates the rate of change of each node's temperature.
+
+    Args:
+        graph: Nodes and the links acting on them.
+        fixed_boundary_nodes: Indices of nodes held at constant temperature.
+        time: Time in s. The rate depends only on temperature; `time` matches the ODE solver's call signature.
+        temperature: Temperature in K of each node.
+
+    Returns:
+        Rate of change in K/s of each node's temperature: net heat flow divided by heat capacity, and zero at fixed
+        boundary nodes. Links still exchange heat with fixed boundary nodes, so their neighbors' rates include it.
+    """
+    rate_of_change = calc_net_heat_flow(graph, temperature) / calc_heat_capacity(graph.nodes, temperature)
+    rate_of_change[list(fixed_boundary_nodes)] = 0.0
+    return rate_of_change
