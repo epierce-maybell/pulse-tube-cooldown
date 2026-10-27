@@ -35,11 +35,14 @@ class Material:
         name: Identifier used by configuration files, such as "OFHC Cu RRR100".
         specific_heat: Maps temperatures in K to specific heats in J/(kg K), elementwise.
         thermal_conductivity: Maps temperatures in K to thermal conductivities in W/(m K), elementwise.
+        conductivity_integral: Maps temperatures in K to the integral of thermal conductivity in W/m from a fixed
+            reference temperature, elementwise.
     """
 
     name: str
     specific_heat: Callable[[NDArray[np.float64]], NDArray[np.float64]]
     thermal_conductivity: Callable[[NDArray[np.float64]], NDArray[np.float64]]
+    conductivity_integral: Callable[[NDArray[np.float64]], NDArray[np.float64]]
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)

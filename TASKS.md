@@ -106,6 +106,12 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Verified by: Fixtures for supported forms load and evaluate correctly; missing or malformed materials produce useful errors.
   - Outcome: `load_material(name, /, *, directory=...)` matches the `name` field across `*.toml` files. Each property table requires `form`, `range`, and `source`; other keys are the fit's arguments. Outside its range, a property takes its value at the nearest end and issues a RuntimeWarning once per side.
 
+- [x] **3.7 Conductivity integrals** · Auto
+  - Needs: 8.1.
+  - Context: DESIGN `Material`; 8.1's outcome; `core/types.py`, `library/materials/load.py`.
+  - Do: Add `conductivity_integral` to Material and build it in `load_material` as agreed in 8.1.
+  - Verified by: Constant, analytic, and tabulated conductivities match their exact integrals; out-of-range values extend linearly and warn once per side.
+
 - [x] **3.5 Copper reference material** · Auto
   - Context: DESIGN material example; `library/materials/data/`; legacy material database.
   - Do: Port OFHC copper RRR100 with property definitions, ranges, and sources.
@@ -145,7 +151,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
 ## 6. Configuration loading — first slice
 
 - [ ] **6.1 Fridge graph loading** · Auto
-  - Needs: 1.2, 3.6, 8.1.
+  - Needs: 1.2, 3.6, 8.2.
   - Context: DESIGN configuration and library loading; `config.py`, `library/links/__init__.py`.
   - Do: Load compositions and links into a graph. Implement `LINK_TYPES` and `load_link`, initially registering conduction and using the shared material loader.
   - Verified by: A toy fridge section yields expected nodes, parameters, and connectivity; bad references and type names produce useful errors.
@@ -203,10 +209,15 @@ Identifiers retain the original task number as a prefix. Context paths are relat
 
 ## 8. Conduction — first slice
 
-- [ ] **8.1 Conduction Link** · Auto
-  - Needs: 1.1, 3.4.
-  - Context: DESIGN Link library; `library/links/conduction.py`; legacy `conductive_link_heat`.
-  - Do: Implement conduction for a material, area, and length by integrating conductivity between node temperatures.
+- [x] **8.1 Conductivity integral** · Discuss
+  - Context: DESIGN `Material` and Link library; legacy `conductive_link_heat`.
+  - Decide: How conduction obtains the integral of thermal conductivity between node temperatures.
+  - Outcome: Each Material provides `conductivity_integral`, in W/m from the low end of the conductivity range. The loader builds it once as a cubic Hermite spline with the conductivity as its slopes; outside the range it extends linearly and warns as the properties do. Conduction models a uniform cross-section, with flow `area / length` times the integral's difference. Gas-gap brackets keep conductivity at the mean temperature.
+
+- [ ] **8.2 Conduction Link** · Auto
+  - Needs: 1.1, 3.7.
+  - Context: DESIGN Link library; 8.1's outcome; `library/links/conduction.py`.
+  - Do: Implement conduction for a material, area, and length from the material's conductivity integral.
   - Verified by: Constant conductivity matches analytic flow; temperature-dependent conductivity matches independent integration and conserves energy under reversed temperatures.
 
 *End of this area's first-slice work.*

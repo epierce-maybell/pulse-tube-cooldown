@@ -15,6 +15,7 @@ def _linear_material() -> Material:
         name="Toy",
         specific_heat=lambda temperature: 2.0 * temperature,
         thermal_conductivity=lambda temperature: 3.0 + 0.0 * temperature,
+        conductivity_integral=lambda temperature: 3.0 * temperature,
     )
 
 
@@ -53,7 +54,7 @@ def test_material_evaluates_properties_over_temperature_arrays():
 
 def test_material_and_gas_are_keyword_only():
     with pytest.raises(TypeError):
-        Material("Toy", lambda t: t, lambda t: t)  # type: ignore[misc]
+        Material("Toy", lambda t: t, lambda t: t, lambda t: t**2 / 2.0)  # type: ignore[misc]
     with pytest.raises(TypeError):
         Gas("He-4", 4.0026e-3, 5.0 / 3.0)  # type: ignore[misc]
 
@@ -68,7 +69,12 @@ def test_gas_stores_si_properties():
 
 def test_node_composition_pairs_materials_with_masses():
     copper = _linear_material()
-    steel = Material(name="Steel", specific_heat=lambda t: t, thermal_conductivity=lambda t: t)
+    steel = Material(
+        name="Steel",
+        specific_heat=lambda t: t,
+        thermal_conductivity=lambda t: t,
+        conductivity_integral=lambda t: t**2 / 2.0,
+    )
     node = Node("RGP", ((copper, 6.35), (steel, 5.0)))
 
     assert node.name == "RGP"
@@ -82,7 +88,12 @@ def test_node_without_materials_is_rejected():
 
 @pytest.mark.parametrize("mass", [0.0, -1.0])
 def test_node_with_nonpositive_mass_is_rejected(mass):
-    steel = Material(name="Steel", specific_heat=lambda t: t, thermal_conductivity=lambda t: t)
+    steel = Material(
+        name="Steel",
+        specific_heat=lambda t: t,
+        thermal_conductivity=lambda t: t,
+        conductivity_integral=lambda t: t**2 / 2.0,
+    )
 
     with pytest.raises(ConfigurationError, match=r"RGP(.|\n)*Steel"):
         Node("RGP", ((_linear_material(), 6.35), (steel, mass)))

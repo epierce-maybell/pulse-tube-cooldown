@@ -17,6 +17,11 @@ Each file describes one material by its name and two properties, specific heat a
 `range` is the fit's validity range in K, and `source` cites the data behind it. Within its range, a property takes the
 fitted value; outside, it takes the value at the nearest end of the range and issues a RuntimeWarning naming the
 material, property, and side. Python's default warning filter shows each distinct warning once.
+
+Each material also has a conductivity integral, the integral of thermal conductivity from the low end of its range.
+Within the range, it is a cubic Hermite spline through Simpson-rule integrals at knots, with the conductivity as its
+slopes. Knots are log-spaced and include any table points. Outside the range, it extends linearly with the
+conductivity at the nearest end and warns as the properties do.
 """
 
 import inspect
@@ -29,6 +34,7 @@ from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
+from scipy.interpolate import CubicHermiteSpline
 
 from pulse_tube_cooldown.core.errors import ConfigurationError
 from pulse_tube_cooldown.core.types import Material
@@ -63,10 +69,14 @@ def load_material(name: str, /, *, directory: str | os.PathLike[str] = _DATA_DIR
             f"{path}: unknown keys {sorted(unknown)}; a material has name, specific_heat, and thermal_conductivity."
         )
 
+    specific_heat, specific_heat_range, _ = _parse_property(path, data, "specific_heat")
+    conductivity, conductivity_range, table_temperature = _parse_property(path, data, "thermal_conductivity")
+
     return Material(
         name=name,
-        specific_heat=_load_property(path, data, name, "specific_heat"),
-        thermal_conductivity=_load_property(path, data, name, "thermal_conductivity"),
+        specific_heat=_clamp(specific_heat, specific_heat_range, name, "specific_heat"),
+        thermal_conductivity=_clamp(conductivity, conductivity_range, name, "thermal_conductivity"),
+        conductivity_integral=_integrate(conductivity, conductivity_range, table_temperature, name),
     )
 
 
@@ -104,8 +114,10 @@ def _read_toml(path: Path) -> dict[str, Any]:
         raise ConfigurationError(f"{path}: invalid TOML: {error}") from error
 
 
-def _load_property(path: Path, data: dict[str, Any], name: str, key: str) -> PropertyFit:
-    """Builds the property's fit, evaluated at the nearest end of its range, with a warning, outside that range."""
+def _parse_property(
+    path: Path, data: dict[str, Any], key: str
+) -> tuple[PropertyFit, tuple[float, float], NDArray[np.float64]]:
+    """Builds the property's fit and returns it with its range and its table temperatures, if tabulated."""
     where = f"{path} [{key}]"
     spec = data.get(key)
 
@@ -131,18 +143,57 @@ def _load_property(path: Path, data: dict[str, Any], name: str, key: str) -> Pro
     except (TypeError, ValueError) as error:
         raise ConfigurationError(f"{where}: invalid parameters for the {form} fit: {error}") from error
 
+    table_temperature = np.array(parameters["table"], dtype=np.float64)[:, 0] if form == "table" else np.array([])
+
+    return fit, (lower, upper), table_temperature
+
+
+def _clamp(fit: PropertyFit, valid_range: tuple[float, float], name: str, key: str) -> PropertyFit:
+    """Evaluates the fit at the nearest end of its range, with a warning, outside that range."""
+    lower, upper = valid_range
     range_text = f"its range [{lower:g}, {upper:g}] K"
     below = f"{name} {key} evaluated below {range_text}; using its value at {lower:g} K."
     above = f"{name} {key} evaluated above {range_text}; using its value at {upper:g} K."
 
     def clamped_fit(temperature: NDArray[np.float64]) -> NDArray[np.float64]:
-        if np.any(temperature < lower):
-            warnings.warn(below, RuntimeWarning, stacklevel=2)
-        if np.any(temperature > upper):
-            warnings.warn(above, RuntimeWarning, stacklevel=2)
+        _warn_outside_range(temperature, lower, upper, below, above)
         return fit(np.clip(temperature, lower, upper))
 
     return clamped_fit
+
+
+def _integrate(
+    conductivity: PropertyFit, valid_range: tuple[float, float], table_temperature: NDArray[np.float64], name: str
+) -> PropertyFit:
+    """Builds the conductivity integral from the low end of the range, extended linearly outside the range."""
+    lower, upper = valid_range
+    knots = np.union1d(
+        np.geomspace(lower, upper, 1025), table_temperature[(lower < table_temperature) & (table_temperature < upper)]
+    )
+
+    slope = conductivity(knots)
+    midpoint_conductivity = conductivity((knots[:-1] + knots[1:]) / 2.0)
+    simpson_integral = np.diff(knots) / 6.0 * (slope[:-1] + 4.0 * midpoint_conductivity + slope[1:])
+    spline = CubicHermiteSpline(knots, np.concatenate(([0.0], np.cumsum(simpson_integral))), slope)
+
+    range_text = f"its range [{lower:g}, {upper:g}] K"
+    below = f"{name} conductivity_integral evaluated below {range_text}; extending linearly from {lower:g} K."
+    above = f"{name} conductivity_integral evaluated above {range_text}; extending linearly from {upper:g} K."
+
+    def conductivity_integral(temperature: NDArray[np.float64]) -> NDArray[np.float64]:
+        _warn_outside_range(temperature, lower, upper, below, above)
+        clipped = np.clip(temperature, lower, upper)
+        return spline(clipped) + spline(clipped, 1) * (temperature - clipped)
+
+    return conductivity_integral
+
+
+def _warn_outside_range(temperature: NDArray[np.float64], lower: float, upper: float, below: str, above: str) -> None:
+    """Warns, on behalf of the property's caller, for temperatures below or above the range."""
+    if np.any(temperature < lower):
+        warnings.warn(below, RuntimeWarning, stacklevel=3)
+    if np.any(temperature > upper):
+        warnings.warn(above, RuntimeWarning, stacklevel=3)
 
 
 def _parse_range(where: str, value: object) -> tuple[float, float]:

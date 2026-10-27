@@ -15,7 +15,12 @@ from pulse_tube_cooldown.engine.equations import (
 
 
 def _material(name: str, specific_heat) -> Material:
-    return Material(name=name, specific_heat=specific_heat, thermal_conductivity=lambda t: 0.0 * t)
+    return Material(
+        name=name,
+        specific_heat=specific_heat,
+        thermal_conductivity=lambda t: 0.0 * t,
+        conductivity_integral=lambda t: 0.0 * t,
+    )
 
 
 LINEAR = _material("Linear", lambda t: 2.0 * t)
