@@ -8,7 +8,9 @@ import xarray as xr
 from numpy.typing import NDArray
 
 from pulse_tube_cooldown.core.errors import ConfigurationError, PTCError
-from pulse_tube_cooldown.core.types import Model, Node, Phase, Procedure, Result
+from pulse_tube_cooldown.core.types import Material, Model, Node, Phase, Procedure, Result
+
+_TOY = Material(name="Toy", specific_heat=lambda t: t, thermal_conductivity=lambda t: t)
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
@@ -23,7 +25,7 @@ class _StubLink:
         return np.zeros_like(temperature)
 
 
-_NODES = tuple(Node(name, ()) for name in ("PRP", "RGP", "Can"))
+_NODES = tuple(Node(name, ((_TOY, 1.0),)) for name in ("PRP", "RGP", "Can"))
 _EXCHANGE_GAS = _StubLink("exchange gas", ("PRP", "RGP", "Can"))
 _SWITCH = _StubLink("switch", ("PRP", "RGP"))
 

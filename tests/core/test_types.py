@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 from numpy.typing import NDArray
 
+from pulse_tube_cooldown.core.errors import ConfigurationError
 from pulse_tube_cooldown.core.types import Gas, Link, Material, Node
 
 
@@ -74,12 +75,25 @@ def test_node_composition_pairs_materials_with_masses():
     assert [(material.name, mass) for material, mass in node.composition] == [("Toy", 6.35), ("Steel", 5.0)]
 
 
+def test_node_without_materials_is_rejected():
+    with pytest.raises(ConfigurationError, match="PRP"):
+        Node("PRP", ())
+
+
+@pytest.mark.parametrize("mass", [0.0, -1.0])
+def test_node_with_nonpositive_mass_is_rejected(mass):
+    steel = Material(name="Steel", specific_heat=lambda t: t, thermal_conductivity=lambda t: t)
+
+    with pytest.raises(ConfigurationError, match=r"RGP(.|\n)*Steel"):
+        Node("RGP", ((_linear_material(), 6.35), (steel, mass)))
+
+
 @pytest.mark.parametrize(
     "component",
     [
         _linear_material(),
         Gas(name="He-4", molar_mass=4.0026e-3, heat_capacity_ratio=5.0 / 3.0),
-        Node("PRP", ()),
+        Node("PRP", ((_linear_material(), 1.0),)),
     ],
 )
 def test_components_are_immutable(component):

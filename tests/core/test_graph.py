@@ -7,7 +7,9 @@ import pytest
 from numpy.typing import NDArray
 
 from pulse_tube_cooldown.core.errors import ConfigurationError, PTCError
-from pulse_tube_cooldown.core.types import Graph, Node
+from pulse_tube_cooldown.core.types import Graph, Material, Node
+
+_TOY = Material(name="Toy", specific_heat=lambda t: t, thermal_conductivity=lambda t: t)
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
@@ -22,7 +24,7 @@ class _StubLink:
 
 
 def _nodes(*names: str) -> tuple[Node, ...]:
-    return tuple(Node(name, ()) for name in names)
+    return tuple(Node(name, ((_TOY, 1.0),)) for name in names)
 
 
 def test_connectivity_maps_link_local_order_to_graph_indices():

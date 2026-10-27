@@ -63,11 +63,24 @@ class Node:
 
     Attributes:
         name: Unique node identifier within a graph, such as "PRP".
-        composition: Pairs of a material and its mass in kg.
+        composition: Pairs of a material and its mass in kg. At least one pair, each with positive mass, so the node
+            has thermal mass.
+
+    Raises:
+        ConfigurationError: The composition is empty or a mass is not positive.
     """
 
     name: str
     composition: tuple[tuple[Material, float], ...]
+
+    def __post_init__(self) -> None:
+        """Validates that the node has thermal mass."""
+        if not self.composition:
+            raise ConfigurationError(f"Node {self.name!r} needs at least one material in its composition.")
+
+        nonpositive = {material.name: mass for material, mass in self.composition if mass <= 0.0}
+        if nonpositive:
+            raise ConfigurationError(f"Node {self.name!r} needs positive masses; these are not: {nonpositive}.")
 
 
 class Link(Protocol):
