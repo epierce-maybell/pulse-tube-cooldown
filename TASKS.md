@@ -49,17 +49,17 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Do: Implement `calc_temperature_rate_of_change` from net heat flows and capacities, with zero derivatives at fixed boundary nodes.
   - Verified by: A small network matches hand-computed rates while retaining heat transfer to fixed boundaries.
 
-- [ ] **1.7 Jacobian** · Auto
+- [x] **1.7 Jacobian** · Auto
   - Context: DESIGN "Engine"; `engine/equations.py`.
   - Do: Implement `build_jacobian`, including temperature-dependent capacities and fixed boundaries.
   - Verified by: A nonlinear network agrees with independent finite differences and has the expected fixed-boundary rows.
+  - Outcome: no build_jacobian; the solver estimates the Jacobian (DESIGN "Engine").
 
 *End of this area's first-slice work.*
 
 ## 2. Integration and results — first slice
 
 - [ ] **2.1 Single-phase integration** · Auto
-  - Needs: 1.7.
   - Context: DESIGN "Engine" and "Phases and Procedure"; `engine/solver.py`.
   - Do: Implement `integrate_phase` with solver options, phase and procedure events, time limits, and observable solver failures.
   - Verified by: Analytic relaxation integrates correctly; each termination mechanism and solver failure is observable.
