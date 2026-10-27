@@ -1,4 +1,4 @@
-# Tasks
+# Tasks — 23/76 done
 
 Build the v1 simulator specified in `docs/DESIGN.md`: the six-plate systems SN09 and FP1 from room temperature until condensing begins, each with least-squares log-temperature residual comparable to or lower than the legacy model's across system thermometers except MXP.
 
@@ -16,9 +16,11 @@ Each task has one focused review outcome and includes relevant tests. Constructe
 
 Within each numbered area, work in order. **Needs** states dependencies across areas. Choose an unchecked task whose earlier tasks in its area and explicit dependencies are complete, preferring first-slice work. Mark claimed work `[o]` and completed work `[x]`. Conditional tasks complete when their condition is resolved and the outcome recorded.
 
+Headings show completed/total tasks and active claims. Update the area and overall counts whenever task markers or the task list change.
+
 Identifiers retain the original task number as a prefix. Context paths are relative to `src/pulse_tube_cooldown/` unless another repository location is given. Follow-up tasks receive new identifiers and concrete outcomes before implementation starts, with dependencies checked against the existing order. A discussion that exposes missing human inputs adds explicit Human dependencies to its implementation task.
 
-## 1. Core types and equations — first slice
+## 1. [7/7] Core types and equations
 
 - [x] **1.1 Material, gas, node, and link types** · Auto
   - Context: DESIGN "Data model" and "Dilution refrigerator library"; `src/pulse_tube_cooldown/core/types.py`.
@@ -57,12 +59,13 @@ Identifiers retain the original task number as a prefix. Context paths are relat
 
 *End of this area's first-slice work.*
 
-## 2. Integration and results — first slice
+## 2. [2/4] Integration and results
 
-- [ ] **2.1 Single-phase integration** · Auto
+- [x] **2.1 Single-phase integration** · Auto
   - Context: DESIGN "Engine" and "Phases and Procedure"; `engine/solver.py`.
   - Do: Implement `integrate_phase` with solver options, phase and procedure events, time limits, and observable solver failures.
   - Verified by: Analytic relaxation integrates correctly; each termination mechanism and solver failure is observable.
+  - Outcome: `integrate_phase` returns a `PhaseSolution` whose `end` names what ended the phase. `Model.solver_options` holds the `[simulation]` keys: `max_time` (end of the whole run, s) and `save_every` (sample spacing from the phase start, s) are required; `solver` defaults to "Radau"; other keys pass to `solve_ivp`.
 
 - [x] **2.2 Procedure execution** · Auto
   - Context: DESIGN "Phases and Procedure"; `engine/solver.py`.
@@ -82,7 +85,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
 
 *End of this area's first-slice work.*
 
-## 3. Material loading — first slice
+## 3. [7/7] Material loading
 
 - [x] **3.1 Log-polynomial fits** · Auto
   - Context: DESIGN "Dilution refrigerator library"; `library/property_fits.py`; legacy fit definitions.
@@ -124,7 +127,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
 
 *End of this area's first-slice work.*
 
-## 4. Validation-system materials — beyond first slice
+## 4. [0/1] Validation-system materials
 
 - [ ] **4.1 Enumerate required material ports** · Auto
   - Needs: 20.2.
@@ -132,7 +135,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Do: Identify additional materials required by each validation system. Add one Auto task per material with its source and verification reference, and a Discuss task for any unsettled property representation.
   - Verified by: Each required material has a usable definition or an individually actionable port task. Add these ports as explicit dependencies of 24.1.
 
-## 5. Configuration decisions — first slice
+## 5. [3/3] Configuration decisions
 
 - [x] **5.1 Phase activation semantics** · Discuss
   - Context: DESIGN "Configuration files" and "Phases and Procedure"; `enable` and `disable` placeholders.
@@ -148,7 +151,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Context: DESIGN "Scope" and condition registry; the operating procedure for starting condensing.
   - Decide: The physical state that starts condensing and the inputs `condensing_start` takes.
 
-## 6. Configuration loading — first slice
+## 6. [0/5] Configuration loading
 
 - [ ] **6.1 Fridge graph loading** · Auto
   - Needs: 1.2, 3.6, 8.2.
@@ -181,7 +184,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Do: Implement and register `condensing_start`, resolving node names against a graph.
   - Verified by: The condition has the specified sign on either side of its threshold and equals zero at the threshold.
 
-## 7. Public run, persistence, and CLI — first slice
+## 7. [0/4] Public run, persistence, and CLI
 
 - [ ] **7.1 Simulation entry point** · Auto
   - Needs: 2.4.
@@ -207,14 +210,14 @@ Identifiers retain the original task number as a prefix. Context paths are relat
 
 *First vertical slice complete.*
 
-## 8. Conduction — first slice
+## 8. [2/2] Conduction
 
 - [x] **8.1 Conductivity integral** · Discuss
   - Context: DESIGN `Material` and Link library; legacy `conductive_link_heat`.
   - Decide: How conduction obtains the integral of thermal conductivity between node temperatures.
   - Outcome: Each Material provides `conductivity_integral`, in W/m from the low end of the conductivity range. The loader builds it once as a cubic Hermite spline with the conductivity as its slopes; outside the range it extends linearly and warns as the properties do. Conduction models a uniform cross-section, with flow `area / length` times the integral's difference. Gas-gap brackets keep conductivity at the mean temperature.
 
-- [ ] **8.2 Conduction Link** · Auto
+- [x] **8.2 Conduction Link** · Auto
   - Needs: 1.1, 3.7.
   - Context: DESIGN Link library; 8.1's outcome; `library/links/conduction.py`.
   - Do: Implement conduction for a material, area, and length from the material's conductivity integral.
@@ -222,7 +225,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
 
 *End of this area's first-slice work.*
 
-## 9. Gas data and gas pushing — beyond first slice
+## 9. [0/2] Gas data and gas pushing
 
 - [ ] **9.1 Gas loader and helium data** · Auto
   - Needs: 1.1.
@@ -236,7 +239,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Do: Implement and register `gas_pushing_pm5`, calculating adjacent-pair conductances from downstream volumes and temperatures and accumulating node flows.
   - Verified by: A hand-computed chain has expected conductances and signed flows, with conserved total energy.
 
-## 10. Gas-gap switch — beyond first slice
+## 10. [1/3] Gas-gap switch
 
 - [x] **10.1 Switch physics and parameters** · Discuss
   - Context: DESIGN Link and phase interfaces; legacy `build_gghs_switch`, `gas_link_heat_transfer`, and thermal-link data.
@@ -255,11 +258,13 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Do: Register the switch and load it from configuration, requiring exactly two nodes.
   - Verified by: A configured run shows the switch carrying heat early and shutting off as it cools, without a phase change; a switch with other than two nodes fails to load.
 
-## 11. Exchange gas — beyond first slice
+## 11. [0/3] Exchange gas
 
 - [ ] **11.1 Exchange-gas physics and parameters** · Discuss
+  - Needs: 20.3, including the cooldown routine deployed in each validation system's `/etc/cold_control/routines` at its run date.
   - Context: DESIGN multi-node Link; legacy `exchange_gas_link`, pressure handling, and gas-link data.
   - Decide: The shared-gas heat-transfer model, pressure and geometry inputs, participating nodes, and phase activation.
+  - Progress: The gas carries no state. One multi-node link sums gas conduction over pairs of surfaces, so its flows sum to zero. The pressure source and the cutoff event remain open and depend on the deployed routines. The last routines in the cold_control repository (June 2025, removed as out of date) admit no exchange gas: they pump the OVC continuously from atmosphere, start the pulse tubes below `p1 < 5e-3`, and stop pumping at STP < 200 K with `p1 < 5e-4`, in unstated units. No source has been found for the legacy P(T_CFP) fit or its 70 K CFP cutoff.
 
 - [ ] **11.2 Exchange-gas Link** · Auto
   - Needs: 9.1.
@@ -273,7 +278,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Do: Register the Link and configure its removal at the agreed cutoff.
   - Verified by: A configured run includes gas heat transfer before cutoff and the intended graph afterwards.
 
-## 12. Radiation and insulation — beyond first slice
+## 12. [0/4] Radiation and insulation
 
 - [ ] **12.1 Radiation physics and parameters** · Discuss
   - Context: DESIGN radiation Link; legacy `radiation_parallel_plates` and `radiation_enclosed`.
@@ -294,7 +299,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Do: Implement and register the agreed insulation heat-transfer behavior.
   - Verified by: Reference cases establish the temperature and insulation-parameter dependence, including a loaded configuration.
 
-## 13. Joint contact — beyond first slice
+## 13. [0/2] Joint contact
 
 - [ ] **13.1 Contact physics and parameters** · Discuss
   - Context: DESIGN joint-contact Link; legacy `thermal_conductance_calc.py` and `conductance_systems.json`.
@@ -306,7 +311,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Do: Implement and register the agreed contact Link.
   - Verified by: Independent cases establish flow and temperature dependence, including configuration loading.
 
-## 14. Cooler characterization inputs — beyond first slice
+## 14. [1/2] Cooler characterization inputs
 
 - [x] **14.1 Cooler characterization requirements** · Auto
   - Context: DESIGN "Coupled capacity maps".
@@ -318,7 +323,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Context: 14.1's outcome and DESIGN stage energy balance.
   - Input: Supply a cooldown path T1(t), T2(t), each stage's masses and materials, and a source for G_R and x_R.
 
-## 15. Path-derived capacity curves — beyond first slice
+## 15. [0/5] Path-derived capacity curves
 
 - [ ] **15.1 Capacity derivation choices** · Discuss
   - Needs: 14.2.
@@ -347,7 +352,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Do: Compare capacities with load-map evidence in their shared measured region and record uncertainties and discrepancies.
   - Verified by: A reproducible comparison establishes supported temperature ranges and identifies any specific follow-up needed before using the curves.
 
-## 16. Cooler Link — beyond first slice
+## 16. [0/4] Cooler Link
 
 - [ ] **16.1 Uncoupled stage cooling** · Auto
   - Needs: 15.5, 6.1.
@@ -369,7 +374,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Do: Register the complete cooler Link and load node references, capacity data, and regenerator parameters from configuration.
   - Verified by: A configured graph evaluates expected flows at all three cooled points with identifiable data sources.
 
-## 18. Result plots — beyond first slice
+## 18. [0/3] Result plots
 
 - [ ] **18.1 Temperature plot** · Auto
   - Needs: 2.4.
@@ -388,7 +393,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Do: Overlay measured temperatures on corresponding simulated node traces.
   - Verified by: A mapped, aligned fixture places each measured series at its expected node and time.
 
-## 19. Graph plot — beyond first slice
+## 19. [0/1] Graph plot
 
 - [ ] **19.1 Graph rendering** · Auto
   - Needs: 1.2.
@@ -396,7 +401,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Do: Draw nodes and links labelled by name and type, including multi-node links.
   - Verified by: A toy graph renders every node, link, and intended connection with readable labels.
 
-## 20. Validation case and inventory — beyond first slice
+## 20. [1/3] Validation case and inventory
 
 - [x] **20.1 Select the v1 validation case** · Discuss
   - Context: DESIGN "Scope"; available repository and legacy measurements and inventories; 14.1's data identification where relevant.
@@ -413,7 +418,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Context: 20.1's outcome and trace metadata.
   - Input: For each validation system, supply the cooldown record, the cold_control routine logs for that run, and missing acquisition/channel metadata. Record existing adequate inputs, including `data/SN09_cooldown_time.dat`, by reference.
 
-## 21. Measurement interpretation — beyond first slice
+## 21. [0/2] Measurement interpretation
 
 - [ ] **21.1 Map and align measured temperatures** · Discuss
   - Needs: 20.3.
@@ -424,7 +429,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Context: DESIGN least-squares log-temperature residual; outcome of 21.1.
   - Decide: Sampling/interpolation and aggregation conventions for computing the same residual for the new and legacy models.
 
-## 22. Measured data and residual — beyond first slice
+## 22. [0/2] Measured data and residual
 
 - [ ] **22.1 Measurement preparation** · Auto
   - Needs: 21.2.
@@ -438,7 +443,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Do: Calculate the least-squares log-temperature residual over specified thermometers and comparison samples.
   - Verified by: Identical traces give zero; a known temperature ratio gives the hand-computed residual; MXP is excluded.
 
-## 23. Legacy baseline — beyond first slice
+## 23. [0/2] Legacy baseline
 
 - [ ] **23.1 Reproduce the legacy cooldowns** · Auto
   - Needs: 20.2, 20.3.
@@ -452,7 +457,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Do: Apply the agreed residual calculation to each system's legacy traces and record its baseline and comparison coverage.
   - Verified by: Repeated scoring reproduces each baseline on the same measurements and window used for the new model.
 
-## 24. Full-system validation — beyond first slice
+## 24. [0/5] Full-system validation
 
 - [ ] **24.1 Validation-system configurations** · Auto
   - Needs: 4.1 and its required material ports, 6.5, 7.4, 9.2, 10.3, 11.3, 12.4, 13.2, 16.4, 20.2.
