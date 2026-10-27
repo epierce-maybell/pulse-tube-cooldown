@@ -10,6 +10,7 @@
 2. Architectural Decision Records (ADRs) record significant or controversial decisions only.
 3. View previous decisions as mutable recommendations. If logic, elegance, or pragmatism contradict a decision encoded in the repository, the decision should be revisited.
 4. Keep values as close to their point of use as is reasonably possible.
+5. Error handling is a slippery slope into insanity. Focus on errors that could (a) reasonably happen, (b) mess something else up down the line, and (c) need special handling beyond what native Python would throw. Lean towards parse-not-validate, but make sure parsing is solving a real problem.
 
 # Rules for interacting
 1. If you are an AI, assume that all future agents are at least as smart as you are. They have the same ability to interpolate missing information, make reasonable decisions, catch and handle discrepancies, and avoid pitfalls that you do. 
