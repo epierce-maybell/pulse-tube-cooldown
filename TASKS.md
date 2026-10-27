@@ -108,7 +108,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Context: DESIGN material TOML example; `library/materials/load.py`, `library/materials/data/`.
   - Do: Implement `load_material` using `PROPERTY_FITS`. Retain sources and validity ranges in material data and document range handling.
   - Verified by: Fixtures for supported forms load and evaluate correctly; missing or malformed materials produce useful errors.
-  - Outcome: `load_material(name, /, *, directory=...)` matches the `name` field across `*.toml` files. Each property table requires `form`, `range`, and `source`; other keys are the fit's arguments. Outside its range, a property takes its value at the nearest end and issues a RuntimeWarning once per side.
+  - Outcome: `load_material(name, /, *, directory=...)` matches the `name` field across `*.toml` files. Each property table holds `form`, `range`, and an optional `source`; other keys are the fit's arguments. Outside its range, a property takes its value at the nearest end and issues a RuntimeWarning once per side; an infinite end leaves that side unbounded.
 
 - [x] **3.7 Conductivity integrals** · Auto
   - Needs: 8.1.
