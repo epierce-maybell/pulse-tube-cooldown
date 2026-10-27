@@ -39,7 +39,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Do: Implement `calc_heat_capacity` by summing mass times specific heat over each node's composition.
   - Verified by: Single-material and mixed-material nodes match hand-computed temperature-dependent capacities.
 
-- [ ] **1.5 Link flows and node heat balances** · Auto
+- [x] **1.5 Link flows and node heat balances** · Auto
   - Context: DESIGN "Engine" and Link convention; `engine/equations.py`.
   - Do: Implement `calc_link_heat_flows` and `calc_net_heat_flow`, routing link-local outputs through connectivity.
   - Verified by: Networks with overlapping links, a multi-node link, and a source or sink give the expected signed node totals.

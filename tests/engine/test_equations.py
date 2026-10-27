@@ -1,9 +1,12 @@
 """Tests for the engine's thermal equations."""
 
-import numpy as np
+import dataclasses
 
-from pulse_tube_cooldown.core.types import Material, Node
-from pulse_tube_cooldown.engine.equations import calc_heat_capacity
+import numpy as np
+from numpy.typing import NDArray
+
+from pulse_tube_cooldown.core.types import Graph, Material, Node
+from pulse_tube_cooldown.engine.equations import calc_heat_capacity, calc_link_heat_flows, calc_net_heat_flow
 
 
 def _material(name: str, specific_heat) -> Material:
@@ -39,3 +42,95 @@ def test_each_node_is_evaluated_at_its_own_temperature():
 
     # PRP at 300 K: 1 * 600. RGP at 4 K: 2 * 8 + 1 * 8. CFP at 50 K: 0.5 * 400.
     np.testing.assert_allclose(calc_heat_capacity(nodes, np.array([300.0, 4.0, 50.0])), [600.0, 24.0, 200.0])
+
+
+@dataclasses.dataclass(frozen=True, slots=True)
+class _Conductance:
+    """Constant conductance G from the first node to the second."""
+
+    name: str
+    nodes: tuple[str, str]
+    conductance: float
+
+    def calc_heat_flow(self, temperature: NDArray[np.float64]) -> NDArray[np.float64]:
+        flow = self.conductance * (temperature[1] - temperature[0])
+        return np.array([flow, -flow])
+
+
+@dataclasses.dataclass(frozen=True, slots=True)
+class _SharedBath:
+    """Relaxes each of its nodes toward their mean temperature with conductance G."""
+
+    name: str
+    nodes: tuple[str, ...]
+    conductance: float
+
+    def calc_heat_flow(self, temperature: NDArray[np.float64]) -> NDArray[np.float64]:
+        return self.conductance * (temperature.mean() - temperature)
+
+
+@dataclasses.dataclass(frozen=True, slots=True)
+class _Source:
+    """Constant power into a single node; negative power is a sink."""
+
+    name: str
+    nodes: tuple[str]
+    power: float
+
+    def calc_heat_flow(self, temperature: NDArray[np.float64]) -> NDArray[np.float64]:
+        return np.full_like(temperature, self.power)
+
+
+def _network() -> Graph:
+    nodes = tuple(Node(name, ((CONSTANT, 1.0),)) for name in ("A", "B", "C", "D"))
+    links = (
+        _Conductance("AB", ("A", "B"), 2.0),
+        _Conductance("BA", ("B", "A"), 0.5),
+        _SharedBath("gas", ("D", "B", "C"), 1.0),
+        _Source("heater", ("C",), 5.0),
+        _Source("cooler", ("D",), -3.0),
+    )
+    return Graph(nodes=nodes, links=links)
+
+
+# Node temperatures A, B, C, D in K.
+_TEMPERATURE = np.array([300.0, 100.0, 40.0, 4.0])
+
+
+def test_link_heat_flows_place_each_link_output_at_its_nodes():
+    flows = calc_link_heat_flows(_network(), _TEMPERATURE)
+
+    # Columns A, B, C, D; NaN where a link does not touch a node.
+    # AB: 2 * (100 - 300) into A. BA: 0.5 * (300 - 100) into B.
+    # gas: mean of D, B, C is (4 + 100 + 40) / 3 = 48, so D +44, B -52, C +8.
+    nan = np.nan
+    expected = [
+        [-400.0, 400.0, nan, nan],
+        [-100.0, 100.0, nan, nan],
+        [nan, -52.0, 8.0, 44.0],
+        [nan, nan, 5.0, nan],
+        [nan, nan, nan, -3.0],
+    ]
+    np.testing.assert_allclose(flows, expected)
+
+
+def test_net_heat_flow_sums_signed_flows_into_each_node():
+    net = calc_net_heat_flow(_network(), _TEMPERATURE)
+
+    # A: -400 - 100. B: 400 + 100 - 52. C: 8 + 5. D: 44 - 3.
+    np.testing.assert_allclose(net, [-500.0, 448.0, 13.0, 41.0])
+
+
+def test_net_heat_flow_propagates_nan_from_a_link_only_to_its_nodes():
+    nodes = tuple(Node(name, ((CONSTANT, 1.0),)) for name in ("A", "B", "C"))
+    graph = Graph(nodes=nodes, links=(_Conductance("AB", ("A", "B"), 1.0), _Source("broken", ("C",), np.nan)))
+
+    # A: 1 * (20 - 10) = 10. B: -10. C: the broken link's NaN.
+    np.testing.assert_allclose(calc_net_heat_flow(graph, np.array([10.0, 20.0, 30.0])), [10.0, -10.0, np.nan])
+
+
+def test_graph_without_links_has_no_heat_flow():
+    graph = Graph(nodes=(Node("A", ((CONSTANT, 1.0),)), Node("B", ((CONSTANT, 1.0),))), links=())
+
+    assert calc_link_heat_flows(graph, np.array([10.0, 20.0])).shape == (0, 2)
+    np.testing.assert_allclose(calc_net_heat_flow(graph, np.array([10.0, 20.0])), [0.0, 0.0])
