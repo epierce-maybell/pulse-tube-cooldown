@@ -77,12 +77,22 @@ def run_procedure(model: Model) -> list[PhaseSolution]:
         model: The model to run, starting from its `initial_temperature`.
 
     Returns:
-        The solution of each integrated phase, in order.
+        The solution of each integrated phase, in order. A phase whose `until` condition is zero or negative at its
+        start ends there with a single sample.
     """
     solutions = []
     time, temperature = 0.0, model.initial_temperature
     for phase in model.procedure.phases:
-        solution = integrate_phase(model, phase, time, temperature)
+        if phase.until is not None and phase.until(time, temperature) <= 0:
+            solution = PhaseSolution(
+                phase=phase,
+                end="until",
+                time=np.array([time]),
+                temperature=temperature[np.newaxis],
+                message="The `until` condition was met at the phase's start.",
+            )
+        else:
+            solution = integrate_phase(model, phase, time, temperature)
         solutions.append(solution)
         if solution.end != "until":
             break

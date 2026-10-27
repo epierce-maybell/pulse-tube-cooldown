@@ -196,6 +196,22 @@ def test_two_phase_run_switches_at_until_and_continues_from_the_switch_state():
     np.testing.assert_allclose(second.temperature[:, 0], expected, rtol=1e-6)
 
 
+@pytest.mark.parametrize("threshold", [300.0, 400.0])
+def test_phase_whose_until_is_met_at_its_start_ends_with_zero_length(threshold):
+    precool = Phase("precool", (_LINK,), _stage_below(threshold))
+    cooldown = _final_phase()
+    model = _model((precool, cooldown))
+
+    first, second = run_procedure(model)
+
+    assert (first.phase, first.end) == (precool, "until")
+    np.testing.assert_array_equal(first.time, [0.0])
+    np.testing.assert_array_equal(first.temperature, [model.initial_temperature])
+    assert (second.phase, second.end) == (cooldown, "max_time")
+    assert second.time[0] == 0.0
+    np.testing.assert_array_equal(second.temperature[0], model.initial_temperature)
+
+
 def test_run_starts_at_zero_from_the_initial_temperature():
     model = _model((_final_phase(),))
 
