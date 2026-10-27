@@ -1,5 +1,5 @@
 # Rules specific to LLMs
-1. DESIGN.md is the current source of truth. LLM agents do not have permission to edit it.
+1. DESIGN.md is the current source of truth. LLM agents do not have permission to edit it. Linting is allowed.
 2. Commit messages must be short, imperative, and not co-signed.
 3. Assume CONTEXT is deprecated where it contradicts other files or a decision under consideration. It only exists to orient new agents.
 4. Do not use comments and documentation to justify choices. Defensive comments are a code smell.
