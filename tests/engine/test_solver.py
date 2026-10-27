@@ -8,7 +8,7 @@ from numpy.typing import NDArray
 
 from pulse_tube_cooldown.core.errors import ConfigurationError
 from pulse_tube_cooldown.core.types import Graph, Material, Model, Node, Phase, PhaseSolution, Procedure
-from pulse_tube_cooldown.engine.solver import integrate_phase, reconstruct_heat_flow, run_procedure
+from pulse_tube_cooldown.engine.solver import build_result, integrate_phase, reconstruct_heat_flow, run_procedure
 
 _CONSTANT = Material(
     name="Constant",
@@ -259,3 +259,112 @@ def test_phase_without_links_reconstructs_an_empty_link_axis():
     graph = Graph(nodes=(_STAGE, _BATH), links=())
 
     assert reconstruct_heat_flow(graph, _SAMPLES).shape == (3, 0, 2)
+
+
+def _switching_run(end="max_time"):
+    # Precool runs the 0.5 W/K strap and the heater; cooldown swaps in a 1 W/K strap and drops the heater.
+    precool = Phase("precool", (_LINK, _HEATER), _stage_below(50.0))
+    cooldown = Phase("cooldown", (_Conductance("strap", ("stage", "bath"), 1.0),), None)
+    model = _model((precool, cooldown))
+    solutions = [
+        PhaseSolution(
+            phase=precool,
+            end="until",
+            time=np.array([0.0, 2.0, 3.0]),
+            temperature=np.array([[300.0, 4.0], [100.0, 4.0], [50.0, 4.0]]),
+            message="precool ended",
+        ),
+        PhaseSolution(
+            phase=cooldown,
+            end=end,
+            time=np.array([3.0, 5.0]),
+            temperature=np.array([[50.0, 4.0], [10.0, 4.0]]),
+            message="cooldown ended",
+        ),
+    ]
+    return model, solutions
+
+
+def test_result_keeps_both_sides_of_a_phase_switch():
+    model, solutions = _switching_run()
+
+    data = build_result(model, solutions).data
+
+    np.testing.assert_array_equal(data.time, [0.0, 2.0, 3.0, 3.0, 5.0])
+    assert list(data.phase.values) == ["precool", "precool", "precool", "cooldown", "cooldown"]
+    np.testing.assert_array_equal(data.temperature, [[300.0, 4.0], [100.0, 4.0], [50.0, 4.0], [50.0, 4.0], [10.0, 4.0]])
+    # At 50 K: 0.5 W/K * (4 K - 50 K) before the switch and 1 W/K * (4 K - 50 K) after.
+    np.testing.assert_allclose(data.heat_flow.isel(time=2).sel(link="strap"), [-23.0, 23.0])
+    np.testing.assert_allclose(data.heat_flow.isel(time=3).sel(link="strap"), [-46.0, 46.0])
+
+
+def test_result_flows_are_nan_where_a_link_is_inactive_or_untouched():
+    model, solutions = _switching_run()
+
+    heater = build_result(model, solutions).data.heat_flow.sel(link="heater")
+
+    # Heater: 1e-3 * T^2 into the stage during precool; it never touches the bath.
+    np.testing.assert_allclose(heater.sel(node="stage")[:3], [90.0, 10.0, 2.5])
+    assert np.isnan(heater.sel(node="stage")[3:]).all()
+    assert np.isnan(heater.sel(node="bath")).all()
+
+
+def test_result_coordinates_name_nodes_and_every_procedure_link():
+    model, solutions = _switching_run()
+
+    data = build_result(model, solutions).data
+
+    assert list(data.node.values) == ["stage", "bath"]
+    assert list(data.link.values) == ["strap", "heater"]
+    assert data.heat_flow.dims == ("time", "link", "node")
+    np.testing.assert_array_equal(data.connected.sel(link="strap"), [True, True])
+    np.testing.assert_array_equal(data.connected.sel(link="heater"), [True, False])
+
+
+def test_result_includes_links_of_phases_that_never_ran():
+    model, solutions = _switching_run()
+    precool = dataclasses.replace(solutions[0], end="stop_condition")
+
+    data = build_result(model, [precool]).data
+
+    assert list(data.link.values) == ["strap", "heater"]
+    assert list(data.phase.values) == ["precool"] * 3
+
+
+@pytest.mark.parametrize("end", ["stop_condition", "max_time", "solver_failure"])
+def test_result_status_is_how_the_final_phase_ended(end):
+    model, solutions = _switching_run(end)
+
+    result = build_result(model, solutions)
+
+    assert result.status == end
+    assert result.model is model
+    assert result.data.attrs["status"] == end
+    assert result.data.attrs["message"] == "cooldown ended"
+
+
+def test_result_records_units():
+    model, solutions = _switching_run()
+
+    data = build_result(model, solutions).data
+
+    assert data.time.attrs["units"] == "s"
+    assert data.temperature.attrs["units"] == "K"
+    assert data.heat_flow.attrs["units"] == "W"
+
+
+def test_result_flows_are_nan_throughout_a_phase_without_links():
+    isolated = Phase("isolated", (), _after(1.0))
+    model = _model((isolated, _final_phase()))
+    solution = PhaseSolution(
+        phase=isolated,
+        end="stop_condition",
+        time=np.array([0.0, 1.0]),
+        temperature=np.array([[300.0, 4.0]] * 2),
+        message="",
+    )
+
+    data = build_result(model, [solution]).data
+
+    assert list(data.link.values) == ["strap"]
+    assert np.isnan(data.heat_flow).all()

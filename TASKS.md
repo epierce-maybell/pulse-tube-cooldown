@@ -1,4 +1,4 @@
-# Tasks — 26/76 done
+# Tasks — 27/76 done
 
 Build the v1 simulator specified in `docs/DESIGN.md`: the six-plate systems SN09 and FP1 from room temperature until condensing begins, each with least-squares log-temperature residual comparable to or lower than the legacy model's across system thermometers except MXP.
 
@@ -59,7 +59,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
 
 *End of this area's first-slice work.*
 
-## 2. [3/4] Integration and results
+## 2. [4/4] Integration and results
 
 - [x] **2.1 Single-phase integration** · Auto
   - Context: DESIGN "Engine" and "Phases and Procedure"; `engine/solver.py`.
@@ -78,10 +78,11 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Do: Implement `reconstruct_heat_flow` over sampled temperatures using the phase graph, producing flows on the phase graph's (sample, link, node) axes.
   - Verified by: Samples agree with direct evaluations, and unconnected link-node pairs are NaN.
 
-- [ ] **2.4 Result assembly** · Auto
+- [x] **2.4 Result assembly** · Auto
   - Context: DESIGN "Data model" and "Engine"; `engine/solver.py`.
   - Do: Implement `build_result`, assembling the DESIGN Result Dataset from solutions, temperatures, heat flows, and status. Place each phase's flows on the link axis of every link used in any phase. Preserve duplicate switch times with each side's phase name.
   - Verified by: A two-phase result retains both switch-side rows with their phase names and distinct flows; a link inactive in one phase is NaN there; coordinates match graph names, `connected` matches connectivity, and attributes record status and units.
+  - Outcome: `status` is the final solution's `end`; Dataset attributes hold it and that solution's solver `message`. The link axis lists every link in the procedure in order of first appearance, so links of phases that never ran are NaN. `time`, `temperature`, and `heat_flow` carry `units` attributes.
 
 *End of this area's first-slice work.*
 
