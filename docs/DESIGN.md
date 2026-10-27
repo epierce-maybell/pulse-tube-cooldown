@@ -32,17 +32,20 @@ name = "PRP-RGP Switch 1"
 type = "gas_gap_switch"
 nodes = ["PRP", "RGP"] # order matters
 
+[[fridge.links]]
+name = "Exchange gas"
+type = "exchange_gas"
+nodes = ["PRP", "RGP", "CFP", "STP", "ICP", "MXP"]
+
 [procedure]
 until = { condition = "condensing_start", node = "MXP", threshold = 10.0 }
 
 [[procedure.phases]]
 name = "precool"
-disable = ["PRP-RGP Switch 1"]
 until = { condition = "exchange_gas_cutoff", node = "CFP", cutoff = 70.0 }
 
 [[procedure.phases]]
 name = "cooldown"
-enable = ["PRP-RGP Switch 1"]
 disable = ["Exchange gas"]
 
 [simulation]
@@ -94,6 +97,12 @@ class Gas:
     name: str
     molar_mass: float
     heat_capacity_ratio: float
+    accommodation_coeff: float
+    thermal_conductivity: Callable[[NDArray[np.float64]], NDArray[np.float64]]
+    saturation_pressure: Callable[[NDArray[np.float64]], NDArray[np.float64]]
+    adsorption_energy: float
+    adsorption_constant: float
+    adsorption_capacity: float # per kg of charcoal
 
 
 @dataclass(frozen=True, slots=True)
@@ -304,6 +313,44 @@ G = \frac{5}{2} \frac{\Delta p}{P} \sum_{j > k} \frac{V_j}{T_j}
 $$
 
 where $\Delta p$ is the pressure swing for each cycle, $P$ is the period of the cycle, and $V_j$ and $T_j$ are the gas volume and temperature at each node $j$ that the gas fills. Heat flow is then simply: $Q = \pm G(\Delta T)$ where $\Delta T$ is the difference in temperature between each node.
+
+#### Gas-gap heat switch
+Gas-gap heat switches are a specific link type, always connecting only two nodes, handled here with a reduced-complexity model. Heat flow $Q$ through the switch is given by:
+
+$$
+Q = \frac{(T_h - T_c)}{\dfrac{1}{hA} + \sum_b \dfrac{L_b}{k_b A_b}},
+$$
+where $T_h$ and $T_c$ are the temperatures of the warmer and colder adjacent nodes, respectively, $A$ is the gap area, and each bracket $b$ has a length $L_b$, area $A_b$, and conductivity $k_b$. The gap's conductance per unit area $h$ is a combination of the high-pressure and low-pressure behavior:
+
+$$
+\frac{1}{h} = \frac{d}{k_g} + \frac{1}{h_m}, \qquad h_m = \alpha \frac{\gamma + 1}{\gamma - 1} \sqrt{\frac{R}{8 \pi M \bar{T}}} P,
+$$
+
+for gap width $d$, gas thermal conductivity $k_g$, accommodation coefficient $\alpha$, heat capacity ratio $\gamma$, molar mass $M$, and ideal gas constant $R$. 
+
+The pressure $P$ follows from conservation. Each switch seals after filling to pressure $P_{fill}$ at temperature $T_{fill}$, so the total amount of gas is $n = P_{fill} V / (R T_{fill})$. The gas is either free or held by the charcoal, so we have:
+
+$$
+n = \frac{P V}{R \bar{T}} + n_s \frac{K P}{1 + K P}, \qquad K = K_0 \, e^{E / R \bar{T}},
+$$
+
+where $n_s$ is the charcoal mass times its capacity and $K_0$ and $E$ are the gas adsorption constants on the charcoal. $P$ is the positive root of this quadratic, capped at some $P_{sat}(T_c)$. Gas properties and $k_b$ are evaluated at the mean temperature $\bar{T} = (T_h + T_c) / 2$. 
+
+The configuration for the switch should look something like:
+```toml
+[[fridge.links]]
+name = "CFP-STP Switch"
+type = "gas_gap_switch"
+nodes = ["CFP", "STP"]
+gas = "He-4"
+fill_pressure = 1.0e5      # Pa
+fill_temperature = 295.0   # K
+gas_volume = 2.5e-6        # m^3
+gap = 5.1e-4               # m
+area = 4.6e-3              # m^2
+charcoal_mass = 1.8e-4     # kg
+brackets = [{ material = "OFHC Cu RRR100", area = 1.0e-4, length = 0.02 }]
+```
 
 ## Validation and testing
 Validation experiments should live in simulations/validation/identifier, where identifier is usually a subdirectory that stores the runner script, the configuration file(s), and output.
