@@ -308,14 +308,15 @@ Identifiers retain the original task number as a prefix. Context paths are relat
 
 ## 14. Cooler characterization inputs — beyond first slice
 
-- [ ] **14.1 Audit available cooler data** · Auto
-  - Context: DESIGN "Coupled capacity maps"; `data/`, legacy cooler data, available test-stand records.
-  - Do: Identify available bare-head cooldown and load-map records, cooler identities, channels, units, and metadata, including the pulse tubes installed in each validation system. List missing capacity-derivation inputs.
-  - Verified by: An inventory distinguishes cooler characterization from fridge validation and identifies records belonging together.
+- [x] **14.1 Cooler characterization requirements** · Auto
+  - Context: DESIGN "Coupled capacity maps".
+  - Do: Determine the inputs needed to derive Q1(T1), Q2(T2), and the regenerator term.
+  - Verified by: Each term in the DESIGN capacity and regenerator equations traces to a named input.
+  - Outcome: Q1(T1) and Q2(T2) need a measured cooldown path T1(t), T2(t) and each stage's heat capacity C_i(T) from its masses and materials. The regenerator term needs G_R(T) and x_R, which the cooldown path does not determine.
 
 - [ ] **14.2 Supply missing characterization inputs** · Human
-  - Context: 14.1's inventory and DESIGN stage energy balance.
-  - Input: Supply identified gaps, including stage masses/materials and attached masses, trace identity/channels, and relevant test-stand parasitic-load information. Record existing adequate inputs by reference.
+  - Context: 14.1's outcome and DESIGN stage energy balance.
+  - Input: Supply a cooldown path T1(t), T2(t), each stage's masses and materials, and a source for G_R and x_R.
 
 ## 15. Path-derived capacity curves — beyond first slice
 
