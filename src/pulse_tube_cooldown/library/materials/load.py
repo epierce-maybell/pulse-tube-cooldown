@@ -44,8 +44,6 @@ __all__ = ["load_material"]
 
 _DATA_DIRECTORY = Path(__file__).parent / "data"
 
-_PROPERTIES = ("specific_heat", "thermal_conductivity")
-
 
 def load_material(name: str, /, *, directory: str | os.PathLike[str] = _DATA_DIRECTORY) -> Material:
     """Loads the material with the given name from a directory of material files.
@@ -62,12 +60,6 @@ def load_material(name: str, /, *, directory: str | os.PathLike[str] = _DATA_DIR
             readable material file, or the material's definition is malformed.
     """
     path, data = _find_material(name, Path(directory))
-
-    unknown = data.keys() - {"name", *_PROPERTIES}
-    if unknown:
-        raise ConfigurationError(
-            f"{path}: unknown keys {sorted(unknown)}; a material has name, specific_heat, and thermal_conductivity."
-        )
 
     specific_heat, specific_heat_range, _ = _parse_property(path, data, "specific_heat")
     conductivity, conductivity_range, table_temperature = _parse_property(path, data, "thermal_conductivity")

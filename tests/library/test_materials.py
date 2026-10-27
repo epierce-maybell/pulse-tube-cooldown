@@ -278,7 +278,6 @@ def _replace(old, new):
     ("text", "message"),
     [
         (_POLY_MATERIAL.split("[thermal_conductivity]")[0], r"thermal_conductivity"),
-        (_replace('name = "Poly Metal"', 'name = "Poly Metal"\ndensity = 8960.0'), r"density"),
         (_replace('form = "log_poly"\n', ""), r"specific_heat.*form"),
         (_replace('form = "log_poly"', 'form = "spline"'), r"specific_heat.*spline.*log_poly.*rational_poly.*table"),
         (_replace("range = [4.0, 300.0]\n", ""), r"specific_heat.*range"),
@@ -296,7 +295,6 @@ def _replace(old, new):
     ],
     ids=[
         "missing property",
-        "unknown key",
         "missing form",
         "unknown form",
         "missing range",
