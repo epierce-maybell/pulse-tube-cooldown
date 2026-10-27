@@ -1,4 +1,4 @@
-# Tasks — 30/77 done
+# Tasks — 31/77 done
 
 Build the v1 simulator specified in `docs/DESIGN.md`: the six-plate systems SN09 and FP1 from room temperature until condensing begins, each with least-squares log-temperature residual comparable to or lower than the legacy model's across system thermometers except MXP.
 
@@ -150,9 +150,9 @@ Identifiers retain the original task number as a prefix. Context paths are relat
 
 - [x] **5.3 Condensing start condition** · Discuss
   - Context: DESIGN "Scope" and condition registry; the operating procedure for starting condensing.
-  - Decide: The physical state that starts condensing and the inputs `condensing_start` takes.
+  - Decide: The physical state that starts condensing and the inputs `condensing_begins` takes.
 
-## 6. [1/5] Configuration loading
+## 6. [2/5] Configuration loading
 
 - [x] **6.1 Fridge graph loading** · Auto
   - Needs: 1.2, 3.6, 8.2.
@@ -160,10 +160,10 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Do: Load compositions and links into a graph. Implement `LINK_TYPES` and `load_link`, initially registering conduction and using the shared material loader.
   - Verified by: A toy fridge section yields expected nodes, parameters, and connectivity; bad references and type names produce useful errors.
 
-- [ ] **6.2 Condition factories** · Auto
+- [x] **6.2 Condition factories** · Auto
   - Needs: 5.2.
   - Context: DESIGN condition example; `library/conditions.py`.
-  - Do: Implement `CONDITIONS` and `gas_pushing_start`, resolving node names against a graph.
+  - Do: Implement `CONDITIONS` and `gas_pushing_begins`, resolving node names against a graph.
   - Verified by: Conditions have the specified signs on either side of their thresholds and equal zero at the thresholds.
 
 - [ ] **6.3 Phase and procedure loading** · Auto
@@ -182,7 +182,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
 - [ ] **6.5 Condensing start condition** · Auto
   - Needs: 5.3.
   - Context: 5.3's recorded design; `library/conditions.py`.
-  - Do: Implement and register `condensing_start`, resolving node names against a graph.
+  - Do: Implement and register `condensing_begins`, resolving node names against a graph.
   - Verified by: The condition has the specified sign on either side of its threshold and equals zero at the threshold.
 
 ## 7. [1/4] Public run, persistence, and CLI
