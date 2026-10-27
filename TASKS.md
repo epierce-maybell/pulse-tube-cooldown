@@ -215,9 +215,9 @@ Identifiers retain the original task number as a prefix. Context paths are relat
 
 - [ ] **9.1 Gas loader and helium data** · Auto
   - Needs: 1.1.
-  - Context: DESIGN Gas type and library; `library/gases/`; legacy gas data.
-  - Do: Implement the gas loader and a sourced helium definition for the Gas fields.
-  - Verified by: Helium loads with expected SI properties; invalid or missing definitions produce useful errors.
+  - Context: DESIGN Gas type and "Gas-gap heat switch"; `library/gases/`; legacy gas data.
+  - Do: Implement the gas loader and sourced helium and nitrogen definitions for the Gas fields, using literature values.
+  - Verified by: Each gas loads with expected SI properties at representative temperatures; invalid or missing definitions produce useful errors.
 
 - [ ] **9.2 PM5 gas-pushing Link** · Auto
   - Needs: 6.1.
@@ -227,21 +227,22 @@ Identifiers retain the original task number as a prefix. Context paths are relat
 
 ## 10. Gas-gap switch — beyond first slice
 
-- [ ] **10.1 Switch physics and parameters** · Discuss
+- [x] **10.1 Switch physics and parameters** · Discuss
   - Context: DESIGN Link and phase interfaces; legacy `build_gghs_switch`, `gas_link_heat_transfer`, and thermal-link data.
   - Decide: On-state and off-state heat-transfer models, their parameters, and how phase activation selects the intended state.
+  - Outcome: DESIGN "Gas-gap heat switch" records a reduced-order model whose shutoff follows from adsorption and condensation, with gas data from literature values. The switch shell is a separate conduction link from each system's inventory.
 
 - [ ] **10.2 Switch heat transfer** · Auto
   - Needs: 9.1.
-  - Context: 10.1's recorded design; `library/links/gas_gap_switch.py`.
-  - Do: Implement the agreed switch Link for its defined states and parameters.
-  - Verified by: Independent reference calculations establish flow in each state, heat-flow direction, and energy balance.
+  - Context: DESIGN "Gas-gap heat switch"; `library/links/gas_gap_switch.py`.
+  - Do: Implement the switch Link, solving for gas pressure from adsorption and the cold-node vapor-pressure cap, with brackets in series.
+  - Verified by: Independent calculations match conductance where gas is fully free, where adsorption limits pressure, and where condensation limits it; flow direction reverses with temperature order.
 
-- [ ] **10.3 Switch configuration and phase use** · Auto
+- [ ] **10.3 Switch configuration and shutoff** · Auto
   - Needs: 6.4.
-  - Context: 10.1's activation rules; link registry and configuration fixtures.
-  - Do: Register the switch and load a configuration changing its effective state at a phase transition.
-  - Verified by: A configured two-phase run uses expected switch behavior on each side of the transition.
+  - Context: DESIGN "Gas-gap heat switch"; link registry and configuration fixtures.
+  - Do: Register the switch and load it from configuration, requiring exactly two nodes.
+  - Verified by: A configured run shows the switch carrying heat early and shutting off as it cools, without a phase change; a switch with other than two nodes fails to load.
 
 ## 11. Exchange gas — beyond first slice
 
@@ -394,7 +395,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
 
 - [ ] **20.2 Supply missing system inventory** · Human
   - Context: 20.1's outcome and gaps; DESIGN nodes, links, and configuration.
-  - Input: For each validation system, supply or confirm the build at its run date: nodes, masses, materials, link parameters, and cooler configuration, starting from available legacy inventory.
+  - Input: For each validation system, supply or confirm the build at its run date: nodes, masses, materials, link parameters, and cooler configuration, starting from available legacy inventory. For each gas-gap switch: gas, fill pressure and temperature, gas volume, gap, area, charcoal mass, brackets, and shell dimensions.
 
 - [ ] **20.3 Supply missing validation measurements** · Human
   - Context: 20.1's outcome and trace metadata.
