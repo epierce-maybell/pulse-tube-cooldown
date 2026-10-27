@@ -204,17 +204,19 @@ As a general rule, physical values should always be specified in SI units.
 Materials are specified in individual TOML files in materials/data. Each entry should take the format:
 ```toml
 name = "OFHC Cu RRR100"
-source = "NIST Cryogenic Material Properties"
 
 [specific_heat]
 form = "log_poly"
 coefficients = []
-range = [4.0, 300.0]
+range = [4.0, 300.0] # out-of-range will clamp to ends and raise a warning
+source = "NIST Cryogenic Material Properties"
+
 
 [thermal_conductivity]
 form = "rational_poly"
 coefficients = []
 range = [4.0, 300.0]
+source = "NIST Cryogenic Material Properties"
 ```
 
 This library has to handle some mapping from the config file to actual objects:
