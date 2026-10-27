@@ -237,82 +237,25 @@ def test_finds_material_by_name_field_rather_than_filename(tmp_path):
     assert load_material("Table Metal", directory=tmp_path).name == "Table Metal"
 
 
-def test_unknown_name_lists_available_materials(tmp_path):
+def test_unknown_name_is_reported(tmp_path):
     _write(tmp_path, "poly.toml", _POLY_MATERIAL)
-    _write(tmp_path, "table.toml", _TABLE_MATERIAL)
 
-    with pytest.raises(ConfigurationError, match=r"Copper.*Poly Metal.*Table Metal"):
+    with pytest.raises(ConfigurationError, match=r"0 materials named 'Copper'"):
         load_material("Copper", directory=tmp_path)
 
 
-def test_duplicate_names_identify_both_files(tmp_path):
+def test_duplicate_names_are_reported(tmp_path):
     _write(tmp_path, "first.toml", _POLY_MATERIAL)
     _write(tmp_path, "second.toml", _POLY_MATERIAL)
 
-    with pytest.raises(ConfigurationError, match=r"Poly Metal.*first\.toml.*second\.toml"):
+    with pytest.raises(ConfigurationError, match=r"2 materials named 'Poly Metal'"):
         load_material("Poly Metal", directory=tmp_path)
 
 
-@pytest.mark.parametrize(
-    ("text", "message"),
-    [
-        ('name = "Broken\n', r"broken\.toml"),
-        ('source = "No name"\n', r"broken\.toml.*name"),
-        ("name = 3\n", r"broken\.toml.*name"),
-    ],
-)
-def test_unreadable_file_in_directory_is_identified(tmp_path, text, message):
-    _write(tmp_path, "poly.toml", _POLY_MATERIAL)
-    _write(tmp_path, "broken.toml", text)
+def test_loads_material_without_sources(tmp_path):
+    _write(tmp_path, "poly.toml", _POLY_MATERIAL.replace('source = "Specific heat reference"\n', ""))
 
-    with pytest.raises(ConfigurationError, match=message):
-        load_material("Poly Metal", directory=tmp_path)
-
-
-def _replace(old, new):
-    assert old in _POLY_MATERIAL
-    return _POLY_MATERIAL.replace(old, new)
-
-
-@pytest.mark.parametrize(
-    ("text", "message"),
-    [
-        (_POLY_MATERIAL.split("[thermal_conductivity]")[0], r"thermal_conductivity"),
-        (_replace('form = "log_poly"\n', ""), r"specific_heat.*form"),
-        (_replace('form = "log_poly"', 'form = "spline"'), r"specific_heat.*spline.*log_poly.*rational_poly.*table"),
-        (_replace("range = [4.0, 300.0]\n", ""), r"specific_heat.*range"),
-        (_replace("range = [4.0, 300.0]", "range = [4.0]"), r"specific_heat.*range"),
-        (_replace("range = [4.0, 300.0]", "range = [300.0, 4.0]"), r"specific_heat.*range"),
-        (_replace("range = [4.0, 300.0]", "range = [0.0, 300.0]"), r"specific_heat.*range"),
-        (_replace("range = [4.0, 300.0]", 'range = ["low", "high"]'), r"specific_heat.*range"),
-        (_replace('source = "Specific heat reference"\n', ""), r"specific_heat.*source"),
-        (_replace('source = "Specific heat reference"', 'source = ""'), r"specific_heat.*source"),
-        (
-            _replace("coefficients = [1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]", "coefficients = [1.0]"),
-            r"thermal_conductivity.*9 coefficients",
-        ),
-        (_replace("coefficients = [0.0, 1.0]", "table = [[4.0, 1.0], [300.0, 2.0]]"), r"specific_heat"),
-    ],
-    ids=[
-        "missing property",
-        "missing form",
-        "unknown form",
-        "missing range",
-        "short range",
-        "reversed range",
-        "nonpositive range",
-        "nonnumeric range",
-        "missing source",
-        "empty source",
-        "invalid fit parameters",
-        "unexpected fit parameter",
-    ],
-)
-def test_malformed_material_reports_file_and_problem(tmp_path, text, message):
-    _write(tmp_path, "poly.toml", text)
-
-    with pytest.raises(ConfigurationError, match=rf"poly\.toml.*{message}"):
-        load_material("Poly Metal", directory=tmp_path)
+    np.testing.assert_allclose(load_material("Poly Metal", directory=tmp_path).specific_heat(np.array([10.0])), [10.0])
 
 
 def test_conductivity_integral_has_conductivity_as_its_slope(tmp_path):

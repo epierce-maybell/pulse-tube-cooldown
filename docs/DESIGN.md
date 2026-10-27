@@ -104,7 +104,7 @@ class Gas:
     name: str
     molar_mass: float
     heat_capacity_ratio: float
-    accommodation_coeff: float
+    accommodation_coeff: Callable[[NDArray[np.float64]], NDArray[np.float64]]
     thermal_conductivity: Callable[[NDArray[np.float64]], NDArray[np.float64]]
     saturation_pressure: Callable[[NDArray[np.float64]], NDArray[np.float64]]
     adsorption_energy: float

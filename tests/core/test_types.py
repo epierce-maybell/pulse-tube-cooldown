@@ -19,6 +19,20 @@ def _linear_material() -> Material:
     )
 
 
+def _toy_gas() -> Gas:
+    return Gas(
+        name="He-4",
+        molar_mass=4.0026e-3,
+        heat_capacity_ratio=5.0 / 3.0,
+        accommodation_coeff=lambda temperature: 0.05 * temperature,
+        thermal_conductivity=lambda temperature: 2.0e-3 * temperature,
+        saturation_pressure=lambda temperature: 2.5e4 * temperature,
+        adsorption_energy=1.0e3,
+        adsorption_constant=1.0e-6,
+        adsorption_capacity=50.0,
+    )
+
+
 @dataclasses.dataclass(frozen=True, slots=True)
 class _ConstantConductance:
     """Two-node link with constant conductance, following the Link convention."""
@@ -56,15 +70,21 @@ def test_material_and_gas_are_keyword_only():
     with pytest.raises(TypeError):
         Material("Toy", lambda t: t, lambda t: t, lambda t: t**2 / 2.0)  # type: ignore[misc]
     with pytest.raises(TypeError):
-        Gas("He-4", 4.0026e-3, 5.0 / 3.0)  # type: ignore[misc]
+        Gas("He-4", 4.0026e-3, 5.0 / 3.0, lambda t: t, lambda t: t, lambda t: t, 1.0, 1.0, 1.0)  # type: ignore[misc]
 
 
 def test_gas_stores_si_properties():
-    helium = Gas(name="He-4", molar_mass=4.0026e-3, heat_capacity_ratio=5.0 / 3.0)
+    helium = _toy_gas()
 
     assert helium.name == "He-4"
     assert helium.molar_mass == pytest.approx(4.0026e-3)
     assert helium.heat_capacity_ratio == pytest.approx(5.0 / 3.0)
+    np.testing.assert_allclose(helium.accommodation_coeff(np.array([10.0])), [0.5])
+    np.testing.assert_allclose(helium.thermal_conductivity(np.array([10.0])), [0.02])
+    np.testing.assert_allclose(helium.saturation_pressure(np.array([4.0])), [1.0e5])
+    assert helium.adsorption_energy == pytest.approx(1.0e3)
+    assert helium.adsorption_constant == pytest.approx(1.0e-6)
+    assert helium.adsorption_capacity == pytest.approx(50.0)
 
 
 def test_node_composition_pairs_materials_with_masses():
@@ -103,7 +123,7 @@ def test_node_with_nonpositive_mass_is_rejected(mass):
     "component",
     [
         _linear_material(),
-        Gas(name="He-4", molar_mass=4.0026e-3, heat_capacity_ratio=5.0 / 3.0),
+        _toy_gas(),
         Node("PRP", ((_linear_material(), 1.0),)),
     ],
 )

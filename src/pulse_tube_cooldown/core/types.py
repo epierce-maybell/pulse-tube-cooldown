@@ -53,11 +53,25 @@ class Gas:
         name: Identifier used by configuration files, such as "He-4".
         molar_mass: Molar mass in kg/mol.
         heat_capacity_ratio: Ratio of specific heats at constant pressure and constant volume.
+        accommodation_coeff: Maps temperatures in K to thermal accommodation coefficients on the surfaces the gas
+            contacts, elementwise.
+        thermal_conductivity: Maps temperatures in K to dilute-gas thermal conductivities in W/(m K), elementwise.
+        saturation_pressure: Maps temperatures in K to the pressures in Pa above which the gas condenses,
+            elementwise. Infinite above the critical temperature.
+        adsorption_energy: Energy E in J/mol of the Langmuir constant K = K_0 exp(E / (R T)) on charcoal.
+        adsorption_constant: Prefactor K_0 in 1/Pa of the Langmuir constant on charcoal.
+        adsorption_capacity: Amount adsorbed on charcoal at saturation, in mol per kg of charcoal.
     """
 
     name: str
     molar_mass: float
     heat_capacity_ratio: float
+    accommodation_coeff: Callable[[NDArray[np.float64]], NDArray[np.float64]]
+    thermal_conductivity: Callable[[NDArray[np.float64]], NDArray[np.float64]]
+    saturation_pressure: Callable[[NDArray[np.float64]], NDArray[np.float64]]
+    adsorption_energy: float
+    adsorption_constant: float
+    adsorption_capacity: float
 
 
 @dataclass(frozen=True, slots=True)

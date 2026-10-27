@@ -1,4 +1,4 @@
-# Tasks — 29/76 done
+# Tasks — 30/77 done
 
 Build the v1 simulator specified in `docs/DESIGN.md`: the six-plate systems SN09 and FP1 from room temperature until condensing begins, each with least-squares log-temperature residual comparable to or lower than the legacy model's across system thermometers except MXP.
 
@@ -227,9 +227,9 @@ Identifiers retain the original task number as a prefix. Context paths are relat
 
 *End of this area's first-slice work.*
 
-## 9. [0/2] Gas data and gas pushing
+## 9. [1/3] Gas data and gas pushing
 
-- [ ] **9.1 Gas loader and helium data** · Auto
+- [x] **9.1 Gas loader and helium data** · Auto
   - Needs: 1.1.
   - Context: DESIGN Gas type and "Gas-gap heat switch"; `library/gases/`; legacy gas data.
   - Do: Implement the gas loader and sourced helium and nitrogen definitions for the Gas fields, using literature values.
@@ -240,6 +240,12 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Context: DESIGN "Gas pushing"; `library/links/gas_pushing.py`.
   - Do: Implement and register `gas_pushing_pm5`, calculating adjacent-pair conductances from downstream volumes and temperatures and accumulating node flows.
   - Verified by: A hand-computed chain has expected conductances and signed flows, with conserved total energy.
+
+- [ ] **9.3 Helium adsorption and accommodation data** · Human
+  - Needs: 9.1.
+  - Context: `library/gases/data/`; Corruccini, Vacuum 7–8, 19 (1959), also reproduced in Ekin, *Experimental Techniques for Low-Temperature Measurements*; legacy's standalone `gas_gap_heat_switch.py` presets.
+  - Do: Supply sourced Langmuir constants for He-4 on the switches' charcoal and accommodation coefficients measured across the temperature ranges of He-4 and N2. Add them to the gas files and remove the xfail marker from the He-4 data tests.
+  - Verified by: He-4 loads and its data tests pass; each accommodation table cites values across its range.
 
 ## 10. [1/3] Gas-gap switch
 
@@ -255,7 +261,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Verified by: Independent calculations match conductance where gas is fully free, where adsorption limits pressure, and where condensation limits it; flow direction reverses with temperature order.
 
 - [ ] **10.3 Switch configuration and shutoff** · Auto
-  - Needs: 6.4.
+  - Needs: 6.4, 9.3.
   - Context: DESIGN "Gas-gap heat switch"; link registry and configuration fixtures.
   - Do: Register the switch and load it from configuration, requiring exactly two nodes.
   - Verified by: A configured run shows the switch carrying heat early and shutting off as it cools, without a phase change; a switch with other than two nodes fails to load.

@@ -8,6 +8,7 @@ from pulse_tube_cooldown.library.property_fits import (
     make_fit_from_table,
     make_log_poly_fit,
     make_rational_poly_fit,
+    make_wagner_fit,
 )
 
 
@@ -153,3 +154,43 @@ def test_table_rejects_invalid_tables_when_built(table, message):
 
 def test_table_is_registered():
     assert PROPERTY_FITS["table"] is make_fit_from_table
+
+
+def _wagner_example():
+    # ln(p / 2e5) = (5 / T) * (-4 * theta + 2 * theta^1.5), theta = 1 - T / 5.
+    return make_wagner_fit(
+        critical_temperature=5.0, critical_pressure=2.0e5, coefficients=[-4.0, 2.0], exponents=[1.0, 1.5]
+    )
+
+
+def test_wagner_matches_hand_calculation():
+    fit = _wagner_example()
+
+    # At 2.5 K, theta = 0.5 and ln(p / pc) = 2 * (-2 + 2 * 0.5^1.5) = -4 + 2^0.5.
+    # At 4 K, theta = 0.2 and ln(p / pc) = 1.25 * (-0.8 + 2 * 0.2^1.5).
+    expected = [2.0e5 * np.exp(-4.0 + np.sqrt(2.0)), 2.0e5 * np.exp(1.25 * (-0.8 + 2.0 * 0.2**1.5))]
+
+    np.testing.assert_allclose(fit(np.array([2.5, 4.0])), expected, rtol=1e-12)
+
+
+def test_wagner_reaches_critical_pressure_at_critical_temperature():
+    np.testing.assert_allclose(_wagner_example()(np.array([5.0])), [2.0e5], rtol=1e-12)
+
+
+def test_wagner_is_infinite_above_critical_temperature():
+    fit = _wagner_example()
+
+    assert np.all(np.isposinf(fit(np.array([5.0001, 10.0, 300.0]))))
+
+
+def test_wagner_preserves_temperature_array_shape():
+    assert _wagner_example()(np.array([[2.5, 4.0], [5.0, 6.0]])).shape == (2, 2)
+
+
+def test_wagner_rejects_mismatched_coefficients_and_exponents_when_built():
+    with pytest.raises(ValueError, match="same number"):
+        make_wagner_fit(critical_temperature=5.0, critical_pressure=2.0e5, coefficients=[-4.0, 2.0], exponents=[1.0])
+
+
+def test_wagner_is_registered():
+    assert PROPERTY_FITS["wagner"] is make_wagner_fit

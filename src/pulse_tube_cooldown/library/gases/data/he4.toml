@@ -1,0 +1,37 @@
+name = "He-4"
+
+# CIAAW, standard atomic weight of helium, 4.002 602(2), https://www.ciaaw.org/helium.htm
+molar_mass = 4.002602e-3
+
+# Ideal monatomic gas; NIST WebBook gives Cp/Cv = 1.6667-1.6673 at 0.001 MPa from 10 to 300 K.
+heat_capacity_ratio = 1.6666666666666667
+
+[accommodation_coeff]
+form = "table"
+table = [[5.0, 1.0], [20.0, 0.6], [300.0, 0.43]]
+range = [5.0, 300.0]
+source = "Corruccini, Vacuum 7-8, 19 (1959), as cited by Franke et al., arXiv:2402.11977 (2024): close to unity on copper well below 10 K, about 0.6 at 20 K; Trott et al., Rev. Sci. Instrum. 82 (2011), as cited there: 0.43 at room temperature; linear between"
+
+# Dilute-gas thermal conductivity in W/(m K).
+[thermal_conductivity]
+form = "table"
+table = [
+    [1.0, 0.002632], [1.4, 0.002845], [2.0, 0.003588], [2.5, 0.004519], [3.0, 0.005569], [4.0, 0.007666],
+    [5.0, 0.009542], [7.0, 0.012650], [10.0, 0.016427], [14.0, 0.020699], [20.0, 0.026244], [30.0, 0.034199],
+    [40.0, 0.041204], [60.0, 0.053570], [80.0, 0.064585], [100.0, 0.074726], [140.0, 0.093272], [200.0, 0.118308],
+    [250.0, 0.137510], [300.0, 0.155649],
+]
+range = [1.0, 300.0]
+source = "Hurly & Mehl, J. Res. NIST 112, 75 (2007), Table 5, zero-density ab initio values, https://nvlpubs.nist.gov/nistpubs/jres/112/2/V112.N02.A01.pdf; uncertainty at most 0.35%"
+
+[saturation_pressure]
+form = "wagner"
+critical_temperature = 5.1953
+critical_pressure = 227600.0
+coefficients = [
+    -2.5589967099484343, -2.1208869241528903, 2.0304814035943877, 0.9702906562630098, -0.006217789170073319,
+    -4.338734244510393,
+]
+exponents = [0.981, 1.13, 1.536, 3.109, 0.338, 14.431]
+range = [2.1768, inf]
+source = "CoolProp Helium.json ancillary vapor-pressure equation, fit to the Ortiz-Vega helium equation of state, https://raw.githubusercontent.com/CoolProp/CoolProp/master/dev/fluids/Helium.json; agrees with the ITS-90 He-4 vapor-pressure scale within 0.05%"
