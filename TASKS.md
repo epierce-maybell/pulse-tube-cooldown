@@ -1,4 +1,4 @@
-# Tasks — 27/76 done
+# Tasks — 28/76 done
 
 Build the v1 simulator specified in `docs/DESIGN.md`: the six-plate systems SN09 and FP1 from room temperature until condensing begins, each with least-squares log-temperature residual comparable to or lower than the legacy model's across system thermometers except MXP.
 
@@ -185,13 +185,14 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Do: Implement and register `condensing_start`, resolving node names against a graph.
   - Verified by: The condition has the specified sign on either side of its threshold and equals zero at the threshold.
 
-## 7. [0/4] Public run, persistence, and CLI
+## 7. [1/4] Public run, persistence, and CLI
 
-- [ ] **7.1 Simulation entry point** · Auto
+- [x] **7.1 Simulation entry point** · Auto
   - Needs: 2.4.
   - Context: DESIGN "Public functions"; `src/pulse_tube_cooldown/__init__.py`.
   - Do: Implement `simulate_cooldown(model)` by executing the procedure and assembling its Result.
   - Verified by: A constructed model returns expected temperatures, switch records, heat flows, and status through the public call.
+  - Outcome: `simulate_cooldown` lives in `engine/solver.py`; `__init__.py` holds no code.
 
 - [ ] **7.2 Saved output** · Auto
   - Context: DESIGN `save_output`; `output.py`.

@@ -8,7 +8,13 @@ from numpy.typing import NDArray
 
 from pulse_tube_cooldown.core.errors import ConfigurationError
 from pulse_tube_cooldown.core.types import Graph, Material, Model, Node, Phase, PhaseSolution, Procedure
-from pulse_tube_cooldown.engine.solver import build_result, integrate_phase, reconstruct_heat_flow, run_procedure
+from pulse_tube_cooldown.engine.solver import (
+    build_result,
+    integrate_phase,
+    reconstruct_heat_flow,
+    run_procedure,
+    simulate_cooldown,
+)
 
 _CONSTANT = Material(
     name="Constant",
@@ -368,3 +374,51 @@ def test_result_flows_are_nan_throughout_a_phase_without_links():
 
     assert list(data.link.values) == ["strap"]
     assert np.isnan(data.heat_flow).all()
+
+
+def _simulated_switch(stop_condition=None):
+    # Precool's 0.5 W/K strap cools the stage with tau = 4 s until 100 K at t = 4 ln(296 / 96); cooldown's 1 W/K strap
+    # then cools it with tau = 2 s from that state until 20 s.
+    precool = Phase("precool", (_LINK,), _stage_below(100.0))
+    cooldown = Phase("cooldown", (_Conductance("strap", ("stage", "bath"), 1.0),), None)
+    return _model((precool, cooldown), stop_condition=stop_condition)
+
+
+def test_simulation_follows_both_phases_and_keeps_the_switch():
+    crossing = _TAU * np.log(296.0 / 96.0)
+    model = _simulated_switch()
+
+    result = simulate_cooldown(model)
+
+    assert result.model is model
+    assert result.status == "max_time"
+    data = result.data
+    precool_time = np.append(np.arange(0.0, crossing, 2.0), crossing)
+    cooldown_time = np.append(np.arange(crossing, 20.0, 2.0), 20.0)
+    np.testing.assert_allclose(data.time, np.concatenate([precool_time, cooldown_time]), rtol=1e-6)
+    assert list(data.phase.values) == ["precool"] * precool_time.size + ["cooldown"] * cooldown_time.size
+    expected = np.concatenate(
+        [_relaxation(precool_time, 0.0, 300.0), 4.0 + 96.0 * np.exp(-(cooldown_time - crossing) / 2.0)]
+    )
+    np.testing.assert_allclose(data.temperature.sel(node="stage"), expected, rtol=1e-6)
+    np.testing.assert_array_equal(data.temperature.sel(node="bath"), 4.0)
+
+
+def test_simulation_heat_flows_follow_each_phases_strap():
+    data = simulate_cooldown(_simulated_switch()).data
+
+    conductance = np.where(data.phase.values == "precool", 0.5, 1.0)
+    into_stage = conductance * (4.0 - data.temperature.sel(node="stage").values)
+    np.testing.assert_allclose(data.heat_flow.sel(link="strap", node="stage"), into_stage, rtol=1e-6)
+    np.testing.assert_allclose(data.heat_flow.sel(link="strap", node="bath"), -into_stage, rtol=1e-6)
+    # At the 100 K switch, 0.5 W/K and then 1 W/K carry heat from the stage to the 4 K bath.
+    switch = np.flatnonzero(np.isclose(data.time.values, _TAU * np.log(296.0 / 96.0)))
+    np.testing.assert_allclose(data.heat_flow.isel(time=switch).sel(link="strap", node="stage"), [-48.0, -96.0])
+
+
+def test_simulation_status_reports_a_procedure_stop():
+    result = simulate_cooldown(_simulated_switch(stop_condition=_after(1.0)))
+
+    assert result.status == "stop_condition"
+    assert set(result.data.phase.values) == {"precool"}
+    np.testing.assert_allclose(result.data.time[-1], 1.0)

@@ -12,7 +12,7 @@ from pulse_tube_cooldown.core.errors import ConfigurationError
 from pulse_tube_cooldown.core.types import Graph, Model, Phase, PhaseSolution, Result
 from pulse_tube_cooldown.engine.equations import calc_link_heat_flows, calc_temperature_rate_of_change
 
-__all__ = ["build_result", "integrate_phase", "reconstruct_heat_flow", "run_procedure"]
+__all__ = ["build_result", "integrate_phase", "reconstruct_heat_flow", "run_procedure", "simulate_cooldown"]
 
 
 def integrate_phase(model: Model, phase: Phase, time: float, temperature: NDArray[np.float64]) -> PhaseSolution:
@@ -168,6 +168,19 @@ def build_result(model: Model, solutions: Sequence[PhaseSolution]) -> Result:
     )
 
     return Result(status=status, model=model, data=data)
+
+
+def simulate_cooldown(model: Model) -> Result:
+    """Simulates a model's cooldown through its procedure.
+
+    Args:
+        model: The model to simulate, starting at time zero from its `initial_temperature`.
+
+    Returns:
+        The run's Result, whose status names how the final phase ended.
+    """
+    solutions = run_procedure(model)
+    return build_result(model, solutions)
 
 
 def _graph(model: Model, phase: Phase) -> Graph:
