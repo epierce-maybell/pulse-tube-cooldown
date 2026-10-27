@@ -44,7 +44,7 @@ def _two_phase_procedure() -> Procedure:
 
 
 def _model(procedure: Procedure | None = None, nodes: tuple[Node, ...] = _NODES) -> Model:
-    return Model(nodes, procedure or _two_phase_procedure(), np.full(len(nodes), 300.0), (2,), {})
+    return Model({}, nodes, procedure or _two_phase_procedure(), np.full(len(nodes), 300.0), (2,), {})
 
 
 def test_multi_phase_procedure_keeps_phases_in_order():
@@ -133,8 +133,11 @@ def test_model_holds_run_inputs():
     procedure = _two_phase_procedure()
     initial_temperature = np.array([300.0, 300.0, 295.0])
 
-    model = Model(_NODES, procedure, initial_temperature, (2,), {"method": "Radau", "max_step": 100.0})
+    model = Model(
+        {"experiment": "Toy"}, _NODES, procedure, initial_temperature, (2,), {"method": "Radau", "max_step": 100.0}
+    )
 
+    assert model.meta == {"experiment": "Toy"}
     assert model.nodes == _NODES
     assert model.procedure is procedure
     np.testing.assert_array_equal(model.initial_temperature, [300.0, 300.0, 295.0])

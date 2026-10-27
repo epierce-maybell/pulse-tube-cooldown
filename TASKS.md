@@ -1,4 +1,4 @@
-# Tasks — 31/77 done
+# Tasks — 32/77 done
 
 Build the v1 simulator specified in `docs/DESIGN.md`: the six-plate systems SN09 and FP1 from room temperature until condensing begins, each with least-squares log-temperature residual comparable to or lower than the legacy model's across system thermometers except MXP.
 
@@ -174,7 +174,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
 
 - [ ] **6.4 Complete model configuration** · Auto
   - Context: DESIGN `configure_model` and Model fields; `config.py`.
-  - Do: Implement `configure_model(path_to_config)`, assembling the procedure, initial temperatures, boundary indices, solver options, and configuration-relative data references where used.
+  - Do: Implement `configure_model(path_to_config)`, assembling the `[meta]` table, procedure, initial temperatures, boundary indices, solver options, and configuration-relative data references where used.
   - Verified by: A complete toy TOML loads into the expected Model; malformed run inputs fail with useful context.
 
 *End of this area's first-slice work.*
@@ -185,7 +185,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Do: Implement and register `condensing_begins`, resolving node names against a graph.
   - Verified by: The condition has the specified sign on either side of its threshold and equals zero at the threshold.
 
-## 7. [1/4] Public run, persistence, and CLI
+## 7. [2/4] Public run, persistence, and CLI
 
 - [x] **7.1 Simulation entry point** · Auto
   - Needs: 2.4.
@@ -194,10 +194,11 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Verified by: A constructed model returns expected temperatures, switch records, heat flows, and status through the public call.
   - Outcome: `simulate_cooldown` lives in `engine/solver.py`; `__init__.py` holds no code.
 
-- [ ] **7.2 Saved output** · Auto
+- [x] **7.2 Saved output** · Auto
   - Context: DESIGN `save_output`; `output.py`.
   - Do: Implement `save_output`, writing the Result Dataset as netCDF with run provenance, and add the netCDF backend dependency.
   - Verified by: Opening the file with xarray reproduces the Result's data and attributes, including both sides of a phase switch.
+  - Outcome: `save_output` lives in `output.py` and writes the Dataset with the netCDF4 engine. Provenance is `Model.meta`, the configuration's `[meta]` table, which `build_result` copies into the Dataset attributes as flat keys beside `status` and `message`.
 
 - [ ] **7.3 CLI and public exports** · Auto
   - Needs: 6.4.

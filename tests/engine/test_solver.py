@@ -78,6 +78,7 @@ def _after(cutoff: float):
 
 def _model(phases: tuple[Phase, ...], stop_condition=None, options=_OPTIONS) -> Model:
     return Model(
+        meta={},
         nodes=(_STAGE, _BATH),
         procedure=Procedure(phases=phases, stop_condition=stop_condition),
         initial_temperature=np.array([300.0, 4.0]),
@@ -347,6 +348,20 @@ def test_result_status_is_how_the_final_phase_ended(end):
     assert result.model is model
     assert result.data.attrs["status"] == end
     assert result.data.attrs["message"] == "cooldown ended"
+
+
+def test_result_attributes_carry_model_meta():
+    model, solutions = _switching_run()
+    model = dataclasses.replace(model, meta={"experiment": "Toy switch", "version": "abc1234"})
+
+    attrs = build_result(model, solutions).data.attrs
+
+    assert attrs == {
+        "experiment": "Toy switch",
+        "version": "abc1234",
+        "status": "max_time",
+        "message": "cooldown ended",
+    }
 
 
 def test_result_records_units():

@@ -140,6 +140,7 @@ class Graph:
 
 @dataclass(frozen=True, slots=True)
 class Model:
+    meta: Mapping[str, Any]
     nodes: tuple[Node, ...]
     procedure: Procedure
     initial_temperature: NDArray[np.float64]

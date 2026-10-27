@@ -264,6 +264,7 @@ class Model:
     """Everything needed to simulate one run.
 
     Attributes:
+        meta: Run provenance from the configuration's `[meta]` table, recorded in the Result's attributes.
         nodes: Nodes with unique names, in index order.
         procedure: The phases to run and the condition that stops the run.
         initial_temperature: Temperature in K of each node at the start of the run.
@@ -276,6 +277,7 @@ class Model:
         ConfigurationError: A phase's graph is invalid, such as a link referring to an unknown node.
     """
 
+    meta: Mapping[str, Any]
     nodes: tuple[Node, ...]
     procedure: Procedure
     initial_temperature: NDArray[np.float64]
@@ -326,7 +328,7 @@ class Result:
             names and every link name used in any phase. Variables are `phase(time)` (phase names),
             `temperature(time, node)` in K, `heat_flow(time, link, node)` in W into the node (NaN where the link does
             not touch the node or is inactive), and `connected(link, node)`. A phase switch repeats its time, once for
-            each phase. Attributes record status, units, and run provenance.
+            each phase. Attributes record status, the solver's final message, units, and the model's `meta`.
     """
 
     status: str

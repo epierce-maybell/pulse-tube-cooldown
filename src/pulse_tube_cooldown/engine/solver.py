@@ -124,8 +124,9 @@ def build_result(model: Model, solutions: Sequence[PhaseSolution]) -> Result:
         solutions: The solution of each integrated phase, in order, as returned by `run_procedure`.
 
     Returns:
-        The run's Result, with the final solution's `end` as its status. The link axis holds every link in any phase
-        of the procedure, in order of first appearance, and a phase switch keeps the samples on both sides.
+        The run's Result, with the final solution's `end` as its status and the model's `meta` among its attributes.
+        The link axis holds every link in any phase of the procedure, in order of first appearance, and a phase switch
+        keeps the samples on both sides.
     """
     links = {}
     for phase in model.procedure.phases:
@@ -164,7 +165,7 @@ def build_result(model: Model, solutions: Sequence[PhaseSolution]) -> Result:
             "node": node_names,
             "link": link_names,
         },
-        attrs={"status": status, "message": solutions[-1].message},
+        attrs={**model.meta, "status": status, "message": solutions[-1].message},
     )
 
     return Result(status=status, model=model, data=data)
