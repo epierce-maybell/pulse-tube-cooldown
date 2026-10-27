@@ -16,7 +16,7 @@ All physical quantities are in SI units, for example:
 from collections import defaultdict
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
-from typing import Any, Protocol
+from typing import Any, Literal, Protocol
 
 import numpy as np
 import xarray as xr
@@ -24,7 +24,7 @@ from numpy.typing import NDArray
 
 from pulse_tube_cooldown.core.errors import ConfigurationError
 
-__all__ = ["Gas", "Graph", "Link", "Material", "Model", "Node", "Phase", "Procedure", "Result"]
+__all__ = ["Gas", "Graph", "Link", "Material", "Model", "Node", "Phase", "PhaseSolution", "Procedure", "Result"]
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -279,6 +279,26 @@ class Model:
                 raise ConfigurationError(f"Phase {phase.name!r}: {error}") from error
 
         object.__setattr__(self, "graphs", tuple(graphs))
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class PhaseSolution:
+    """The integrated history of one phase.
+
+    Attributes:
+        phase: The integrated phase.
+        end: What ended the phase: its `until` condition, the procedure's `stop_condition`, the run's `max_time`, or a
+            solver failure.
+        time: Sample times in s, from the phase's start time; the last sample is the state where the phase ended.
+        temperature: Temperature in K of each node at each sample, with one row per sample.
+        message: The solver's description of how integration ended.
+    """
+
+    phase: Phase
+    end: Literal["until", "stop_condition", "max_time", "solver_failure"]
+    time: NDArray[np.float64]
+    temperature: NDArray[np.float64]
+    message: str
 
 
 @dataclass(frozen=True, slots=True)

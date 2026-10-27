@@ -141,6 +141,15 @@ class Model:
     graphs: tuple[Graph, ...]
 
 
+@dataclass(frozen=True, slots=True, kw_only=True)
+class PhaseSolution:
+    phase: Phase
+    end: Literal["until", "stop_condition", "max_time", "solver_failure"]
+    time: NDArray[np.float64]  
+    temperature: NDArray[np.float64] 
+    message: str
+    
+
 @dataclass(frozen=True, slots=True)
 class Result:
     status: str
@@ -187,24 +196,18 @@ def calc_temperature_rate_of_change(
     graph: Graph, fixed_boundary_nodes: tuple[int, ...], time: float, temperature: NDArray[np.float64]
 ) -> NDArray[np.float64]: ...
 
-
-def build_jacobian(
-    graph: Graph, fixed_boundary_nodes: tuple[int, ...], temperature: NDArray[np.float64]
-) -> NDArray[np.float64]: ...
-
-
 def integrate_phase(
     model: Model, phase: Phase, time: float, temperature: NDArray[np.float64]
-) -> scipy.integrate.OdeResult: ...
+) -> PhaseSolution: ...
 
 
-def run_procedure(model: Model) -> list[OdeResult]: ...
+def run_procedure(model: Model) -> Sequence[PhaseSolution]: ...
 
 
 def reconstruct_heat_flow(graph: Graph, temperature: NDArray[np.float64]) -> NDArray[np.float64]: ...
 
 
-def build_result(model: Model, solutions: Sequence[OdeResult]) -> Result: ...
+def build_result(model: Model, solutions: Sequence[PhaseSolution]) -> Result: ...
 ```
 
 ## Dilution refrigerator library
