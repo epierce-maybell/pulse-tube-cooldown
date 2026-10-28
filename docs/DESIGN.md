@@ -330,7 +330,7 @@ where $\Delta p$ is the pressure swing for each cycle, $P$ is the period of the 
 Gas-gap heat switches are a specific link type, always connecting only two nodes, handled here with a reduced-complexity model. Heat flow $Q$ through the switch is given by:
 
 $$
-Q = \frac{(T_h - T_c)}{\dfrac{1}{hA} + \sum_b \dfrac{L_b}{k_b A_b}},
+Q = \frac{(T_h - T_c)}{\frac{1}{hA} + \sum_b \frac{L_b}{k_b A_b}},
 $$
 where $T_h$ and $T_c$ are the temperatures of the warmer and colder adjacent nodes, respectively, $A$ is the gap area, and each bracket $b$ has a length $L_b$, area $A_b$, and conductivity $k_b$. The gap's conductance per unit area $h$ is a combination of the high-pressure and low-pressure behavior:
 
