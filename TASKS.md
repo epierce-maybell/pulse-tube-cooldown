@@ -1,4 +1,4 @@
-# Tasks — 36/79 done
+# Tasks — 38/81 done
 
 Build the v1 simulator specified in `docs/DESIGN.md`: the six-plate systems SN09 and FP1 from room temperature until condensing begins, each with least-squares log-temperature residual comparable to or lower than the legacy model's across system thermometers except MXP.
 
@@ -289,17 +289,29 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Do: Register the Link and load its pairs, gas, reference node, and pressure coefficients from configuration.
   - Verified by: A configured run carries gas heat transfer while the reference node is warm and none once the pressure reaches zero, without a phase change; a pair naming a node outside the link fails to load.
 
-## 12. [0/4] Radiation and insulation
+## 12. [1/6] Radiation and insulation
 
-- [ ] **12.1 Radiation physics and parameters** · Discuss
+- [x] **12.1 Radiation physics and parameters** · Discuss
   - Context: DESIGN radiation Link; legacy `radiation_parallel_plates` and `radiation_enclosed`.
   - Decide: Supported plate/shield geometries and area, emissivity, and enclosure parameters.
+  - Outcome: DESIGN "Radiation" records one gray-body link between two nodes ordered `[inner, outer]`, with per-node areas and named Surfaces whose emissivity is evaluated at each surface's own temperature. Parallel plates have equal areas. An inner area larger than the outer area raises ConfigurationError.
+
+- [ ] **12.5 Surface type and loader** · Auto
+  - Needs: 1.1.
+  - Context: DESIGN `Surface` and "Radiation"; `library/surfaces/load.py`, `library/surfaces/data/`; `make_fit` in `library/property_fits.py`.
+  - Do: Define Surface and implement `load_surface`, building emissivity in the material property format.
+  - Verified by: Fixture surfaces load and evaluate emissivity, with range handling as for materials; missing or malformed surfaces produce useful errors.
 
 - [ ] **12.2 Radiation Link** · Auto
-  - Needs: 6.1.
+  - Needs: 6.1, 12.5.
   - Context: 12.1's recorded design; `library/links/radiation.py`.
   - Do: Implement and register the agreed radiation Link.
-  - Verified by: Reference calculations cover agreed geometries, equal temperatures, and reversed temperature ordering.
+  - Verified by: Reference calculations cover parallel plates, unequal enclosed areas, temperature-dependent emissivity, equal temperatures, and reversed temperature ordering; an inner area larger than the outer area raises ConfigurationError.
+
+- [ ] **12.6 Surface emissivity data** · Human
+  - Needs: 12.5, 20.2.
+  - Context: DESIGN "Radiation"; each validation system's inventory; `library/surfaces/data/`.
+  - Input: Supply sourced emissivity over temperature for each radiating surface finish in SN09 and FP1, as surface files.
 
 - [ ] **12.3 MLI physics and parameters** · Discuss
   - Context: DESIGN MLI Link; legacy MLI functions; outcome of 12.1.
@@ -485,7 +497,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
 ## 24. [0/5] Full-system validation
 
 - [ ] **24.1 Validation-system configurations** · Auto
-  - Needs: 4.1 and its required material ports, 6.5, 7.4, 9.2, 10.3, 11.3, 12.4, 13.2, 14.3, 16.4, 20.2, 20.4.
+  - Needs: 4.1 and its required material ports, 6.5, 7.4, 9.2, 10.3, 11.3, 12.4, 12.6, 13.2, 14.3, 16.4, 20.2, 20.4.
   - Context: DESIGN configuration and validation; each validation system's inventory; `simulations/validation/<identifier>/`.
   - Do: Write each validation system's TOML and reproducible runner from its inventory, procedure, and cooler data.
   - Verified by: Loaded compositions, connectivity, activation, and parameters match the supplied inventory.

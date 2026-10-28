@@ -88,7 +88,7 @@ run-ptc --config "path_to_config" --output "path_to_output"
 ```
 
 ## Data model
-The important structures are listed here. The Model holds information about the simulation, including the order of operations (see Phases and Procedure, below), and is responsible for constructing graphs. A Graph describes the connectivity between components of the system, Nodes and Links, which may be made of Materials that are responsible for their own thermal properties. Simulation output is stored in a Result.
+The important structures are listed here. The Model holds information about the simulation, including the order of operations (see Phases and Procedure, below), and is responsible for constructing graphs. A Graph describes the connectivity between components of the system, Nodes and Links, which may consist of Materials, Gases, and Surfaces that are responsible for their own thermal properties. Simulation output is stored in a Result.
 
 ```python
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -110,6 +110,12 @@ class Gas:
     adsorption_energy: float
     adsorption_constant: float
     adsorption_capacity: float # per kg of charcoal
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class Surface:
+    name: str
+    emissivity: Callable[[NDArray[np.float64]], NDArray[np.float64]]
 
 
 @dataclass(frozen=True, slots=True)
@@ -365,6 +371,34 @@ charcoal_mass = 1.8e-4     # kg
 brackets = [{ material = "OFHC Cu RRR100", area = 1.0e-4, length = 0.02 }]
 ```
 
+#### Radiation
+Radiation Links connect exactly two nodes, ordered as `[inner, outer]` corresponding to their orientation in physical space. We'll denote `inner` as $\Box_1$ and `outer` as $\Box_2$. Heat flow $Q$ between them is given by grey-body radiation:
+
+$$
+Q = \pm \frac{\sigma A_1 (T_2^4 - T_1^4)}{\frac{1}{\epsilon_1(T_1)} + \frac{A_1}{A_2} \left(\frac{1}{\epsilon_2(T_2)} - 1 \right)},
+$$
+
+for each node's temperature $T_1$ and $T_2$, surface area $A_1$ and $A_2$, and emissivity $\epsilon_1$ and $\epsilon_2$. Parallel plates have $A_1 = A_2$. $Q$ is positive into the inner node and negative into the outer node, by construction. Rather than store emissivity on each Node, we track each Surface adjacent to the Radiation Link as its own type.
+
+Surface configuration looks like:
+```toml
+name = "Polished OFHC Cu"
+[emissivity]
+form = "table"
+table = [[4.0, 0.006], [77.0, 0.015], [300.0, 0.03]]
+range = [4.0, 300.0]
+source = "..."
+```
+And a Radiation Link is configured as:
+```toml
+[[fridge.links]]
+name = "4K shield to still shield"
+type = "radiation"
+nodes = ["STP", "CFP"]
+area = [0.119, 0.45]
+surface = ["Polished OFHC Cu", "Polished OFHC Cu"]
+```
+
 ## Validation and testing
 Validation experiments should live in simulations/validation/identifier, where identifier is usually a subdirectory that stores the runner script, the configuration file(s), and output.
 
@@ -400,6 +434,10 @@ src/pulse_tube_cooldown/
                 ss_304.toml
                 ...
         gases/
+            __init__.py
+            load.py
+            data/...
+        surfaces/
             __init__.py
             load.py
             data/...
