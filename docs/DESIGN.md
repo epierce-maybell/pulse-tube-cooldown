@@ -327,10 +327,10 @@ where $Q_R$ is the heat flow, $G_R(T_R)$ is the regenerator conductance, $T_{RGP
 Gas pushing is its own specific link type, although future scenarios may extend this to consider different methods. Here, we focus on `gas_pushing_pm5`, which is currently deployed. Rather than fit to data, we derive a simple model from first principles, where gas pushing is effectively a conductance between two nodes. Pressure varies on short time scales relative to heat flow, so we average over the pumping cycle. Then, the effective conductance $G$ between two nodes $k$ and $k + 1$ is given by
 
 $$
-G = \frac{5}{2} \frac{\Delta p}{P} \sum_{j > k} \frac{V_j}{T_j}
+G = \frac{5}{2} \Delta p f \sum_{j > k} \frac{V_j}{T_j}
 $$
 
-where $\Delta p$ is the pressure swing for each cycle, $P$ is the period of the cycle, and $V_j$ and $T_j$ are the gas volume and temperature at each node $j$ that the gas fills. Heat flow is then simply: $Q = \pm G(\Delta T)$ where $\Delta T$ is the difference in temperature between each node.
+where $\Delta p$ is the pressure swing for each cycle, $f = 1 / $period is the frequency of the cycle, and $V_j$ and $T_j$ are the gas volume and temperature at each node $j$ that the gas fills. Heat flow is then simply: $Q = \pm G(\Delta T)$ where $\Delta T$ is the difference in temperature between each node.
 
 #### Gas-gap heat switch
 Gas-gap heat switches are a specific link type, always connecting only two nodes, handled here with a reduced-complexity model. Heat flow $Q$ through the switch is given by:
