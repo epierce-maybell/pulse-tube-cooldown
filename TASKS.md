@@ -247,7 +247,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
 
 - [ ] **9.3 Helium adsorption and accommodation data** · Human
   - Needs: 9.1.
-  - Context: `library/gases/data/`; Corruccini, Vacuum 7–8, 19 (1959), also reproduced in Ekin, *Experimental Techniques for Low-Temperature Measurements*; legacy's standalone `gas_gap_heat_switch.py` presets.
+  - Context: `library/gases/data/`; Corruccini, Vacuum 7–8, 19 (1959), also reproduced in Ekin, *Experimental Techniques for Low-Temperature Measurements*; 20.2's switch charcoal.
   - Do: Supply sourced Langmuir constants for He-4 on the switches' charcoal and accommodation coefficients measured across the temperature ranges of He-4 and N2. Add them to the gas files and remove the xfail marker from the He-4 data tests.
   - Verified by: He-4 loads and its data tests pass; each accommodation table cites values across its range.
 
@@ -431,7 +431,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
 
 - [ ] **20.3 Supply missing validation measurements** · Human
   - Context: 20.1's outcome and trace metadata.
-  - Input: For each validation system, supply the cooldown record, the cold_control routine logs for that run, the `monitor_ovc` P1 diagnostics, and missing acquisition/channel metadata. Record existing adequate inputs, including `data/sn09/cooldown_2026-06-04.dat`, by reference.
+  - Input: For each validation system, supply the cooldown record, the cold_control routine logs for that run, the `monitor_ovc` P1 diagnostics, the P2 and P3 pressure traces through gas pushing, and missing acquisition/channel metadata. Record existing adequate inputs, including `data/sn09/cooldown_2026-06-04.dat`, by reference.
 
 - [ ] **20.4 Measure FP1 geometry from CAD** · Human
   - Context: FP1 CAD; DESIGN radiation, exchange-gas, conduction, gas-gap switch, gas-pushing, and regenerator inputs; `data/fp1/bom_by_node.csv`.
