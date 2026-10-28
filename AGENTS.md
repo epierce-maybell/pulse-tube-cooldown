@@ -4,6 +4,7 @@
 3. Assume CONTEXT is deprecated where it contradicts other files or a decision under consideration. It only exists to orient new agents.
 4. Do not use comments and documentation to justify choices. Defensive comments are a code smell.
 5. An `__init__.py` holds only a docstring and re-exports. Definitions live in named modules, such as `library/materials/load.py`. This holds even where a task or design names an `__init__.py` as the location.
+6. Assume that multiple agents are operating simultaneously. Scope Plannotator reviews and git commits to only the changes made in the current session.
 
 # Rules for contributing
 1. Documentation says "what is," not "what isn't."

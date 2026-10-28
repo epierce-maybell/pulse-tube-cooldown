@@ -334,7 +334,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Do: Implement and register the agreed contact Link.
   - Verified by: Independent cases establish flow and temperature dependence, including configuration loading.
 
-## 14. [1/3] Cooler characterization inputs
+## 14. [1/3, 1 claimed] Cooler characterization inputs
 
 - [x] **14.1 Cooler characterization requirements** · Auto
   - Context: DESIGN "Coupled capacity maps".
@@ -342,9 +342,11 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Verified by: Each term in the DESIGN capacity and regenerator equations traces to a named input.
   - Outcome: Q1(T1) and Q2(T2) need a measured cooldown path T1(t), T2(t) and each stage's heat capacity C_i(T) from its masses and materials. The regenerator term needs G_R(T) and x_R, which the cooldown path does not determine.
 
-- [ ] **14.2 Supply missing characterization inputs** · Human
+- [o] **14.2 Supply missing characterization inputs** · Human
   - Context: 14.1's outcome and DESIGN stage energy balance.
   - Input: Supply a cooldown path T1(t), T2(t), each stage's masses and materials, and a source for G_R and x_R.
+  - Test-stand masses: mounting hardware 3.9 oz (110.6 g), of which 1.4 oz (39.7 g) is copper; radiation shield 42 oz (1.191 kg) of copper; flange 16 oz (453.6 g) of aluminum.
+  - Gaps: stage assignment of each part; material of the remaining 2.5 oz (70.9 g) of mounting hardware; cold-head internal masses; cooldown path; G_R and x_R.
 
 - [ ] **14.3 FP1 pulse-tube characterization records** · Human
   - Context: 14.1's outcome; 20.1's outcome; SN09's records in `data/sn09/pulse_tube/`.
