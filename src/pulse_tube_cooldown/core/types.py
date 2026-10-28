@@ -24,7 +24,19 @@ from numpy.typing import NDArray
 
 from pulse_tube_cooldown.core.errors import ConfigurationError
 
-__all__ = ["Gas", "Graph", "Link", "Material", "Model", "Node", "Phase", "PhaseSolution", "Procedure", "Result"]
+__all__ = [
+    "Gas",
+    "Graph",
+    "Link",
+    "Material",
+    "Model",
+    "Node",
+    "Phase",
+    "PhaseSolution",
+    "Procedure",
+    "Result",
+    "Surface",
+]
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -72,6 +84,19 @@ class Gas:
     adsorption_energy: float
     adsorption_constant: float
     adsorption_capacity: float
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class Surface:
+    """A surface finish that exchanges thermal radiation.
+
+    Attributes:
+        name: Identifier used by configuration files, such as "Polished OFHC Cu".
+        emissivity: Maps temperatures in K to hemispherical total emissivities, elementwise.
+    """
+
+    name: str
+    emissivity: Callable[[NDArray[np.float64]], NDArray[np.float64]]
 
 
 @dataclass(frozen=True, slots=True)

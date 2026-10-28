@@ -1,4 +1,4 @@
-# Tasks — 39/81 done
+# Tasks — 40/81 done
 
 Build the v1 simulator specified in `docs/DESIGN.md`: the six-plate systems SN09 and FP1 from room temperature until condensing begins, each with least-squares log-temperature residual comparable to or lower than the legacy model's across system thermometers except MXP.
 
@@ -290,18 +290,19 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Do: Register the Link and load its pairs, gas, reference node, and pressure coefficients from configuration.
   - Verified by: A configured run carries gas heat transfer while the reference node is warm and none once the pressure reaches zero, without a phase change; a pair naming a node outside the link fails to load.
 
-## 12. [1/6] Radiation and insulation
+## 12. [2/6] Radiation and insulation
 
 - [x] **12.1 Radiation physics and parameters** · Discuss
   - Context: DESIGN radiation Link; legacy `radiation_parallel_plates` and `radiation_enclosed`.
   - Decide: Supported plate/shield geometries and area, emissivity, and enclosure parameters.
   - Outcome: DESIGN "Radiation" records one gray-body link between two nodes ordered `[inner, outer]`, with per-node areas and named Surfaces whose emissivity is evaluated at each surface's own temperature. Parallel plates have equal areas. An inner area larger than the outer area raises ConfigurationError.
 
-- [ ] **12.5 Surface type and loader** · Auto
+- [x] **12.5 Surface type and loader** · Auto
   - Needs: 1.1.
   - Context: DESIGN `Surface` and "Radiation"; `library/surfaces/load.py`, `library/surfaces/data/`; `make_fit` in `library/property_fits.py`.
   - Do: Define Surface and implement `load_surface`, building emissivity in the material property format.
   - Verified by: Fixture surfaces load and evaluate emissivity, with range handling as for materials; missing or malformed surfaces produce useful errors.
+  - Outcome: `load_surface(name, /, *, directory=...)` reads the `[emissivity]` table with `make_fit`. Material, gas, and surface loaders share `read_named_toml` in `library/toml_files.py`, which picks the one `*.toml` file whose `name` field matches. `library/surfaces/data/` arrives with 12.6.
 
 - [ ] **12.2 Radiation Link** · Auto
   - Needs: 6.1, 12.5.

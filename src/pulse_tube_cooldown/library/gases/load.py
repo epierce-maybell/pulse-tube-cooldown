@@ -22,13 +22,11 @@ pressure's range extends to infinity, where the Wagner form is infinite past the
 """
 
 import os
-import tomllib
 from pathlib import Path
-from typing import Any
 
-from pulse_tube_cooldown.core.errors import ConfigurationError
 from pulse_tube_cooldown.core.types import Gas
 from pulse_tube_cooldown.library.property_fits import make_fit
+from pulse_tube_cooldown.library.toml_files import read_named_toml
 
 __all__ = ["load_gas"]
 
@@ -48,7 +46,7 @@ def load_gas(name: str, /, *, directory: str | os.PathLike[str] = _DATA_DIRECTOR
     Raises:
         ConfigurationError: If no file or more than one file defines the name.
     """
-    data = _read_definition(name, Path(directory))
+    data = read_named_toml(name, directory=directory, kind="gases")
 
     return Gas(
         name=name,
@@ -61,14 +59,3 @@ def load_gas(name: str, /, *, directory: str | os.PathLike[str] = _DATA_DIRECTOR
         adsorption_constant=float(data["adsorption_constant"]),
         adsorption_capacity=float(data["adsorption_capacity"]),
     )
-
-
-def _read_definition(name: str, directory: Path) -> dict[str, Any]:
-    """Returns the contents of the one file in `directory` whose `name` field is `name`."""
-    definitions = [tomllib.loads(path.read_text(encoding="utf-8")) for path in directory.glob("*.toml")]
-    matches = [definition for definition in definitions if definition["name"] == name]
-
-    if len(matches) != 1:
-        raise ConfigurationError(f"Found {len(matches)} gases named {name!r} in {directory}; expected one.")
-
-    return matches[0]

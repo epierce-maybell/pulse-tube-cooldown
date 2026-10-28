@@ -24,18 +24,16 @@ conductivity at the nearest end and warns as the properties do.
 """
 
 import os
-import tomllib
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
 from scipy.interpolate import CubicHermiteSpline
 
-from pulse_tube_cooldown.core.errors import ConfigurationError
 from pulse_tube_cooldown.core.types import Material
 from pulse_tube_cooldown.library.property_fits import PropertyFit, make_fit, warn_above, warn_below
+from pulse_tube_cooldown.library.toml_files import read_named_toml
 
 __all__ = ["load_material"]
 
@@ -55,7 +53,7 @@ def load_material(name: str, /, *, directory: str | os.PathLike[str] = _DATA_DIR
     Raises:
         ConfigurationError: If no file or more than one file defines the name.
     """
-    data = _read_definition(name, Path(directory))
+    data = read_named_toml(name, directory=directory, kind="materials")
     conductivity = make_fit(data["thermal_conductivity"], f"{name} thermal_conductivity")
     table = np.array(data["thermal_conductivity"].get("table", []), dtype=np.float64).reshape(-1, 2)
 
@@ -67,17 +65,6 @@ def load_material(name: str, /, *, directory: str | os.PathLike[str] = _DATA_DIR
             conductivity, data["thermal_conductivity"]["range"], table[:, 0], f"{name} conductivity_integral"
         ),
     )
-
-
-def _read_definition(name: str, directory: Path) -> dict[str, Any]:
-    """Returns the contents of the one file in `directory` whose `name` field is `name`."""
-    definitions = [tomllib.loads(path.read_text(encoding="utf-8")) for path in directory.glob("*.toml")]
-    matches = [definition for definition in definitions if definition["name"] == name]
-
-    if len(matches) != 1:
-        raise ConfigurationError(f"Found {len(matches)} materials named {name!r} in {directory}; expected one.")
-
-    return matches[0]
 
 
 def _integrate(
