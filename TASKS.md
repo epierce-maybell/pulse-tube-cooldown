@@ -1,4 +1,4 @@
-# Tasks — 33/77 done
+# Tasks — 34/77 done
 
 Build the v1 simulator specified in `docs/DESIGN.md`: the six-plate systems SN09 and FP1 from room temperature until condensing begins, each with least-squares log-temperature residual comparable to or lower than the legacy model's across system thermometers except MXP.
 
@@ -152,7 +152,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Context: DESIGN "Scope" and condition registry; the operating procedure for starting condensing.
   - Decide: The physical state that starts condensing and the inputs `condensing_begins` takes.
 
-## 6. [3/5] Configuration loading
+## 6. [4/5] Configuration loading
 
 - [x] **6.1 Fridge graph loading** · Auto
   - Needs: 1.2, 3.6, 8.2.
@@ -180,7 +180,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
 
 *End of this area's first-slice work.*
 
-- [ ] **6.5 Condensing start condition** · Auto
+- [x] **6.5 Condensing start condition** · Auto
   - Needs: 5.3.
   - Context: 5.3's recorded design; `library/conditions.py`.
   - Do: Implement and register `condensing_begins`, resolving node names against a graph.

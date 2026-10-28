@@ -18,7 +18,7 @@ from numpy.typing import NDArray
 from pulse_tube_cooldown.core.errors import ConfigurationError
 from pulse_tube_cooldown.core.types import Graph
 
-__all__ = ["CONDITIONS", "gas_pushing_begins", "load_condition"]
+__all__ = ["CONDITIONS", "condensing_begins", "gas_pushing_begins", "load_condition"]
 
 
 def gas_pushing_begins(graph: Graph, node: str, threshold: float) -> Callable[[float, NDArray[np.float64]], float]:
@@ -36,8 +36,24 @@ def gas_pushing_begins(graph: Graph, node: str, threshold: float) -> Callable[[f
     return lambda time, temperature: temperature[idx] - threshold
 
 
+def condensing_begins(graph: Graph, node: str, threshold: float) -> Callable[[float, NDArray[np.float64]], float]:
+    """Condensing begins once a node cools to a threshold temperature.
+
+    Args:
+        graph: A graph that holds the node, with the node ordering the condition will see.
+        node: The name of the node.
+        threshold: The node's temperature at which condensing begins, in K.
+
+    Raises:
+        ConfigurationError: The graph has no node with this name.
+    """
+    idx = graph.get_node_index(node)
+    return lambda time, temperature: temperature[idx] - threshold
+
+
 CONDITIONS: Mapping[str, Callable[..., Callable[[float, NDArray[np.float64]], float]]] = {
     "gas_pushing_begins": gas_pushing_begins,
+    "condensing_begins": condensing_begins,
 }
 
 
