@@ -1,4 +1,4 @@
-# Tasks — 38/81 done
+# Tasks — 39/81 done
 
 Build the v1 simulator specified in `docs/DESIGN.md`: the six-plate systems SN09 and FP1 from room temperature until condensing begins, each with least-squares log-temperature residual comparable to or lower than the legacy model's across system thermometers except MXP.
 
@@ -187,7 +187,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Do: Implement and register `condensing_begins`, resolving node names against a graph.
   - Verified by: The condition has the specified sign on either side of its threshold and equals zero at the threshold.
 
-## 7. [3/4] Public run, persistence, and CLI
+## 7. [4/4] Public run, persistence, and CLI
 
 - [x] **7.1 Simulation entry point** · Auto
   - Needs: 2.4.
@@ -209,10 +209,11 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Verified by: An installed CLI configures, simulates, and saves a run; a bad configuration reports a failing exit status.
   - Outcome: `main` lives in `__main__.py`. A `PTCError`, unreadable file, or malformed TOML prints `run-ptc: error: ...` and exits 1 without saving. A `solver_failure` status saves the run, prints the solver message, and exits 1. A missing top-level table, NaN initial temperature, or unknown solver name still surfaces as a traceback.
 
-- [ ] **7.4 Canonical toy run** · Auto
+- [x] **7.4 Canonical toy run** · Auto
   - Context: DESIGN canonical run and testing; `simulations/validation/`, integration tests.
   - Do: Add a reproducible toy configuration and reference calculation exercising conduction, a fixed boundary, and a phase switch. Run through both the three public calls and CLI.
   - Verified by: Both paths save equivalent results agreeing with the reference and preserving switch-side records.
+  - Outcome: `simulations/validation/toy/` holds `toy.toml` and `run.py`. The reference in `tests/integration/test_toy_run.py` integrates the Plate's cooling time by quadrature over the library's material properties; the run ends at 21 h, before the Plate settles at the 4 K bath.
 
 *First vertical slice complete.*
 
