@@ -1,15 +1,60 @@
 """Building models from TOML configuration files."""
 
+import os
+import tomllib
 from collections.abc import Mapping
 from typing import Any
 
+import numpy as np
+
 from pulse_tube_cooldown.core.errors import ConfigurationError
-from pulse_tube_cooldown.core.types import Graph, Node, Phase, Procedure
+from pulse_tube_cooldown.core.types import Graph, Model, Node, Phase, Procedure
 from pulse_tube_cooldown.library.conditions import load_condition
 from pulse_tube_cooldown.library.links.load import load_link
 from pulse_tube_cooldown.library.materials.load import load_material
 
-__all__ = ["load_fridge", "load_procedure"]
+__all__ = ["configure_model", "load_fridge", "load_procedure"]
+
+
+def configure_model(path_to_config: str | os.PathLike[str]) -> Model:
+    """Builds a model from a TOML configuration file.
+
+    Args:
+        path_to_config: Path to the TOML configuration file.
+
+    Returns:
+        The model, ready to simulate.
+
+    Raises:
+        ConfigurationError: A table is invalid, `initial_temperature` does not match the nodes, or a fixed boundary
+            node is unknown.
+    """
+    with open(path_to_config, "rb") as file:
+        config = tomllib.load(file)
+
+    graph = load_fridge(config["fridge"])
+    procedure = load_procedure(config["procedure"], graph)
+    solver_options = dict(config["simulation"])
+    names = [node.name for node in graph.nodes]
+
+    initial_temperature = np.asarray(solver_options.pop("initial_temperature"), dtype=np.float64)
+    if initial_temperature.ndim == 0:
+        initial_temperature = np.full(len(names), initial_temperature)
+    elif initial_temperature.shape != (len(names),):
+        raise ConfigurationError(
+            f"`initial_temperature` has {initial_temperature.size} values but needs one for each node: {names}."
+        )
+
+    fixed_boundary_nodes = tuple(graph.get_node_index(name) for name in solver_options.pop("fixed_boundary_nodes", []))
+
+    return Model(
+        config.get("meta", {}),
+        graph.nodes,
+        procedure,
+        initial_temperature,
+        fixed_boundary_nodes,
+        solver_options,
+    )
 
 
 def load_fridge(fridge: Mapping[str, Any]) -> Graph:

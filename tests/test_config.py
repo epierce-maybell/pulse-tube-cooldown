@@ -5,9 +5,9 @@ import tomllib
 import numpy as np
 import pytest
 
-from pulse_tube_cooldown.config import load_fridge, load_procedure
+from pulse_tube_cooldown.config import configure_model, load_fridge, load_procedure
 from pulse_tube_cooldown.core.errors import ConfigurationError
-from pulse_tube_cooldown.core.types import Graph
+from pulse_tube_cooldown.core.types import Graph, Model
 from pulse_tube_cooldown.library.links.conduction import Conduction
 
 _FRIDGE = tomllib.loads(
@@ -242,3 +242,110 @@ def test_bad_condition_names_the_problem(until, named):
 
     with pytest.raises(ConfigurationError, match=named):
         load_procedure(phases, _GRAPH)
+
+
+_CONFIG = """
+[meta]
+experiment = "Toy conduction with a phase switch"
+version = "abc1234"
+
+[[fridge.nodes]]
+name = "Plate"
+composition = [["OFHC Cu RRR100", 1.0]]
+
+[[fridge.nodes]]
+name = "Bath"
+composition = [["OFHC Cu RRR100", 1.0]]
+
+[[fridge.links]]
+name = "Rod A"
+type = "conduction"
+nodes = ["Plate", "Bath"]
+material = "304 SS"
+area = 1.0e-4
+length = 0.1
+
+[[fridge.links]]
+name = "Rod B"
+type = "conduction"
+nodes = ["Plate", "Bath"]
+material = "304 SS"
+area = 1.0e-4
+length = 0.1
+
+[procedure]
+until = { condition = "gas_pushing_begins", node = "Plate", threshold = 10.0 }
+
+[[procedure.phases]]
+name = "single rod"
+disable = ["Rod B"]
+until = { condition = "gas_pushing_begins", node = "Plate", threshold = 100.0 }
+
+[[procedure.phases]]
+name = "both rods"
+enable = ["Rod B"]
+
+[simulation]
+solver = "Radau"
+max_time = 86400.0
+save_every = 100.0
+rtol = 1.0e-6
+initial_temperature = [300.0, 4.0]
+fixed_boundary_nodes = ["Bath"]
+"""
+
+
+def _configure(tmp_path, text=_CONFIG):
+    path = tmp_path / "toy.toml"
+    path.write_text(text)
+    return configure_model(path)
+
+
+def test_configures_the_complete_model(tmp_path):
+    model = _configure(tmp_path)
+
+    assert isinstance(model, Model)
+    assert model.meta == {"experiment": "Toy conduction with a phase switch", "version": "abc1234"}
+    assert [node.name for node in model.nodes] == ["Plate", "Bath"]
+    assert [phase.name for phase in model.procedure.phases] == ["single rod", "both rods"]
+    assert [[link.name for link in graph.links] for graph in model.graphs] == [["Rod A"], ["Rod A", "Rod B"]]
+    np.testing.assert_array_equal(model.initial_temperature, [300.0, 4.0])
+    assert model.fixed_boundary_nodes == (1,)
+    assert model.solver_options == {"solver": "Radau", "max_time": 86400.0, "save_every": 100.0, "rtol": 1.0e-6}
+
+
+def test_procedure_conditions_are_bound_to_the_configured_nodes(tmp_path):
+    model = _configure(tmp_path)
+
+    assert model.procedure.phases[0].until(0.0, np.array([100.0, 4.0])) == 0.0
+    assert model.procedure.stop_condition(0.0, np.array([10.0, 4.0])) == 0.0
+
+
+def test_scalar_initial_temperature_applies_to_every_node(tmp_path):
+    model = _configure(tmp_path, _CONFIG.replace("initial_temperature = [300.0, 4.0]", "initial_temperature = 295.0"))
+
+    np.testing.assert_array_equal(model.initial_temperature, [295.0, 295.0])
+
+
+def test_meta_and_fixed_boundary_nodes_are_optional(tmp_path):
+    text = _CONFIG.replace('fixed_boundary_nodes = ["Bath"]', "")
+    text = text.replace('[meta]\nexperiment = "Toy conduction with a phase switch"\nversion = "abc1234"', "")
+
+    model = _configure(tmp_path, text)
+
+    assert model.meta == {}
+    assert model.fixed_boundary_nodes == ()
+
+
+def test_initial_temperature_of_the_wrong_length_names_the_nodes(tmp_path):
+    text = _CONFIG.replace("initial_temperature = [300.0, 4.0]", "initial_temperature = [300.0, 4.0, 4.0]")
+
+    with pytest.raises(ConfigurationError, match=r"(?s)initial_temperature.*3.*Plate.*Bath"):
+        _configure(tmp_path, text)
+
+
+def test_unknown_fixed_boundary_node_is_named(tmp_path):
+    text = _CONFIG.replace('fixed_boundary_nodes = ["Bath"]', 'fixed_boundary_nodes = ["Tub"]')
+
+    with pytest.raises(ConfigurationError, match="Tub"):
+        _configure(tmp_path, text)
