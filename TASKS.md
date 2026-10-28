@@ -1,4 +1,4 @@
-# Tasks — 35/77 done
+# Tasks — 36/79 done
 
 Build the v1 simulator specified in `docs/DESIGN.md`: the six-plate systems SN09 and FP1 from room temperature until condensing begins, each with least-squares log-temperature residual comparable to or lower than the legacy model's across system thermometers except MXP.
 
@@ -187,7 +187,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Do: Implement and register `condensing_begins`, resolving node names against a graph.
   - Verified by: The condition has the specified sign on either side of its threshold and equals zero at the threshold.
 
-## 7. [2/4] Public run, persistence, and CLI
+## 7. [3/4] Public run, persistence, and CLI
 
 - [x] **7.1 Simulation entry point** · Auto
   - Needs: 2.4.
@@ -202,11 +202,12 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Verified by: Opening the file with xarray reproduces the Result's data and attributes, including both sides of a phase switch.
   - Outcome: `save_output` lives in `output.py` and writes the Dataset with the netCDF4 engine. Provenance is `Model.meta`, the configuration's `[meta]` table, which `build_result` copies into the Dataset attributes as flat keys beside `status` and `message`.
 
-- [ ] **7.3 CLI and public exports** · Auto
+- [x] **7.3 CLI and public exports** · Auto
   - Needs: 6.4.
   - Context: DESIGN public API and CLI; `__init__.py`, `__main__.py`, existing console-script declaration in `pyproject.toml`.
   - Do: Export the three public functions and implement `run-ptc --config ... --output ...`, including useful failures and exit status.
   - Verified by: An installed CLI configures, simulates, and saves a run; a bad configuration reports a failing exit status.
+  - Outcome: `main` lives in `__main__.py`. A `PTCError`, unreadable file, or malformed TOML prints `run-ptc: error: ...` and exits 1 without saving. A `solver_failure` status saves the run, prints the solver message, and exits 1. A missing top-level table, NaN initial temperature, or unknown solver name still surfaces as a traceback.
 
 - [ ] **7.4 Canonical toy run** · Auto
   - Context: DESIGN canonical run and testing; `simulations/validation/`, integration tests.
@@ -321,7 +322,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Do: Implement and register the agreed contact Link.
   - Verified by: Independent cases establish flow and temperature dependence, including configuration loading.
 
-## 14. [1/2] Cooler characterization inputs
+## 14. [1/3] Cooler characterization inputs
 
 - [x] **14.1 Cooler characterization requirements** · Auto
   - Context: DESIGN "Coupled capacity maps".
@@ -332,6 +333,10 @@ Identifiers retain the original task number as a prefix. Context paths are relat
 - [ ] **14.2 Supply missing characterization inputs** · Human
   - Context: 14.1's outcome and DESIGN stage energy balance.
   - Input: Supply a cooldown path T1(t), T2(t), each stage's masses and materials, and a source for G_R and x_R.
+
+- [ ] **14.3 FP1 pulse-tube characterization records** · Human
+  - Context: 14.1's outcome; 20.1's outcome; SN09's records in `data/sn09/pulse_tube/`.
+  - Input: Locate the test-stand cooldown and load map for each of FP1's two PT1.5 pulse tubes and add them under `data/fp1/pulse_tube/`.
 
 ## 15. [0/5] Path-derived capacity curves
 
@@ -382,7 +387,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
 - [ ] **16.4 Cooler configuration** · Auto
   - Context: DESIGN Link loading; link registry and configuration fixtures.
   - Do: Register the complete cooler Link and load node references, capacity data, and regenerator parameters from configuration.
-  - Verified by: A configured graph evaluates expected flows at all three cooled points with identifiable data sources.
+  - Verified by: A configured graph evaluates expected flows at all three cooled points with identifiable data sources; two cooler links on the same plates add their flows.
 
 ## 18. [0/3] Result plots
 
@@ -411,22 +416,32 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Do: Draw nodes and links labelled by name and type, including multi-node links.
   - Verified by: A toy graph renders every node, link, and intended connection with readable labels.
 
-## 20. [1/3] Validation case and inventory
+## 20. [2/4] Validation case and inventory
 
 - [x] **20.1 Select the v1 validation case** · Discuss
   - Context: DESIGN "Scope"; available repository and legacy measurements and inventories; 14.1's data identification where relevant.
   - Decide: Which six-plate system has suitable paired inventory and measurements for a legacy comparison. Record identity, evidence, data locations, and remaining gaps.
-  - Outcome: Validate on SN09 and FP1, which share the six-plate architecture with one pulse tube each. Run the new and legacy models on both systems; legacy runs are regenerated as needed. Builds are documented for every fridge, and cold_control's `cooldown` and `condense` routines define each run's procedure.
-  - SN09 data: `data/SN09_cooldown_time.dat` covers 2026-06-04 00:01 to 2026-06-06 23:00 UTC at 60 s, with PRP, RGP, CFP, STP, ICP, MXP, and DHX. MXP reaches 10 K, where condensing starts, at 63.1 h. `data/SN9_PTR_load_map.png` is the load map for SN09's pulse tube.
-  - Gaps: FP1 cooldown record; SN09 and FP1 build inventories at their run dates; routine logs for each run; bare-head cooldowns for both pulse tubes and FP1's load map.
+  - Outcome: Validate on SN09 and FP1, which share the six-plate architecture. SN09 has one PT1.1 pulse tube; FP1 has two PT1.5 pulse tubes on the same plates. Run the new and legacy models on both systems; legacy runs are regenerated as needed. Builds are documented for every fridge, and cold_control's `cooldown` (SN09) and `fp_cooldown` (FP1) routines define each run's procedure.
+  - SN09 data: `data/sn09/cooldown_2026-06-04.dat` covers 2026-06-04 00:01 to 2026-06-06 23:00 UTC at 60 s, with PRP, RGP, CFP, STP, ICP, MXP, and DHX. MXP reaches 10 K, where condensing starts, at 63.1 h. `data/sn09/pulse_tube/` holds the test-stand cooldowns and load maps for SN09's pulse tube.
+  - Gaps: FP1 cooldown record; routine logs for each run; characterization records for FP1's pulse tubes (14.3).
 
-- [ ] **20.2 Supply missing system inventory** · Human
-  - Context: 20.1's outcome and gaps; DESIGN nodes, links, and configuration.
-  - Input: For each validation system, supply or confirm the build at its run date: nodes, masses, materials, link parameters, and cooler configuration, starting from available legacy inventory. For each gas-gap switch: gas, fill pressure and temperature, gas volume, gap, area, charcoal mass, brackets, and shell dimensions.
+- [x] **20.2 Supply missing system inventory** · Human
+  - Context: 20.1's outcome; DESIGN nodes, links, and configuration; each system's BoM and its reduction to node masses, `data/<system>/bom_by_node.csv`.
+  - Supplied: Node masses by material for both systems, with eleven gas-gap switches in each: PRP–RGP 2 × N2, RGP–CFP 2 × N2, CFP–STP 3 × He-4, STP–ICP 2 × He-4, and ICP–MXP 2 × He-4. All eleven use the same core (500-000182), outer core (500-000183), and shell (500-000185). Each gap is 0.5 mm wide with 40 cm^2 of facing area. The shell is 0.50 mm 304 SS sheet, 25.0 mm OD and 56.4 mm long, giving a 39 mm^2 conduction cross-section over a 70 mm developed length. Switches are filled to 1 atm at room temperature and sealed with a crush tube. Each switch holds one 0.197 cm^3 (0.012 in^3 in CAD) charge of granulated coconut charcoal (part 200-000021), about 0.1 g at a packed density of 0.5 g/cm^3.
 
 - [ ] **20.3 Supply missing validation measurements** · Human
   - Context: 20.1's outcome and trace metadata.
-  - Input: For each validation system, supply the cooldown record, the cold_control routine logs for that run, the `monitor_ovc` P1 diagnostics, and missing acquisition/channel metadata. Record existing adequate inputs, including `data/SN09_cooldown_time.dat`, by reference.
+  - Input: For each validation system, supply the cooldown record, the cold_control routine logs for that run, the `monitor_ovc` P1 diagnostics, and missing acquisition/channel metadata. Record existing adequate inputs, including `data/sn09/cooldown_2026-06-04.dat`, by reference.
+
+- [ ] **20.4 Measure FP1 geometry from CAD** · Human
+  - Context: FP1 CAD; DESIGN radiation, exchange-gas, conduction, gas-gap switch, gas-pushing, and regenerator inputs; `data/fp1/bom_by_node.csv`.
+  - Input: Record in `data/fp1/geometry.csv`, one row per value with its unit and source part:
+    - Outer width, depth, height, and panel thickness of the PRP, CFP, STP, and MXP shields, and the vacuum can's inner dimensions.
+    - Spacing between adjacent plates, from the vacuum can top through ICP–MXP, and the cross-section of each support type spanning each spacing.
+    - Gas-gap switch core and outer-core cross-sections and lengths along the heat path, the gap width and facing area, and the sealed gas volume.
+    - Internal gas volumes of the still, the ICP heat exchangers, each DHX, and the mixing chamber.
+    - Each pulse tube's regenerator clamp position as a fraction of the distance from first to second stage.
+  - SN09 geometry follows from these values and SN09's BoM shield masses.
 
 ## 21. [0/2] Measurement interpretation
 
@@ -470,7 +485,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
 ## 24. [0/5] Full-system validation
 
 - [ ] **24.1 Validation-system configurations** · Auto
-  - Needs: 4.1 and its required material ports, 6.5, 7.4, 9.2, 10.3, 11.3, 12.4, 13.2, 16.4, 20.2.
+  - Needs: 4.1 and its required material ports, 6.5, 7.4, 9.2, 10.3, 11.3, 12.4, 13.2, 14.3, 16.4, 20.2, 20.4.
   - Context: DESIGN configuration and validation; each validation system's inventory; `simulations/validation/<identifier>/`.
   - Do: Write each validation system's TOML and reproducible runner from its inventory, procedure, and cooler data.
   - Verified by: Loaded compositions, connectivity, activation, and parameters match the supplied inventory.
