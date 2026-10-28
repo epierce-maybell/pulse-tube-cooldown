@@ -213,7 +213,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Context: DESIGN canonical run and testing; `simulations/validation/`, integration tests.
   - Do: Add a reproducible toy configuration and reference calculation exercising conduction, a fixed boundary, and a phase switch. Run through both the three public calls and CLI.
   - Verified by: Both paths save equivalent results agreeing with the reference and preserving switch-side records.
-  - Outcome: `simulations/validation/toy/` holds `toy.toml` and `run.py`. The reference in `tests/integration/test_toy_run.py` integrates the Plate's cooling time by quadrature over the library's material properties; the run ends at 21 h, before the Plate settles at the 4 K bath.
+  - Outcome: `simulations/validation/toy/` holds `toy.toml` and `run.py`. The reference in `tests/integration/test_toy_run.py` integrates the Plate's cooling time by quadrature over the library's material properties; the run ends at 24 h, after the Plate settles at the 4.2 K bath. Pinned values in the same test record the run's output, so they change with the material data.
 
 *First vertical slice complete.*
 

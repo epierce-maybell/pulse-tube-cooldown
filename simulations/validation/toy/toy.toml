@@ -3,7 +3,7 @@ experiment = "Toy conduction with a phase switch"
 
 [[fridge.nodes]]
 name = "Plate"
-composition = [["OFHC Cu RRR100", 1.0]]
+composition = [["OFHC Cu RRR100", 2.5]]
 
 [[fridge.nodes]]
 name = "Bath"
@@ -14,7 +14,7 @@ name = "Rod A"
 type = "conduction"
 nodes = ["Plate", "Bath"]
 material = "304 SS"
-area = 1.0e-4
+area = 2.5e-4
 length = 0.1
 
 [[fridge.links]]
@@ -22,8 +22,8 @@ name = "Rod B"
 type = "conduction"
 nodes = ["Plate", "Bath"]
 material = "304 SS"
-area = 1.0e-4
-length = 0.1
+area = 2.25e-4
+length = 0.05
 
 [[procedure.phases]]
 name = "single rod"
@@ -36,9 +36,9 @@ enable = ["Rod B"]
 
 [simulation]
 solver = "Radau"
-max_time = 75600.0
+max_time = 86400.0
 save_every = 1800.0
 rtol = 1.0e-8
 atol = 1.0e-8
-initial_temperature = [300.0, 4.0]
+initial_temperature = [300.0, 4.2]
 fixed_boundary_nodes = ["Bath"]
