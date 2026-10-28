@@ -1,0 +1,127 @@
+item,part_number,name,quantity,extended_mass_kg,node,material_class,flag
+1,,"THERMAL STRAP, P5-502 CUSTOM",1.0,0.271,UNASSIGNED,Cu,strap end plates not stated
+16,200-000029,"THERMAL STRAP, P5-502 CUSTOM",3.0,0.822,UNASSIGNED,Cu,strap end plates not stated
+317,350-000162,"PULSE TUBE, STRIPPED",1.0,29.484,EXCLUDED,Other,pulse tube body excluded (in cooler curves)
+346,400-000028,"TUBE, HX PUMPING LINE",1.0,0.022,STP,SS,
+364,500-000035,"CAP, MIXING CHAMBER",1.0,0.207,MXP,Cu,material N/A assumed Cu
+369,500-000091,"ADAPTER, STILL LINE STUB",2.0,0.04,STP,SS,
+370,500-000095,"HOUSING, HX PUMPING LINE",1.0,0.037,STP,SS,
+371,500-000098,"BASE, STILL",1.0,0.699,STP,Cu,
+372,500-000099,"CHAMBER, STILL",1.0,0.76,STP,Cu,
+373,500-000100,"HX LOWER, STILL",1.0,0.185,STP,Cu,
+374,500-000101,"HX UPPER, STILL",1.0,0.04,STP,Cu,
+375,500-000102,"INNER TUBE, STILL",1.0,0.072,STP,Cu,
+376,500-000103,"OUTER TUBE, STILL",1.0,0.017,STP,SS,
+379,500-000182,"CORE, GAS GAP",11.0,1.738,GGHS,Cu,"gas-gap mass allocated to plates per 11-switch layout; material N/A, assumed Cu"
+380,500-000182,"CORE, GAS GAP",1.0,0.158,EXCLUDED,Cu,duplicate gas-gap row (first row per part number is the total)
+381,500-000182,"CORE, GAS GAP",10.0,1.58,EXCLUDED,Cu,duplicate gas-gap row (first row per part number is the total)
+382,500-000183,"OUTER CORE, GAS GAP",11.0,1.859,GGHS,Cu,"gas-gap mass allocated to plates per 11-switch layout; material N/A, assumed Cu"
+383,500-000183,"OUTER CORE, GAS GAP",1.0,0.169,EXCLUDED,Cu,duplicate gas-gap row (first row per part number is the total)
+384,500-000183,"OUTER CORE, GAS GAP",10.0,1.69,EXCLUDED,Cu,duplicate gas-gap row (first row per part number is the total)
+388,500-000185,"SHELL, GAS GAP",11.0,0.231,GGHS,SS,"gas-gap mass allocated to plates per 11-switch layout; material N/A, assumed Cu"
+389,500-000185,"SHELL, GAS GAP",1.0,0.021,EXCLUDED,SS,duplicate gas-gap row (first row per part number is the total)
+390,500-000185,"SHELL, GAS GAP",10.0,0.21,EXCLUDED,SS,duplicate gas-gap row (first row per part number is the total)
+391,500-000188,"MOUNT, GAS GAP",4.0,0.22,GGHS,Cu,"gas-gap mass allocated to plates per 11-switch layout; material N/A, assumed Cu"
+392,500-000190,"CENTER, GAS GAP, CRUSH TUBE",4.0,0.608,GGHS,Cu,"gas-gap mass allocated to plates per 11-switch layout; material N/A, assumed Cu"
+393,500-000190,"CENTER, GAS GAP, CRUSH TUBE",5.0,0.76,EXCLUDED,Cu,duplicate gas-gap row (first row per part number is the total)
+394,500-000191,"TUBE, GAS GAP, .125IN",7.0,0.014,GGHS,Cu,"gas-gap mass allocated to plates per 11-switch layout; material N/A, assumed Cu"
+395,500-000191,"TUBE, GAS GAP, .125IN",1.0,0.002,EXCLUDED,Cu,duplicate gas-gap row (first row per part number is the total)
+396,500-000191,"TUBE, GAS GAP, .125IN",5.0,0.01,EXCLUDED,Cu,duplicate gas-gap row (first row per part number is the total)
+397,500-000192,"PORT, SINGLE GGHS, CRUSH TUBE",3.0,0.33,GGHS,Cu,"gas-gap mass allocated to plates per 11-switch layout; material N/A, assumed Cu"
+398,500-000192,"PORT, SINGLE GGHS, CRUSH TUBE",1.0,0.11,EXCLUDED,Cu,duplicate gas-gap row (first row per part number is the total)
+399,500-000201,"FOIL, PARTIAL ETCH",8.0,0.04,DHX,SS,DHX identification inferred; sinter/foil N/A assumed silver
+400,500-000214,"SUPPORT, COLD FOOT, SIDE",2.0,0.024,CFP,G10,material N/A assumed Cu
+401,500-000215,"SUPPORT, MIXING, SIDE",2.0,0.026,MXP,G10,
+402,500-000216,"SUPPORT, PRIMARY, SIDE",6.0,0.054,PRP,G10,
+403,500-000217,"SUPPORT, MIXING, SIDE REAR",1.0,0.011,MXP,G10,
+404,500-000218,"SUPPORT, COLD FOOT, FRONT",2.0,0.022,CFP,G10,material N/A assumed Cu
+405,500-000219,"SUPPORT, MIXING, FRONT",3.0,0.018,MXP,G10,
+406,500-000220,"SUPPORT, PRIMARY, FRONT",2.0,0.014,PRP,G10,
+412,500-000245,"COVER, PRIMARY PLATE CUTOUT",2.0,0.06,PRP,Cu,shield/bracket N/A assumed Al
+413,500-000249,"COVER, CFP CUTOUT",2.0,0.032,CFP,Cu,material N/A assumed Cu
+417,500-000290,"BRACKET, REGENERATOR",1.0,0.161,RGP,Cu,material N/A assumed Cu
+418,500-000294,"BASE, HX ICP PLATE",1.0,0.525,ICP,Cu,
+419,500-000295,"FITTING, HX ICP PLATE",1.0,0.05,ICP,SS,
+420,500-000296,"INSERT, HX ICP PLATE",1.0,0.427,ICP,Cu,
+437,500-000460,"COVER, COLD FOOT, EDGES",4.0,0.008,CFP,SS,material N/A assumed Cu
+455,500-000485,"SHELL, BASE UPPER",4.0,0.224,DHX,SS,DHX identification inferred; sinter/foil N/A assumed silver
+456,500-000486,"SHELL, BASE LOWER",8.0,0.544,DHX,SS,DHX identification inferred; sinter/foil N/A assumed silver
+457,500-000487,"SHELL, CAP UPPER",4.0,0.204,DHX,SS,DHX identification inferred; sinter/foil N/A assumed silver
+458,500-000488,"SHELL, CAP LOWER",8.0,0.504,DHX,SS,DHX identification inferred; sinter/foil N/A assumed silver
+459,500-000492,"ADAPTER, MXC TO DIL",1.0,0.007,MXP,Cu,material N/A assumed Cu
+460,500-000493,"TUBE, MXC CONV",1.0,0.001,MXP,SS,material N/A assumed Cu
+461,500-000494,"TUBE, MXC TO DIL",1.0,0.002,MXP,SS,material N/A assumed Cu
+462,500-000495,"ADAPTER, MXC TO CONV",1.0,0.007,MXP,Cu,material N/A assumed Cu
+494,500-000570,"COPPER ISOTHERM, CONC TRAP",2.0,0.134,UNASSIGNED,Cu,concentric trap stage not stated
+501,500-000681,"RAIL, BOTTOM CFP",1.0,0.044,CFP,Al,material N/A assumed Cu
+502,500-000682,"RAIL, LEFT CFP",1.0,0.066,CFP,Al,material N/A assumed Cu
+503,500-000683,"RAIL, RIGHT CFP",1.0,0.066,CFP,Al,material N/A assumed Cu
+504,500-000684,"RAIL, BOTTOM PRP",1.0,0.048,PRP,Al,shield/bracket N/A assumed Al
+505,500-000685,"RAIL, LEFT PRP",1.0,0.072,PRP,Al,shield/bracket N/A assumed Al
+506,500-000686,"RAIL, RIGHT PRP",1.0,0.072,PRP,Al,shield/bracket N/A assumed Al
+513,500-000791,"PORT, WIRING INSERT, BLANK, W INSERTS",3.0,10.53,EXCLUDED,Other,room-temperature wiring-port blank excluded
+514,500-000796,"CLAMP, GGHS, WITH INSERTS",4.0,0.38,GGHS,Cu,"gas-gap mass allocated to plates per 11-switch layout; material N/A, assumed Cu"
+515,500-000796,"CLAMP, GGHS, WITH INSERTS",5.0,0.475,EXCLUDED,Cu,duplicate gas-gap row (first row per part number is the total)
+516,500-000797,"PLATE, INTERMEDIATE COLD, WITH INSERTS",1.0,4.703,ICP,Cu,"plate material N/A, OFHC copper (decision)"
+517,500-000798,"PLATE, REGENERATOR, WITH INSERTS",1.0,6.158,RGP,Cu,"plate material N/A, OFHC copper (decision)"
+518,500-000801,"PLATE, COLD FOOT, WITH INSERTS",1.0,8.114,CFP,Cu,"plate material N/A, OFHC copper (decision)"
+519,500-000802,"PLATE, PRIMARY, WITH INSERTS",1.0,8.97,PRP,Cu,"plate material N/A, OFHC copper (decision)"
+525,500-000811,"BASE, MXC, WELDED FLAG",1.0,1.08,MXP,Cu,material N/A assumed Cu
+526,500-000812,"TOP CAP, MXC, WELDED FLAG",1.0,0.63,MXP,Cu,material N/A assumed Cu
+527,500-000813,"MXC DIL, TUBE, MXC, WELDED FLAG",1.0,0.004,MXP,SS,material N/A assumed Cu
+528,500-000814,"MXC CON, TUBE, MXC, WELDED FLAG",1.0,0.001,MXP,SS,material N/A assumed Cu
+529,500-000815,"BOTTOM CAP, MXC, WELDED FLAG",1.0,0.246,MXP,Cu,material N/A assumed Cu
+530,500-000816,"FLAG, MXC, WELDED FLAG",9.0,0.342,MXP,Cu,material N/A assumed Cu
+531,500-000817,"PLATE, STILL, WITH INSERTS",1.0,6.302,STP,Cu,"plate material N/A, OFHC copper (decision)"
+532,500-000818,"PLATE, MIXING CHAMBER, WITH INSERTS",1.0,4.331,MXP,Cu,"plate material N/A, OFHC copper (decision)"
+533,500-000821,"SINTER, MXC, WELDED FLAG",18.0,0.36,MXP,Other,material N/A assumed Cu
+534,500-000822,"CLAMP, GGHS TOP, WITH INSERTS",4.0,0.188,GGHS,Cu,"gas-gap mass allocated to plates per 11-switch layout; material N/A, assumed Cu"
+545,500-000849,"CLAMP, BASE, HEATER CARTRIDGE, STILL",2.0,0.078,STP,Cu,
+546,500-000850,"CLAMP, TOP, HEATER CARTRIDGE, STILL",2.0,0.046,STP,Cu,
+549,500-000865,"BLOCK, COLD FOOT SIDES, W INSERTS",2.0,0.776,CFP,Cu,material N/A assumed Cu
+550,500-000866,"BLOCK, COLD FOOT, ENDS, W INSERTS",2.0,0.92,CFP,Cu,material N/A assumed Cu
+551,500-000868,"BRACKET, PRP SHLD, W INSERT",8.0,0.152,PRP,Al,shield/bracket N/A assumed Al
+552,500-000869,"BRACKET, STP MXP SHLD, W INSERT",8.0,0.144,MXP,Cu,material N/A assumed Cu
+554,500-000871,"FRONT PLATE, MXC, WELDED FLAG, W/ INSERTS",1.0,0.873,MXP,Cu,material N/A assumed Cu
+555,500-000872,"SIDE PLATE, MXC, WELDED FLAG, W/ INSERTS",2.0,0.46,MXP,Cu,material N/A assumed Cu
+556,500-000873,"BACK PLATE, MXC, WELDED FLAG. W/ INSERTS",1.0,0.759,MXP,Cu,material N/A assumed Cu
+560,500-000882,"COVER B, PRIMARY PLATE CUTOUT",1.0,0.032,PRP,Cu,shield/bracket N/A assumed Al
+561,500-000883,"COVER B, CFP CUTOUT",1.0,0.017,CFP,Cu,material N/A assumed Cu
+562,500-000890,"SPACER, REGENERATOR, W INSERTS",1.0,0.162,RGP,Cu,material N/A assumed Cu
+563,500-000891,"CLAMP, REGENERATOR, TAPPED, W INSERTS",1.0,0.125,RGP,Cu,material N/A assumed Cu
+564,500-000892,"CLAMP, REGENERATOR, W INSERTS",1.0,0.114,RGP,Cu,material N/A assumed Cu
+590,500-000971,"HANDLE, SHIELD",1.0,0.102,UNASSIGNED,Cu,shield stage not stated
+591,500-001031,"SLAB MXC, ATTACHMENT PLATE, FRONT W/ INSERTS",1.0,0.609,EXCLUDED,Cu,6STK/slab MXC design not installed
+592,500-001032,"SLAB MXC. ATTACHMENT PLATE, SIDE W/ INSERTS",2.0,0.524,EXCLUDED,Cu,6STK/slab MXC design not installed
+593,500-001033,"SLAB MXC, ATTACHMENT PLATE, REAR W/ INSERTS",1.0,0.732,EXCLUDED,Cu,6STK/slab MXC design not installed
+594,500-001320,"BASE, 6STK, MIXING CHAMBER",1.0,0.565,EXCLUDED,Cu,6STK/slab MXC design not installed
+606,510-000076,"Bracket, Shipping",2.0,5.902,EXCLUDED,Other,shipping hardware excluded
+622,510-000274,"SHIELD, DOOR MXP",1.0,0.773,MXP,Cu,shield material N/A assumed Cu
+623,510-000275,"SHIELD, BOTTOM MXP",1.0,1.346,MXP,Cu,shield material N/A assumed Cu
+624,510-000276,"SHIELD, FRONT MXP",1.0,0.461,MXP,Cu,shield material N/A assumed Cu
+625,510-000277,"SHIELD, REAR MXP",1.0,2.947,MXP,Cu,shield material N/A assumed Cu
+626,510-000278,"PANEL, LIGHT BLOCKING BOTTOM MXP",1.0,0.229,MXP,Cu,shield material N/A assumed Cu
+629,510-000280,"SHIELD, LIGHT BLOCKING DOOR MXP",1.0,0.288,MXP,Cu,shield material N/A assumed Cu
+630,510-000281-01,"PANEL, BOTTOM STP",1.0,1.566,STP,Cu,shield material N/A assumed Cu
+631,510-000282-01,"PANEL, FRONT STP",1.0,1.668,STP,Cu,shield material N/A assumed Cu
+632,510-000283-01,"PANEL, REAR STP",1.0,5.352,STP,Cu,shield material N/A assumed Cu
+633,510-000284,"PANEL, LIGHT BLOCKING BOTTOM STP",1.0,0.246,STP,Cu,shield material N/A assumed Cu
+634,510-000285-01,"PANEL, DOOR STP",1.0,1.085,STP,Cu,shield material N/A assumed Cu
+635,510-000286-01,"PANEL, LIGHT BLOCKING DOOR STP",1.0,0.224,STP,Cu,shield material N/A assumed Cu
+636,510-000287-01,"PANEL, BOTTOM CFP",1.0,1.765,CFP,Cu,material N/A assumed Cu
+637,510-000288-01,"PANEL, REAR CFP",1.0,6.948,CFP,Cu,material N/A assumed Cu
+638,510-000289,"PANEL, LIGHT BLOCKING BOTTOM CFP",1.0,0.254,CFP,Cu,material N/A assumed Cu
+639,510-000290-01,"PANEL, FRONT CFP",1.0,2.91,CFP,Cu,material N/A assumed Cu
+640,510-000291-01,"PANEL, BOTTOM PRP",1.0,0.581,PRP,Al,shield/bracket N/A assumed Al
+641,510-000292-01,"PANEL, LEFT PRP",1,0.703,PRP,Al,listed qty 8 treated as 1 (implausible multiplier)
+642,510-000293-01,"PANEL, REAR PRP",1.0,1.631,PRP,Al,shield/bracket N/A assumed Al
+643,510-000294-01,"PANEL, RIGHT PRP",1,0.703,PRP,Al,listed qty 8 treated as 1 (implausible multiplier)
+644,510-000295-01,"PANEL, FRONT PRP",1.0,1.515,PRP,Al,shield/bracket N/A assumed Al
+645,510-000296-01,"PANEL, DOOR PRP",1.0,0.469,PRP,Al,shield/bracket N/A assumed Al
+646,510-000297,"PANEL, LIGHT BLOCKING BOTTOM PRP",1.0,0.082,PRP,Al,
+648,510-000299-01,"PANEL, LIGHT BLOCKING DOOR BOTTOM STP",1.0,0.064,STP,Cu,shield material N/A assumed Cu
+649,510-000300-01,"PANEL, DOOR CFP",1.0,1.337,CFP,Cu,material N/A assumed Cu
+668,520-000000,"SINTER, BASE MXC",1.0,0.098,MXP,Other,silver
+669,520-000001,"SINTER, CAP MXC",1.0,0.075,MXP,Other,silver
+670,520-000005,"SINTER, LOWER",16.0,0.672,DHX,Other,DHX identification inferred; sinter/foil N/A assumed silver
+690,900-000140,"SINTERED FOIL, UPPER",4.0,0.192,DHX,Other,DHX identification inferred; sinter/foil N/A assumed silver
