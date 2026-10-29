@@ -1,4 +1,4 @@
-# Tasks — 40/81 done
+# Tasks — 41/81 done
 
 Build the v1 simulator specified in `docs/DESIGN.md`: the six-plate systems SN09 and FP1 from room temperature until condensing begins, each with least-squares log-temperature residual comparable to or lower than the legacy model's across system thermometers except MXP.
 
@@ -290,7 +290,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Do: Register the Link and load its pairs, gas, reference node, and pressure coefficients from configuration.
   - Verified by: A configured run carries gas heat transfer while the reference node is warm and none once the pressure reaches zero, without a phase change; a pair naming a node outside the link fails to load.
 
-## 12. [2/6] Radiation and insulation
+## 12. [3/6] Radiation and insulation
 
 - [x] **12.1 Radiation physics and parameters** · Discuss
   - Context: DESIGN radiation Link; legacy `radiation_parallel_plates` and `radiation_enclosed`.
@@ -304,11 +304,12 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Verified by: Fixture surfaces load and evaluate emissivity, with range handling as for materials; missing or malformed surfaces produce useful errors.
   - Outcome: `load_surface(name, /, *, directory=...)` reads the `[emissivity]` table with `make_fit`. Material, gas, and surface loaders share `read_named_toml` in `library/toml_files.py`, which picks the one `*.toml` file whose `name` field matches. `library/surfaces/data/` arrives with 12.6.
 
-- [ ] **12.2 Radiation Link** · Auto
+- [x] **12.2 Radiation Link** · Auto
   - Needs: 6.1, 12.5.
   - Context: 12.1's recorded design; `library/links/radiation.py`.
   - Do: Implement and register the agreed radiation Link.
   - Verified by: Reference calculations cover parallel plates, unequal enclosed areas, temperature-dependent emissivity, equal temperatures, and reversed temperature ordering; an inner area larger than the outer area raises ConfigurationError.
+  - Outcome: `Radiation` holds `nodes`, `area`, and `surface` as `[inner, outer]` pairs, matching the configuration keys. Its constructor checks only the area ordering; `load_radiation` unpacks each pair, so a list of other than two entries raises ValueError at load.
 
 - [ ] **12.6 Surface emissivity data** · Human
   - Needs: 12.5, 20.2.
