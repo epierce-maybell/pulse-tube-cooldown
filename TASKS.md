@@ -1,4 +1,4 @@
-# Tasks — 42/84 done
+# Tasks — 42/85 done
 
 Build the v1 simulator specified in `docs/DESIGN.md`: the six-plate systems SN09 and FP1 from room temperature until condensing begins, each with least-squares log-temperature residual comparable to or lower than the legacy model's across system thermometers except MXP.
 
@@ -339,7 +339,7 @@ Identifiers retain the original task number as a prefix. Context paths are relat
 
 ## 14. [1/6, 1 claimed] Cooler inputs
 
-The cooler model is `docs/adrs/coupled-capacity-maps.md` (the ADR). Its slice is the bare-head test 15.12, which gates area 16.
+The cooler model is `docs/adrs/coupled-capacity-maps.md` (the ADR). Its slice is the bare-head test 15.12, which gates the cooler's registration and configuration in 16.4.
 
 - [x] **14.1 Cooler characterization requirements** · Auto
   - Context: DESIGN "Coupled capacity maps".
@@ -365,11 +365,11 @@ The cooler model is `docs/adrs/coupled-capacity-maps.md` (the ADR). Its slice is
   - Context: ADR "Data requirements".
   - Input: Per compressor model, the displacement rate, waveform factor, relief swing, mean pressure, and valve frequency with sources, or a record that no specification exists. Also which compressor drives each head on the test stand and in each fridge, and whether FP1's two heads share one.
 
-- [ ] **14.6 TPR mounting and calibration** · Human
-  - Context: `data/sn09/pulse_tube/` file headers, where the T3/Taux channel reads through Z1518's calibration, the same file as T1; the load maps, where TPR moves one for one with T2 and barely with T1.
-  - Input: Where TPR is mounted on the regenerator, which sensor and calibration it reads through, and whether a corrected trace can be produced.
+- [ ] **14.6 Thermometer calibrations** · Human
+  - Context: `data/sn09/pulse_tube/` file headers, where T1 and TPR both read through Z1518; during cooldown TPR rises to 350 K, and at rest T1, TPR, and T2 read 276, 294, and 309 K.
+  - Input: Which sensor and calibration each of T1, TPR, and T2 reads through, where TPR is mounted, and corrected traces for SN09's cooldowns and load maps.
 
-## 15. [0/7] Cooler model and per-unit fit
+## 15. [0/9] Cooler model and per-unit fit
 
 - [ ] **15.6 Helium properties** · Auto
   - Context: ADR assumption 1; `he34pak` at `../../dev/he34pak`, whose `hepak` subpackage holds pure He-4; `library/gases/`.
@@ -405,27 +405,32 @@ The cooler model is `docs/adrs/coupled-capacity-maps.md` (the ADR). Its slice is
   - Do: Fit the product of waveform factor and displacement rate once on one SN09 cooldown with the load-map numbers held, record it with the compressor values, and hold it for every unit.
   - Verified by: The fitted gain reproduces that cooldown's warm-end rate, and SN09's other cooldown is predicted without refitting.
 
+- [ ] **15.13 Aluminum reference material** · Auto
+  - Context: 14.2's test-stand flange; `library/materials/data/`; NIST cryogenic material properties.
+  - Do: Port 6061-T6 aluminum with property definitions, ranges, and sources, or the alloy 14.2 names if it differs.
+  - Verified by: Loaded values match references at representative temperatures.
+
+- [ ] **16.5 Cooler Link** · Auto
+  - Needs: 15.7.
+  - Context: ADR; 15.7's model; `library/links/cooler.py`.
+  - Do: Implement the Link over the stage-1, clamp, and stage-2 nodes plus a named ambient node, holding one compressor and one or more heads, and returning the model's flows into each node. Registration and configuration follow in 16.4.
+  - Verified by: Node flows match the model's Q_1, Q_R, and Q_2; two heads on one link share the swing.
+
 - [ ] **15.12 Bare-head cooldown test** · Auto
-  - Needs: 14.2, 14.4, 14.5, 14.6, 15.9, 15.10, 15.11.
-  - Context: ADR "Data requirements"; `simulations/validation/`; engine.
+  - Needs: 14.2, 14.4, 14.5, 14.6, 15.9, 15.10, 15.11, 15.13, 16.5.
+  - Context: ADR "Data requirements"; `simulations/validation/`; engine; 16.5's Link, constructed directly.
   - Do: Fit SN09's two load maps, simulate the bare head on the test stand as a three-node network with the fitted numbers, giving the clamp node the thermometer block's mass so Q_R = 0 emerges, and compare T1, TPR, and T2 against both cooldowns. Attribute each miss to the drive, the enthalpy form, the matrix specific heat, or the clamp split as the ADR lays out.
   - Verified by: A reproducible report shows the comparison for both cooldowns, whether the four numbers moved between the two load maps, and either that the model passes or the specific term that fails and the follow-up task that addresses it.
 
 *End of this area's slice. Area 16 waits on 15.12's outcome.*
 
-## 16. [0/2] Cooler Link
-
-- [ ] **16.5 Cooler Link** · Auto
-  - Needs: 15.12 passed, 6.1.
-  - Context: ADR; 15.7's model; `library/links/cooler.py`.
-  - Do: Implement the Link over the stage-1, clamp, and stage-2 nodes plus a named ambient node, holding one compressor and one or more heads, and returning the model's flows into each node.
-  - Verified by: Node flows match the model's Q_1, Q_R, and Q_2; two heads on one link share the swing; a link with other than four nodes fails to load.
+## 16. [0/1] Cooler configuration
 
 - [ ] **16.4 Cooler configuration** · Auto
-  - Needs: 14.4, 14.5, 16.5.
-  - Context: ADR "Data requirements"; link registry and configuration fixtures; per-unit parameter files from 15.9.
+  - Needs: 14.4, 14.5, 15.12 passed, 6.1.
+  - Context: ADR "Data requirements"; 16.5's Link; link registry and configuration fixtures; per-unit parameter files from 15.9.
   - Do: Register `cooler` and load its nodes, head parameter files, design values, and compressor values from configuration.
-  - Verified by: A configured graph evaluates expected flows at all three cooled points with identifiable data sources; FP1's two heads load on one link when they share a compressor and on two links otherwise.
+  - Verified by: A configured graph evaluates expected flows at all three cooled points with identifiable data sources; FP1's two heads load on one link when they share a compressor and on two links otherwise; a link with other than four nodes fails to load.
 
 ## 18. [1/3] Result plots
 
