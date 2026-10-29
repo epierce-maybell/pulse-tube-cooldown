@@ -1,4 +1,4 @@
-# Tasks — 41/81 done
+# Tasks — 42/81 done
 
 Build the v1 simulator specified in `docs/DESIGN.md`: the six-plate systems SN09 and FP1 from room temperature until condensing begins, each with least-squares log-temperature residual comparable to or lower than the legacy model's across system thermometers except MXP.
 
@@ -406,13 +406,14 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Do: Register the complete cooler Link and load node references, capacity data, and regenerator parameters from configuration.
   - Verified by: A configured graph evaluates expected flows at all three cooled points with identifiable data sources; two cooler links on the same plates add their flows.
 
-## 18. [0/3] Result plots
+## 18. [1/3] Result plots
 
-- [ ] **18.1 Temperature plot** · Auto
+- [x] **18.1 Temperature plot** · Auto
   - Needs: 2.4.
   - Context: DESIGN Result; `plot/result.py`.
   - Do: Plot node temperatures with units, node labels, and phase-switch markers.
   - Verified by: A multi-phase result renders expected traces and switch positions.
+  - Outcome: `plot_temperature(data, /, *, ax=None, log=True)` takes a Result's Dataset, in memory or reopened from netCDF, and returns the Axes. Time is in hours; temperature is logarithmic unless `log=False`. Each switch has a dashed line labelled with both phase names.
 
 - [ ] **18.2 Heat-flow plot** · Auto
   - Context: DESIGN Result; `plot/result.py`.
