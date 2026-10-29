@@ -22,7 +22,7 @@ $$
 where $Q_i$ is heat flow into each stage, $H_i$ is the enthalpy flow away from each stage, $K_i$ is the thermal conductance of the tube ending at stage $i$, and $L_i$ is the loss down the regenerator ending at plate $i$, such that:
 
 $$
-L_i = (1 - \epsilon_i) \dot{m}_i \, c_p \, \Delta T_i,
+L_i = (1 - \epsilon_i) \dot{m}_i c_p \Delta T_i,
 $$
 
 where $\dot{m}_i$ is the mean mass flow through the section, $c_p$ is the specific heat of helium, $\Delta T_i$ is the temperature difference across the section (e.g., $\Delta T_1 = T_a - T_1$), and $\epsilon_i = 1 - a_i u_i$ is the effectiveness in terms of a packing constant $a_i$ of order one and utilization $u_i$, defined by:
@@ -33,7 +33,7 @@ $$
 
 where $f$ is the valve frequency, $M_i$ is the mass matrix of the section, $c_{m,i}$ is the specific heat of the mass matrix, and $\bar{T_i}$ is the mean temperature of the section. This is essentially the heat capacity of the gas moving through a section per cycle divided by the heat capacity of the matrix it passes over. At $T_2$, helium is far from an ideal gas, so we add a correction to of the form $L_2 += (1 - \beta(T_2, \bar{P}) T_2) H_2$, where $\beta$ is helium's isobaric expansion coefficient. 
 
-One further correction is required for the regenerator clamp, which sits at some normalized position $x_R \in [0, 1]$ between stages 1 and 2. The two sections on either side of $x_R$ are one matrix of mass $M_{col}$ divided into $M_R = x_R M_{col}$ and $M_2 = (1 - x_R) \, M_{col}$. 
+One further correction is required for the regenerator clamp, which sits at some normalized position $x_R \in [0, 1]$ between stages 1 and 2. The two sections on either side of $x_R$ are one matrix of mass $M_{col}$ divided into $M_R = x_R M_{col}$ and $M_2 = (1 - x_R) M_{col}$. 
 
 Then, mass flows are given by:
 
@@ -52,7 +52,7 @@ where $\dot{m}_c$ is the drive's flow characteristic, $\dot{V}_c$ is the compres
 From this, we get the cycle-averaged enthalpy flow in each stage:
 
 $$
-H_i = \frac{1}{2} \, C_i \, P_a^2,
+H_i = \frac{1}{2} C_i P_a^2,
 $$
 
 where $C_i$ is an effective conductance for each valve.
