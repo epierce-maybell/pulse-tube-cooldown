@@ -60,7 +60,7 @@ where $C_i$ is an effective conductance for each valve.
 ## Data requirements
 Each pulse tube unit needs $C_1$, $C_2$, $a_1$, and $a_2$ from post-tuning load map data.
 
-Drive values $\dot{V}_c$, $\kappa$, $\Delta P_{max}$, $\bar{P}$, and $f$ can be obtained once, as they should not vary much between compressors.
+Drive values $`\dot{V}_c`$, $\kappa$, $`\Delta P_{max}`$, $\bar{P}$, and $f$ can be obtained once, as they should not vary much between compressors.
 
 The values $V_j$, $x_R$, $M_1$ and $M_{col}$, $c_{m,i}$, and $K_i$ depend on the geometry and materials of each fridge design.
 
