@@ -47,7 +47,7 @@ $$
 \dot{m}_1 = \dot{m}_c(P_h, P_l) = \dot{V}_c \rho(T_a, P_l),
 $$
 
-where $\dot{m}_c$ is the drive's flow characteristic and $\dot{V}_c$ is the compressor's volumetric displacement rate. The mean pressure is fixed by the gas charge, so $\bar{P} = (P_h + P_l) / 2$ always, and the swing in pressure $\Delta P = P_h - P_l$ is set by the drive constraint, subject to $\Delta P \leq \Delta P_{max}$, falling as the head cools. Where two pulse tube heads share one compressor, $D_1$ contains both heads' components and they interact through the pressure wave. The pressure amplitude is then $P_a = \frac{1}{2} \kappa \Delta P$, where $\kappa$ is a waveform factor of order one that accounts for non-sinusoidal behavior.
+where $\dot{m}_c$ is the drive's flow characteristic and $\dot{V}_c$ is the compressor's volumetric displacement rate. The mean pressure is fixed by the gas charge, so $\bar{P} = (P_h + P_l) / 2$ always, and the swing in pressure $\Delta P = P_h - P_l$ is set by the drive constraint, subject to $`\Delta P \leq \Delta P_{max}`$, falling as the head cools. Where two pulse tube heads share one compressor, $D_1$ contains both heads' components and they interact through the pressure wave. The pressure amplitude is then $P_a = \frac{1}{2} \kappa \Delta P$, where $\kappa$ is a waveform factor of order one that accounts for non-sinusoidal behavior.
 
 From this, we get the cycle-averaged enthalpy flow in each stage:
 
@@ -60,9 +60,9 @@ where $C_i$ is an effective conductance for each valve.
 ## Data requirements
 Each pulse tube unit needs $C_1$, $C_2$, $a_1$, and $a_2$ from post-tuning load map data.
 
-Drive values $\dot{V}_c, \kappa, $\Delta P_{max}$, $\bar{P}$, and $f$ can be obtained once, as they should not vary much between compressors. 
+Drive values $\dot{V}_c$, $\kappa$, $\Delta P_{max}$, $\bar{P}$, and $f$ can be obtained once, as they should not vary much between compressors.
 
-The values $V_j, x_R, M_1 and M_{col}, c_{m,i}, and K_i depend on the geometry and materials of each fridge design.
+The values $V_j$, $x_R$, $M_1$ and $M_{col}$, $c_{m,i}$, and $K_i$ depend on the geometry and materials of each fridge design.
 
 ## Assumptions and simplifications
 1. Helium properties come from he34pack.
