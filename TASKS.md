@@ -47,7 +47,7 @@ Where DESIGN is silent, the code and its tests are the record.
 
 The model is `docs/adrs/coupled-capacity-maps.md`. The milestone is reproducing the bare head's cooldown on the test stand. Registering the cooler as a configurable link waits on that.
 
-- [ ] **2.1 Helium properties** · Auto
+- [x] **2.1 Helium properties** · Auto
   Add `he34pak` (`../../dev/he34pak`; pure He-4 is its `hepak` subpackage) as a dependency and expose He-4 density, isobaric specific heat, and isobaric expansion coefficient as array functions of temperature and pressure over 2 K to 300 K at the head's pressures. Check the near-ideal limit at 300 K and the real-gas regime at 4 K.
 
 - [ ] **2.2 Head model** · Auto
