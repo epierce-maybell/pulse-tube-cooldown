@@ -8,7 +8,7 @@ Target: Derive a model for pulse tube cooling power from first principles and wh
 3. We may ask for targeted experiments iff we can show they are high-leverage, but we cannot ask for more data for every pulse tube unit;
 4. As much as possible, we don't want to hide behind calibration: a model that fits one fridge well but doesn't generalize is not useful, and if a model fails to fit a fridge, we need to be able to attribute that failure to a particular system;
 5. There is a regenerator clamp between stages 1 and 2, so the true map is of the form Q1(T1, T2, TR), Q2(T1, T2, TR), QR(T1, T2, TR). Our model should get as close to that fidelity as is reasonable, but it may not be possible to do so with the data we have;
-6. Fridge-plus units have two pulse tubes, so we should make sure our model can handle interactions between them (this probably doesn't change most designs, but worth keeping an eye on).
+6. Heads and compressors share gas manifolds in more than one arrangement. The drive model should handle any number of heads and compressors on one manifold.
 
 ## Governing equations
 Stage 1 is the primary plate (PRP), stage 2 is the cold-foot plate (CFP), and there is a regenerator plate (RGP) clamped at some fraction $x_R \in [0, 1]$ of the distance between them; quantities on these are denoted $\Box_1$, $\Box_2$, and $\Box_R$, respectively. The temperature of each stage, $T_i$, is held fixed over one valve period, so that the energy flows (gas enthalpy plus axial conduction) are averaged across cycles. The energy balances for each stage are:
@@ -41,13 +41,13 @@ $$
 \dot{m}_i = f \sum_{j \in D_i} V_j \left[\rho(T_j, P_h) - \rho(T_j, P_l) \right],
 $$
 
-where $D_i$ is the set of gas-filled components including $i$ and everything colder than it, $P_h$ and $P_l$ are the supply and return pressures, respectively, and $\rho$ is the density of helium. The mass flow of the entire system is set by the drive constraint:
+where $D_i$ is the set of gas-filled components including $i$ and everything colder than it, $P_h$ and $P_l$ are the supply and return pressures, respectively, and $\rho$ is the density of helium. The mass flow is set by a drive constraint on each gas manifold, meaning the set of heads and compressors that share supply and return lines:
 
 $$
-\dot{m}_1 = \dot{m}_c(P_h, P_l) = \dot{V}_c \rho(T_a, P_l),
+\sum_{h} \dot{m}_{1,h} = \sum_{k} \dot{m}_{c,k}(P_h, P_l) = \rho(T_a, P_l) \sum_{k} \dot{V}_{c,k},
 $$
 
-where $\dot{m}_c$ is the drive's flow characteristic and $\dot{V}_c$ is the compressor's volumetric displacement rate. The mean pressure is fixed by the gas charge, so $\bar{P} = (P_h + P_l) / 2$ always, and the swing in pressure $\Delta P = P_h - P_l$ is set by the drive constraint, subject to $`\Delta P \leq \Delta P_{max}`$, falling as the head cools. Where two pulse tube heads share one compressor, $D_1$ contains both heads' components and they interact through the pressure wave. The pressure amplitude is then $P_a = \frac{1}{2} \kappa \Delta P$, where $\kappa$ is a waveform factor of order one that accounts for non-sinusoidal behavior.
+where $h$ runs over the heads on the manifold, $k$ runs over its compressors, $\dot{m}_{c,k}$ is the flow characteristic of compressor $k$, and $\dot{V}_{c,k}$ is its volumetric displacement rate. The mean pressure is fixed by the gas charge and the total volume of the manifold, so $\bar{P} = (P_h + P_l) / 2$ always. The pressure swing $\Delta P = P_h - P_l$ is set by the drive constraint, subject to $`\Delta P \leq \Delta P_{max} = \min_k \Delta P_{max,k}`$, and falls as the heads cool. Heads on one manifold interact through the shared pressure wave. The pressure amplitude is then $P_a = \frac{1}{2} \kappa \Delta P$, where $\kappa$ is a waveform factor of order one that accounts for non-sinusoidal behavior.
 
 From this, we get the cycle-averaged enthalpy flow in each stage:
 
@@ -60,7 +60,7 @@ where $C_i$ is an effective conductance for each valve.
 ## Data requirements
 Each pulse tube unit needs $C_1$, $C_2$, $a_1$, and $a_2$ from post-tuning load map data.
 
-Drive values $`\dot{V}_c`$, $\kappa$, $`\Delta P_{max}`$, $\bar{P}$, and $f$ can be obtained once, as they should not vary much between compressors.
+Drive values $`\dot{V}_{c,k}`$, $\kappa$, $`\Delta P_{max,k}`$, $\bar{P}$, and $f$ are obtained once per drive configuration, meaning the number and model of compressors on a manifold.
 
 The values $V_j$, $x_R$, $M_1$ and $M_{col}$, $c_{m,i}$, and $K_i$ depend on the geometry and materials of each fridge design.
 
@@ -73,3 +73,4 @@ The values $V_j$, $x_R$, $M_1$ and $M_{col}$, $c_{m,i}$, and $K_i$ depend on the
 6. $C_i$ is constant because the valve sits at $T_a$.
 7. $a_i$ is constant because the temperature dependence is carried entirely by $c_{m,i}$.
 8. The response of $Q_R$ to $T_R$ is captured by $a_2$ and is only tested by the RGP trace.
+9. $C_i$ and $a_i$ are independent of drive configuration.
