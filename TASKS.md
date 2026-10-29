@@ -1,4 +1,4 @@
-# Tasks — 42/81 done
+# Tasks — 42/84 done
 
 Build the v1 simulator specified in `docs/DESIGN.md`: the six-plate systems SN09 and FP1 from room temperature until condensing begins, each with least-squares log-temperature residual comparable to or lower than the legacy model's across system thermometers except MXP.
 
@@ -337,7 +337,9 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Do: Implement and register the agreed contact Link.
   - Verified by: Independent cases establish flow and temperature dependence, including configuration loading.
 
-## 14. [1/3, 1 claimed] Cooler characterization inputs
+## 14. [1/6, 1 claimed] Cooler inputs
+
+The cooler model is `docs/adrs/coupled-capacity-maps.md` (the ADR). Its slice is the bare-head test 15.12, which gates area 16.
 
 - [x] **14.1 Cooler characterization requirements** · Auto
   - Context: DESIGN "Coupled capacity maps".
@@ -345,66 +347,85 @@ Identifiers retain the original task number as a prefix. Context paths are relat
   - Verified by: Each term in the DESIGN capacity and regenerator equations traces to a named input.
   - Outcome: Q1(T1) and Q2(T2) need a measured cooldown path T1(t), T2(t) and each stage's heat capacity C_i(T) from its masses and materials. The regenerator term needs G_R(T) and x_R, which the cooldown path does not determine.
 
-- [o] **14.2 Supply missing characterization inputs** · Human
-  - Context: 14.1's outcome and DESIGN stage energy balance.
-  - Input: Supply a cooldown path T1(t), T2(t), each stage's masses and materials, and a source for G_R and x_R.
+- [o] **14.2 Test-stand inventory** · Human
+  - Context: ADR; 15.12's bare-head simulation; `data/sn09/pulse_tube/`.
+  - Input: Each stage's masses and materials on the test stand, including the flange, shield, mounting hardware, the cold-end heat exchangers inside the head, and the thermometer block at the clamp, with the stage or clamp each part is bolted to.
   - Test-stand masses: mounting hardware 3.9 oz (110.6 g), of which 1.4 oz (39.7 g) is copper; radiation shield 42 oz (1.191 kg) of copper; flange 16 oz (453.6 g) of aluminum.
-  - Gaps: stage assignment of each part; material of the remaining 2.5 oz (70.9 g) of mounting hardware; cold-head internal masses; cooldown path; G_R and x_R.
+  - Gaps: stage assignment of each part; material of the remaining 2.5 oz (70.9 g) of mounting hardware; cold-head internal masses.
 
 - [ ] **14.3 FP1 pulse-tube characterization records** · Human
   - Context: 14.1's outcome; 20.1's outcome; SN09's records in `data/sn09/pulse_tube/`.
   - Input: Locate the test-stand cooldown and load map for each of FP1's two PT1.5 pulse tubes and add them under `data/fp1/pulse_tube/`.
 
-## 15. [0/5] Path-derived capacity curves
+- [ ] **14.4 Head geometry and matrix inventory** · Human
+  - Context: ADR "Governing equations" and "Data requirements"; data expected from the heads' designers; `data/<system>/pulse_tube/`.
+  - Input: For each head design (PT1.1 on SN09, PT1.5 on FP1): the gas volume of each gas-filled component and the section or stage whose temperature it takes; the clamp fraction x_R; the matrix masses M_1 and M_col and the matrix material of each section; the pulse-tube wall dimensions and material behind K_1 and K_2. Record them with sources.
 
-- [ ] **15.1 Capacity derivation choices** · Discuss
-  - Needs: 14.2.
-  - Context: DESIGN "Coupled capacity maps"; characterization inputs. `docs/proposals/cooler-capacity-from-existing-curves.md` supplies candidate methods.
-  - Decide: Cleaning, thermometer alignment, differentiation, parasitic-load estimation, and temperature-range treatment for Q1(T1) and Q2(T2). Define evidence for assessing consistency with the matching load map.
+- [ ] **14.5 Compressor values** · Human
+  - Context: ADR "Data requirements".
+  - Input: Per compressor model, the displacement rate, waveform factor, relief swing, mean pressure, and valve frequency with sources, or a record that no specification exists. Also which compressor drives each head on the test stand and in each fridge, and whether FP1's two heads share one.
 
-- [ ] **15.2 Prepare characterization traces** · Auto
-  - Context: 15.1's processing choices; characterization data; `simulations/validation/`.
-  - Do: Implement reproducible loading and preparation of the identified stage traces.
-  - Verified by: Prepared traces have agreed channels, units, alignment, and sample handling, with raw-data provenance.
+- [ ] **14.6 TPR mounting and calibration** · Human
+  - Context: `data/sn09/pulse_tube/` file headers, where the T3/Taux channel reads through Z1518's calibration, the same file as T1; the load maps, where TPR moves one for one with T2 and barely with T1.
+  - Input: Where TPR is mounted on the regenerator, which sensor and calibration it reads through, and whether a corrected trace can be produced.
 
-- [ ] **15.3 Characterization heat loads** · Auto
-  - Needs: 3.4.
-  - Context: 15.1's model; test-stand inventory and materials.
-  - Do: Calculate stage C_i(T) and agreed Qp_i(t), adding individually scoped material-port dependencies first where needed.
-  - Verified by: Known-inventory examples match hand calculations; mass, material, and parasitic-load assumptions are recorded.
+## 15. [0/7] Cooler model and per-unit fit
 
-- [ ] **15.4 Derive and store stage capacity curves** · Auto
-  - Needs: 3.3.
-  - Context: DESIGN Q_i = -C_i(T_i) * dT_i/dt + Qp_i; prepared traces and heat loads.
-  - Do: Derive Q1(T1) and Q2(T2) and save sourced table data using the agreed processing and range treatment.
-  - Verified by: A synthetic trace recovers its known capacity; saved curves reproduce derived stage values.
+- [ ] **15.6 Helium properties** · Auto
+  - Context: ADR assumption 1; `he34pak` at `../../dev/he34pak`, whose `hepak` subpackage holds pure He-4; `library/gases/`.
+  - Do: Add `he34pak` as a dependency and expose He-4 density, isobaric specific heat, and isobaric expansion coefficient as array functions of temperature and pressure over 2 K to 300 K at the head's pressures.
+  - Verified by: Values match reference points at representative temperatures and pressures, including the near-ideal limit at 300 K and the real-gas regime at 4 K.
 
-- [ ] **15.5 Capacity consistency assessment** · Auto
-  - Context: Matching load map; 15.1's assessment criteria; derived curves.
-  - Do: Compare capacities with load-map evidence in their shared measured region and record uncertainties and discrepancies.
-  - Verified by: A reproducible comparison establishes supported temperature ranges and identifies any specific follow-up needed before using the curves.
+- [ ] **15.7 Head model** · Auto
+  - Needs: 15.6, 3.4.
+  - Context: ADR "Governing equations"; `library/cooler/model.py`.
+  - Do: Implement the model for one compressor driving one or more heads: solve the drive constraint for the swing under its cap, then the mass flows, utilizations, losses, enthalpy flows, and tube conduction, returning Q_1, Q_R, and Q_2 per head from (T_1, T_R, T_2, T_a), the head's design values, its four fitted numbers, and the compressor values.
+  - Verified by: A hand-computed single-head case matches; the ideal-gas limit, the relief cap, and a second head sharing the swing behave as the ADR states; signs follow the energy balances.
 
-## 16. [0/4] Cooler Link
+- [ ] **15.8 Test-stand file readers** · Auto
+  - Context: `data/sn09/pulse_tube/` cooldown and load-map `.dat` formats.
+  - Do: Read cooldown traces (time, T1, TPR, T2) and load maps (Q1, Q2, T1, TPR, T2) into arrays with units and provenance, dropping invalid samples.
+  - Verified by: Both SN09 cooldowns and load maps load with the expected shapes and channel ranges; a malformed file fails usefully.
 
-- [ ] **16.1 Uncoupled stage cooling** · Auto
-  - Needs: 15.5, 6.1.
-  - Context: DESIGN "Coupled capacity maps"; `library/links/cooler.py`.
-  - Do: Implement stage heat sinks from supported Q1(T1) and Q2(T2) curves, resolving any blockers identified in 15.5 first.
-  - Verified by: Each stage's signed flow matches its curve independently of the other stage's temperature.
+- [ ] **15.9 Load-map fit** · Auto
+  - Needs: 15.7, 15.8.
+  - Context: ADR "Data requirements"; `library/cooler/fit.py`; `data/<system>/pulse_tube/`.
+  - Do: Fit C_1, C_2, a_1, and a_2 by least squares to a load map, with Q_R = 0 and the measured T_R at each point, and write the result as a per-unit parameter file under the system's pulse-tube data directory.
+  - Verified by: A synthetic load map generated by the model recovers its parameters; the fit reports residuals and flags a packing constant far from order one.
 
-- [ ] **16.2 Regenerator conduction inputs** · Discuss
-  - Context: DESIGN Q_R = G_R(T_R) * (T_RGP - T_R), with T_R = T1 + x_R * (T2 - T1); available cooler data.
-  - Decide: The source or parameterization of G_R and x_R; identify any specific human input needed before implementation.
+- [ ] **15.10 Regenerator matrix materials** · Auto
+  - Needs: 14.4.
+  - Context: 14.4's matrix materials; `library/materials/data/`.
+  - Do: Port the specific heat of each matrix material 14.4 names, with sources and ranges.
+  - Verified by: Loaded values match references at representative temperatures.
 
-- [ ] **16.3 Regenerator heat transfer** · Auto
-  - Context: 16.2's recorded parameters; `library/links/cooler.py`.
-  - Do: Add the specified independent regenerator heat sink using the interpolated regenerator temperature.
-  - Verified by: Hand calculations establish Q_R and its sign while Q1 and Q2 retain their specified independent behavior.
+- [ ] **15.11 Drive gain fallback** · Auto, conditional on 14.5 recording no specification
+  - Needs: 14.5, 15.9.
+  - Context: ADR "Data requirements"; `data/sn09/pulse_tube/`.
+  - Do: Fit the product of waveform factor and displacement rate once on one SN09 cooldown with the load-map numbers held, record it with the compressor values, and hold it for every unit.
+  - Verified by: The fitted gain reproduces that cooldown's warm-end rate, and SN09's other cooldown is predicted without refitting.
+
+- [ ] **15.12 Bare-head cooldown test** · Auto
+  - Needs: 14.2, 14.4, 14.5, 14.6, 15.9, 15.10, 15.11.
+  - Context: ADR "Data requirements"; `simulations/validation/`; engine.
+  - Do: Fit SN09's two load maps, simulate the bare head on the test stand as a three-node network with the fitted numbers, giving the clamp node the thermometer block's mass so Q_R = 0 emerges, and compare T1, TPR, and T2 against both cooldowns. Attribute each miss to the drive, the enthalpy form, the matrix specific heat, or the clamp split as the ADR lays out.
+  - Verified by: A reproducible report shows the comparison for both cooldowns, whether the four numbers moved between the two load maps, and either that the model passes or the specific term that fails and the follow-up task that addresses it.
+
+*End of this area's slice. Area 16 waits on 15.12's outcome.*
+
+## 16. [0/2] Cooler Link
+
+- [ ] **16.5 Cooler Link** · Auto
+  - Needs: 15.12 passed, 6.1.
+  - Context: ADR; 15.7's model; `library/links/cooler.py`.
+  - Do: Implement the Link over the stage-1, clamp, and stage-2 nodes plus a named ambient node, holding one compressor and one or more heads, and returning the model's flows into each node.
+  - Verified by: Node flows match the model's Q_1, Q_R, and Q_2; two heads on one link share the swing; a link with other than four nodes fails to load.
 
 - [ ] **16.4 Cooler configuration** · Auto
-  - Context: DESIGN Link loading; link registry and configuration fixtures.
-  - Do: Register the complete cooler Link and load node references, capacity data, and regenerator parameters from configuration.
-  - Verified by: A configured graph evaluates expected flows at all three cooled points with identifiable data sources; two cooler links on the same plates add their flows.
+  - Needs: 14.4, 14.5, 16.5.
+  - Context: ADR "Data requirements"; link registry and configuration fixtures; per-unit parameter files from 15.9.
+  - Do: Register `cooler` and load its nodes, head parameter files, design values, and compressor values from configuration.
+  - Verified by: A configured graph evaluates expected flows at all three cooled points with identifiable data sources; FP1's two heads load on one link when they share a compressor and on two links otherwise.
 
 ## 18. [1/3] Result plots
 

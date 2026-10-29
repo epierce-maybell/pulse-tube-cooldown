@@ -307,21 +307,7 @@ Conditions and their arguments should be named for the physical event they mark,
 Some decisions are not obvious, but have leverage over the rest of the design.
 
 #### Coupled capacity maps
-We do not have extended load map data during cooldown for our pulse tubes. What we do have is one run per unit, post-tuning, on a test stand for exactly one cooldown curve. This gives us T1 and T2 with respect to time over one path. We also have a load map for each unit, but only for T2 $\in (2, 5)$ K and T1 $\in (40, 68)$ K.
-
-This is an ongoing question, but for now, we can set up a first-order uncoupled model, where each $Q(T)$ path is separable. For each stage $i$ and heat flow $Q_i(T_i)$, we have
-
-$$
-Q_i(t) = -C_i(T_i(t)) \frac{dT_i}{dt} + Qp_i(t)
-$$
-
-for heat flow $Q$, thermal capacity $C$, temperature $T$, and parasitic heat load $Qp$. Conduction to the regenerator can be modeled simply as
-
-$$
-Q_R = G_R (T_{RGP} - T_R)
-$$
-
-where $Q_R$ is the heat flow, $G_R(T_R)$ is the regenerator conductance, $T_{RGP}$ is the temperature of the RGP node, and $T_R = T1 + x_R (T2 - T1)$ is the temperature of the regenerator tube at the normalized clamp position $x_R$. This assumes that $Q_R$ is an independent sink, so it does not influence $Q1$ or $Q2$ (which is almost certainly only an approximation of reality).
+We do not have extended load map data during cooldown for our pulse tubes. What we do have is one run per unit, post-tuning, on a test stand for exactly one cooldown curve. The decision for how to model coupled capacity maps is recorded in `docs/adrs/coupled-capacity-maps.md`.
 
 #### Gas pushing
 Gas pushing is its own specific link type, although future scenarios may extend this to consider different methods. Here, we focus on `gas_pushing_pm5`, which is currently deployed. Rather than fit to data, we derive a simple model from first principles, where gas pushing is effectively a conductance between two nodes. Pressure varies on short time scales relative to heat flow, so we average over the pumping cycle. Then, the effective conductance $G$ between two nodes $k$ and $k + 1$ is given by
