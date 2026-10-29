@@ -47,7 +47,7 @@ $$
 \dot{m}_1 = \dot{m}_c(P_h, P_l) = \dot{V}_c \rho(T_a, P_l),
 $$
 
-where $\dot{m}_c$ is the drive's flow characteristic, $\dot{V}_c$ is the compressor's volumetric displacement rate. The mean pressure is fixed by the gas charge, so $\bar{P} = (P_h + P_l) / 2$ always, and the swing in pressure $\Delta P = P_h - P_l$ is set by the drive constraint, subject to $\Delta P \leq \Delta P_{max}$, falling as the head cools. Where two pulse tube heads share one compressor, $D_1$ contains both heads' components and they interact through the pressure wave. The pressure amplitude is then $P_a = \frac{1}{2} \kappa \Delta P$, where $\kappa$ is a waveform factor of order one that accounts for non-sinusoidal behavior.
+where $\dot{m}_c$ is the drive's flow characteristic and $\dot{V}_c$ is the compressor's volumetric displacement rate. The mean pressure is fixed by the gas charge, so $\bar{P} = (P_h + P_l) / 2$ always, and the swing in pressure $\Delta P = P_h - P_l$ is set by the drive constraint, subject to $\Delta P \leq \Delta P_{max}$, falling as the head cools. Where two pulse tube heads share one compressor, $D_1$ contains both heads' components and they interact through the pressure wave. The pressure amplitude is then $P_a = \frac{1}{2} \kappa \Delta P$, where $\kappa$ is a waveform factor of order one that accounts for non-sinusoidal behavior.
 
 From this, we get the cycle-averaged enthalpy flow in each stage:
 
