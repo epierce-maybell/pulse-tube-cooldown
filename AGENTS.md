@@ -16,6 +16,8 @@
 # Rules for interacting
 1. If you are an AI, assume that all future agents are at least as smart as you are. They have the same ability to interpolate missing information, make reasonable decisions, catch and handle discrepancies, and avoid pitfalls that you do. 
 2. Accept ambiguity in places where a human will interact with the repository. Reserve rigor and strict guidelines for agent-only surfaces.
+3. Symbols are meaningless unless they are defined in a way that the human can understand. Do not assume that there are standard conventions for physics notation the way that we might for mathematics.
+4. You probably don't need that piece of information you're fixated on. If a problem can be worked without having all the details, do so. Get as far as you can, or if a specific fact is blocking a foundational assumption, specify the actual blocker.
 
 # External resources
 We follow the Google Style Guide for [Python](https://google.github.io/styleguide/pyguide.html) and [documentation](https://google.github.io/styleguide/docguide/best_practices.html?utm_source=chatgpt.com).
