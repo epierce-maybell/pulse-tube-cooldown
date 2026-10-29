@@ -60,7 +60,10 @@ The model is `docs/adrs/coupled-capacity-maps.md`. The milestone is reproducing 
   `library/links/cooler.py`: a link over the stage-1, clamp, and stage-2 nodes plus a named ambient node, holding one compressor and one or more heads and returning the model's flows into each node.
 
 - [ ] **2.5 Bare-head cooldown test** · Auto
-  Fit SN09's two load maps, then simulate the bare head on the test stand as a three-node network and compare T1, TPR, and T2 against both measured cooldowns. Give the clamp node the thermometer block's mass so zero clamp load emerges instead of being imposed. Needs 5.1, 5.3, 5.4, and 5.5, plus material files for the regenerator matrix and the flange's aluminum (6061-T6 unless the inventory says otherwise). 
+  Fit SN09's two load maps, then simulate the bare head on the test stand as a three-node network and compare T1, TPR, and T2 against both measured cooldowns. Give the clamp node the thermometer block's mass so zero clamp load emerges instead of being imposed. Needs 2.7, 5.1, 5.3, 5.4, and 5.5, plus a material file for the flange's aluminum (6061-T6 unless the inventory says otherwise). 
+
+- [ ] **2.7 Regenerator matrix materials** · Auto
+  Material files in `library/materials` for lead, Er3Ni, HoCu2, and Gd2O2S: specific heat from 2 K to 300 K and density, with sources. The rare-earth heat capacities have peaks below 10 K that the fits must keep. Geometry and layer fractions come from 5.3.
 
 - [ ] **2.6 Cooler configuration** · Auto, after 2.5 passes
   Register `cooler` and load its nodes, head parameter files, design values, and compressor values from TOML. FP1's two heads go on one link when they share a compressor and on two otherwise.
@@ -108,8 +111,8 @@ Things only a human can find. Check what's already in the repository and the rel
 - [ ] **5.2 FP1 pulse-tube records** · Human
   The test-stand cooldown and load map for each of FP1's two PT1.5 heads, under `data/fp1/pulse_tube/` like SN09's.
 
-- [ ] **5.3 Head geometry and regenerator matrix** · Human
-  For PT1.1 and PT1.5, per the ADR's "Data requirements": the gas volume of each gas-filled component and whose temperature it takes, the clamp position as a fraction of the regenerator length, the matrix masses and materials per section, and the pulse-tube wall dimensions and material. Expected from the heads' designers.
+- [x] **5.3 SN09 head geometry and regenerator matrix** · Human
+  For the SN09 head, per the ADR's "Data requirements": the gas volume of each gas-filled component and whose temperature it takes, the clamp position as a fraction of the regenerator length, the matrix materials and layer fractions per section, and the tube dimensions and material. Recorded in `data/sn09/pulse_tube/geometry.csv`: tube radii, lengths, and the clamp position from CAD; matrix layers from the TransMIT PTD 420RX paper in `docs/papers/Falter2024.pdf`, the same head family; wall thickness, porosity, and the gas volumes derived from them marked as estimates. FP1's heads are in 5.9.
 
 - [ ] **5.4 Compressor values** · Human
   Per compressor model: displacement rate, waveform factor, relief swing, mean pressure, and valve frequency, with sources, or a note that no specification exists. Also which compressor drives each head on the test stand and in each fridge, and whether FP1's two heads share one.
@@ -127,6 +130,6 @@ Things only a human can find. Check what's already in the repository and the rel
   For each system: the cooldown record, the cold_control routine logs for that run, the `monitor_ovc` P1 diagnostics, the P2 and P3 pressure traces through gas pushing, and channel metadata. FP1's cooldown is the main gap.
 
 - [ ] **5.9 FP1 geometry from CAD** · Human
-  Into `data/fp1/geometry.csv`, one row per value with its unit and source part: shield and vacuum-can dimensions and panel thicknesses; plate spacings and the cross-section of each support type; switch core cross-sections and lengths along the heat path, gap, facing area, and sealed gas volume; internal gas volumes of the still, ICP heat exchangers, each DHX, and the mixing chamber; each pulse tube's clamp fraction. SN09's geometry follows from these and its BoM shield masses.
+  Into `data/fp1/geometry.csv`, one row per value with its unit and source part: shield and vacuum-can dimensions and panel thicknesses; plate spacings and the cross-section of each support type; switch core cross-sections and lengths along the heat path, gap, facing area, and sealed gas volume; internal gas volumes of the still, ICP heat exchangers, each DHX, and the mixing chamber; for each pulse tube, the clamp distances to PRP and CFP and the outer radius and length of its four tubes, as in `data/sn09/pulse_tube/geometry.csv`, once 2.5 has tested the SN09 values. SN09's geometry follows from these and its BoM shield masses.
 
 Already supplied, for the switch link and the system configurations: each system has eleven gas-gap switches, PRP–RGP 2 × N2, RGP–CFP 2 × N2, CFP–STP 3 × He-4, STP–ICP 2 × He-4, and ICP–MXP 2 × He-4. All use the same core (500-000182), outer core (500-000183), and shell (500-000185). Each gap is 0.5 mm wide with 40 cm^2 of facing area. The shell is 0.50 mm 304 SS sheet, 25.0 mm OD and 56.4 mm long, giving a 39 mm^2 conduction cross-section over a 70 mm developed length, and is its own conduction link. Switches are filled to 1 atm at room temperature and sealed with a crush tube. Each holds one 0.197 cm^3 charge of granulated coconut charcoal (part 200-000021), about 0.1 g at 0.5 g/cm^3.

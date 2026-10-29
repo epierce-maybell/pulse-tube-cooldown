@@ -1,0 +1,27 @@
+quantity,value,unit,source,notes
+prp_to_clamp,149.6,mm,CAD 910-000018,5.891 in along the stage-2 regenerator
+clamp_to_cfp,77.8,mm,CAD 910-000018,3.062 in along the stage-2 regenerator
+clamp_fraction_x_R,0.658,,CAD 910-000018,prp_to_clamp / (prp_to_clamp + clamp_to_cfp); Falter 2024 puts the PTD 420RX intermediate stage at 0.73 by the same convention
+stage1_regenerator_outer_radius,32.11,mm,CAD 910-000018,1.264 in; the widest tube; warm flange to PRP
+stage1_regenerator_length,180.0,mm,CAD 910-000018,7.087 in
+stage1_pulse_tube_outer_radius,10.74,mm,CAD 910-000018,0.846 in diameter; warm flange to PRP
+stage1_pulse_tube_length,181.0,mm,CAD 910-000018,7.126 in
+stage2_regenerator_outer_radius,16.51,mm,CAD 910-000018,0.65 in; the shorter tube; carries the RGP clamp
+stage2_regenerator_length,244.3,mm,CAD 910-000018,cylindrical face area 39.289 in^2 / (2 pi r)
+stage2_pulse_tube_outer_radius,12.50,mm,CAD 910-000018,0.492 in; the longer tube
+stage2_pulse_tube_length,444.1,mm,CAD 910-000018,cylindrical face area 54.051 in^2 / (2 pi r); runs from CFP past PRP to the warm flange
+tube_wall_thickness,0.5,mm,estimate,typical thin-wall cryocooler tube; not in CAD
+tube_wall_material,304 stainless steel,,Falter 2024,stainless regenerator tube; grade assumed
+stage1_regenerator_layer_SS,0.72,fraction of length,Falter 2024 Fig. 2,warm end; stainless screens; schematic measured to about 0.05
+stage1_regenerator_layer_Pb,0.28,fraction of length,Falter 2024 Fig. 2,cold end; lead spheres; production filling assumed to match the paper
+stage2_regenerator_layer_Pb,0.16,fraction of length,Falter 2024 Fig. 2,from PRP; lead spheres
+stage2_regenerator_layer_Er3Ni,0.32,fraction of length,Falter 2024 Fig. 2,ends at 0.48 from PRP
+stage2_regenerator_layer_HoCu2,0.32,fraction of length,Falter 2024 Fig. 2,ends at 0.80 from PRP; the clamp at 0.658 sits inside this layer
+stage2_regenerator_layer_GOS,0.20,fraction of length,Falter 2024 Fig. 2,to CFP; Gd2O2S spheres
+matrix_porosity_spheres,0.38,,estimate,random close packing; all stage-2 layers and the stage-1 Pb layer
+matrix_porosity_screens,0.70,,estimate,stainless screen stack; stage-1 SS layer
+stage1_regenerator_gas_volume,344.9,cm^3,derived,pi (r - wall)^2 x length x (0.72 porosity_screens + 0.28 porosity_spheres); linear profile Ta to T1
+stage1_pulse_tube_gas_volume,59.7,cm^3,derived,pi (r - wall)^2 x length; linear profile Ta to T1
+stage2_regenerator_gas_volume_prp_to_clamp,49.2,cm^3,derived,pi (r - wall)^2 x length x x_R x porosity_spheres; linear profile T1 to TR
+stage2_regenerator_gas_volume_clamp_to_cfp,25.6,cm^3,derived,pi (r - wall)^2 x length x (1 - x_R) x porosity_spheres; linear profile TR to T2
+stage2_pulse_tube_gas_volume,200.9,cm^3,derived,pi (r - wall)^2 x length; linear profile Ta to T2
