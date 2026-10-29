@@ -50,7 +50,7 @@ The model is `docs/adrs/coupled-capacity-maps.md`. The milestone is reproducing 
 - [x] **2.1 Helium properties** · Auto
   Add `he34pak` (`../../dev/he34pak`; pure He-4 is its `hepak` subpackage) as a dependency and expose He-4 density, isobaric specific heat, and isobaric expansion coefficient as array functions of temperature and pressure over 2 K to 300 K at the head's pressures. Check the near-ideal limit at 300 K and the real-gas regime at 4 K.
 
-- [ ] **2.2 Head model** · Auto
+- [] **2.2 Head model** · Auto
   The ADR's governing equations in `library/cooler/model.py`, for one compressor driving one or more heads. Solve the drive constraint for the pressure swing under its relief cap, then the mass flows, utilizations, losses, enthalpy flows, and tube conduction. It returns the cooling at stage 1, the regenerator clamp, and stage 2 for each head, given those three temperatures plus ambient, the head's design values, its four fitted numbers, and the compressor values. Check a hand-computed single head, the ideal-gas limit, the relief cap, and that two heads on one compressor share the swing.
 
 - [ ] **2.3 Test-stand data and load-map fit** · Auto
@@ -60,7 +60,7 @@ The model is `docs/adrs/coupled-capacity-maps.md`. The milestone is reproducing 
   `library/links/cooler.py`: a link over the stage-1, clamp, and stage-2 nodes plus a named ambient node, holding one compressor and one or more heads and returning the model's flows into each node.
 
 - [ ] **2.5 Bare-head cooldown test** · Auto
-  Fit SN09's two load maps, then simulate the bare head on the test stand as a three-node network and compare T1, TPR, and T2 against both measured cooldowns. Give the clamp node the thermometer block's mass so zero clamp load emerges instead of being imposed. Needs 5.1, 5.3, 5.4, and 5.5, plus material files for the regenerator matrix and the flange's aluminum (6061-T6 unless the inventory says otherwise). Deliver a reproducible report saying whether the four numbers moved between load maps and, for any miss, which term the ADR blames and what follows.
+  Fit SN09's two load maps, then simulate the bare head on the test stand as a three-node network and compare T1, TPR, and T2 against both measured cooldowns. Give the clamp node the thermometer block's mass so zero clamp load emerges instead of being imposed. Needs 5.1, 5.3, 5.4, and 5.5, plus material files for the regenerator matrix and the flange's aluminum (6061-T6 unless the inventory says otherwise). 
 
 - [ ] **2.6 Cooler configuration** · Auto, after 2.5 passes
   Register `cooler` and load its nodes, head parameter files, design values, and compressor values from TOML. FP1's two heads go on one link when they share a compressor and on two otherwise.
