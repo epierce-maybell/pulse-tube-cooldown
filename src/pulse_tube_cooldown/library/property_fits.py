@@ -15,6 +15,7 @@ from typing import Any
 import numpy as np
 from numpy.polynomial import polynomial
 from numpy.typing import ArrayLike, NDArray
+from scipy.constants import gas_constant
 
 __all__ = [
     "PROPERTY_FITS",
@@ -22,6 +23,7 @@ __all__ = [
     "make_fit",
     "make_fit_from_table",
     "make_log_poly_fit",
+    "make_measured_with_lattice_fit",
     "make_rational_poly_fit",
     "make_wagner_fit",
     "warn_above",
@@ -102,6 +104,72 @@ def make_fit_from_table(table: ArrayLike) -> PropertyFit:
     return fit
 
 
+def make_measured_with_lattice_fit(measured: ArrayLike, molar_mass: float, lattice: Mapping[str, Any]) -> PropertyFit:
+    """Builds a measured specific heat continued above its last point by lattice, electronic, and magnetic terms.
+
+    At and below the measured table's last temperature T_m, the specific heat interpolates the table linearly. Above,
+    it is the molar lattice and electronic heat capacity divided by the molar mass, plus the table's excess over those
+    terms at T_m, falling as (T_m / T)^2.
+
+    The lattice table holds, with x = theta / T and R the molar gas constant:
+
+    - `debye`: `temperature` theta, `atoms` n (default 1), and `anharmonic` alpha (default 0), giving three acoustic
+      branches per atom, 9 n R x^-3 integral_0^x u^4 e^u / (e^u - 1)^2 du / (1 - alpha T).
+    - `einstein`: a list of optical modes, each with `temperature` theta, `branches` b, and `anharmonic` alpha
+      (default 0), giving b R x^2 e^x / (e^x - 1)^2 / (1 - alpha T). Defaults to none.
+    - `electronic`: the Sommerfeld coefficient gamma in J/(mol K^2), giving gamma T. Defaults to 0.
+
+    Args:
+        measured: Points as rows of [temperature in K, specific heat in J/(kg K)], with strictly increasing
+            temperatures.
+        molar_mass: Mass of one formula unit's mole in kg/mol.
+        lattice: The terms above.
+
+    Returns:
+        A function from positive temperatures in K, of any shape, to specific heats in J/(kg K).
+
+    Raises:
+        ValueError: If the measured table is invalid, as for `make_fit_from_table`.
+    """
+    point_temperature, point_value = _parse_table(measured)
+    debye = lattice["debye"]
+    modes = [
+        (mode["temperature"], mode["branches"], mode.get("anharmonic", 0.0)) for mode in lattice.get("einstein", [])
+    ]
+    electronic = lattice.get("electronic", 0.0)
+
+    # Gauss-Legendre rule on [-1, 1] for the Debye integral, truncated at u = 50.
+    nodes, weights = np.polynomial.legendre.leggauss(64)
+
+    def acoustic(temperature: NDArray[np.float64]) -> NDArray[np.float64]:
+        x = debye["temperature"] / temperature
+        upper = np.minimum(x, 50.0)[..., np.newaxis]
+        u = upper * (nodes + 1.0) / 2.0
+        integral = upper[..., 0] / 2.0 * np.sum(weights * u**4 * np.exp(-u) / np.expm1(-u) ** 2, axis=-1)
+        return 9.0 * gas_constant * integral / x**3
+
+    def optical(temperature: NDArray[np.float64], theta: float) -> NDArray[np.float64]:
+        x = theta / temperature
+        return gas_constant * x**2 * np.exp(-x) / np.expm1(-x) ** 2
+
+    def molar_heat_capacity(temperature: NDArray[np.float64]) -> NDArray[np.float64]:
+        total = debye.get("atoms", 1) * acoustic(temperature) / (1.0 - debye.get("anharmonic", 0.0) * temperature)
+        total = total + electronic * temperature
+        for theta, branches, anharmonic in modes:
+            total = total + branches * optical(temperature, theta) / (1.0 - anharmonic * temperature)
+        return total
+
+    last = point_temperature[-1]
+    remainder = point_value[-1] - molar_heat_capacity(np.array([last]))[0] / molar_mass
+
+    def fit(temperature: NDArray[np.float64]) -> NDArray[np.float64]:
+        above = np.maximum(temperature, last)
+        continued = molar_heat_capacity(above) / molar_mass + remainder * (last / above) ** 2
+        return np.where(temperature <= last, np.interp(temperature, point_temperature, point_value), continued)
+
+    return fit
+
+
 def make_wagner_fit(
     critical_temperature: float, critical_pressure: float, coefficients: Sequence[float], exponents: Sequence[float]
 ) -> PropertyFit:
@@ -164,6 +232,7 @@ def _parse_table(table: ArrayLike) -> tuple[NDArray[np.float64], NDArray[np.floa
 
 PROPERTY_FITS = {
     "log_poly": make_log_poly_fit,
+    "measured_with_lattice": make_measured_with_lattice_fit,
     "rational_poly": make_rational_poly_fit,
     "table": make_fit_from_table,
     "wagner": make_wagner_fit,

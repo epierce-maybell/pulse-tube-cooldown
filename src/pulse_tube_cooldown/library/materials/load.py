@@ -1,8 +1,10 @@
 """Loading materials from TOML files.
 
-Each file describes one material by its name and two properties, specific heat and thermal conductivity:
+Each file describes one material by its name, its density in kg/m^3, and two properties, specific heat and thermal
+conductivity:
 
     name = "OFHC Cu RRR100"
+    density = 8960.0
 
     [specific_heat]
     form = "log_poly"
@@ -12,6 +14,8 @@ Each file describes one material by its name and two properties, specific heat a
 
     [thermal_conductivity]
     ...
+
+Thermal conductivity is optional.
 
 Each property is a table read by `make_fit`. Within its range, a property takes the fitted value; outside, it
 takes the value at the nearest end of the range and issues a RuntimeWarning naming the material, property, and side.
@@ -54,16 +58,20 @@ def load_material(name: str, /, *, directory: str | os.PathLike[str] = _DATA_DIR
         ConfigurationError: If no file or more than one file defines the name.
     """
     data = read_named_toml(name, directory=directory, kind="materials")
-    conductivity = make_fit(data["thermal_conductivity"], f"{name} thermal_conductivity")
-    table = np.array(data["thermal_conductivity"].get("table", []), dtype=np.float64).reshape(-1, 2)
+    conductivity = conductivity_integral = None
+
+    if "thermal_conductivity" in data:
+        spec = data["thermal_conductivity"]
+        conductivity = make_fit(spec, f"{name} thermal_conductivity")
+        table = np.array(spec.get("table", []), dtype=np.float64).reshape(-1, 2)
+        conductivity_integral = _integrate(conductivity, spec["range"], table[:, 0], f"{name} conductivity_integral")
 
     return Material(
         name=name,
+        density=float(data["density"]),
         specific_heat=make_fit(data["specific_heat"], f"{name} specific_heat"),
         thermal_conductivity=conductivity,
-        conductivity_integral=_integrate(
-            conductivity, data["thermal_conductivity"]["range"], table[:, 0], f"{name} conductivity_integral"
-        ),
+        conductivity_integral=conductivity_integral,
     )
 
 

@@ -8,7 +8,11 @@ from pulse_tube_cooldown.core.types import Graph, Material, Node
 from pulse_tube_cooldown.library.conditions import CONDITIONS, condensing_begins, gas_pushing_begins
 
 _TOY = Material(
-    name="Toy", specific_heat=lambda t: t, thermal_conductivity=lambda t: t, conductivity_integral=lambda t: t**2 / 2.0
+    name="Toy",
+    density=1.0,
+    specific_heat=lambda t: t,
+    thermal_conductivity=lambda t: t,
+    conductivity_integral=lambda t: t**2 / 2.0,
 )
 
 _GRAPH = Graph(nodes=tuple(Node(name, ((_TOY, 1.0),)) for name in ("PRP", "CFP", "MXP")), links=())

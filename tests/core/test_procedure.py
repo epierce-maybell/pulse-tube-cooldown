@@ -11,7 +11,11 @@ from pulse_tube_cooldown.core.errors import ConfigurationError, PTCError
 from pulse_tube_cooldown.core.types import Material, Model, Node, Phase, Procedure, Result
 
 _TOY = Material(
-    name="Toy", specific_heat=lambda t: t, thermal_conductivity=lambda t: t, conductivity_integral=lambda t: t**2 / 2.0
+    name="Toy",
+    density=1.0,
+    specific_heat=lambda t: t,
+    thermal_conductivity=lambda t: t,
+    conductivity_integral=lambda t: t**2 / 2.0,
 )
 
 

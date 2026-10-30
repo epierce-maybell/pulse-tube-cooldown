@@ -1,5 +1,8 @@
 name = "304 SS"
 
+# Density in kg/m^3 at room temperature: ASM Handbook, Vol. 1, AISI 304.
+density = 8000.0
+
 # Specific heat in J/(kg K).
 [specific_heat]
 form = "log_poly"

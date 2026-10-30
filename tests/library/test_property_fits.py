@@ -7,6 +7,7 @@ from pulse_tube_cooldown.library.property_fits import (
     PROPERTY_FITS,
     make_fit_from_table,
     make_log_poly_fit,
+    make_measured_with_lattice_fit,
     make_rational_poly_fit,
     make_wagner_fit,
 )
@@ -194,3 +195,108 @@ def test_wagner_rejects_mismatched_coefficients_and_exponents_when_built():
 
 def test_wagner_is_registered():
     assert PROPERTY_FITS["wagner"] is make_wagner_fit
+
+
+_GAS_CONSTANT = 8.314462618
+
+# Zeros ending at 0.02 K, leaving the lattice terms above.
+_NO_MEASUREMENT = [[0.01, 0.0], [0.02, 0.0]]
+
+
+def test_measured_with_lattice_follows_measured_table_to_its_last_point():
+    fit = make_measured_with_lattice_fit(
+        measured=[[2.0, 1.0], [4.0, 5.0], [10.0, 2.0]], molar_mass=0.1, lattice={"debye": {"temperature": 200.0}}
+    )
+
+    np.testing.assert_allclose(fit(np.array([2.0, 3.0, 4.0, 7.0, 10.0])), [1.0, 3.0, 5.0, 3.5, 2.0])
+
+
+def test_measured_with_lattice_debye_term_follows_t_cubed_law_far_below_debye_temperature():
+    fit = make_measured_with_lattice_fit(
+        measured=_NO_MEASUREMENT, molar_mass=0.5, lattice={"debye": {"temperature": 1000.0, "atoms": 4}}
+    )
+
+    # C = (12 pi^4 / 5) n R (T / theta)^3 per mole for n atoms, here per kg.
+    temperature = np.array([5.0, 20.0])
+    expected = 12.0 * np.pi**4 / 5.0 * 4 * _GAS_CONSTANT * (temperature / 1000.0) ** 3 / 0.5
+
+    np.testing.assert_allclose(fit(temperature), expected, rtol=1e-6)
+
+
+def test_measured_with_lattice_debye_term_approaches_dulong_petit_far_above_debye_temperature():
+    fit = make_measured_with_lattice_fit(
+        measured=_NO_MEASUREMENT, molar_mass=0.5, lattice={"debye": {"temperature": 10.0, "atoms": 4}}
+    )
+
+    # C = 3 n R (1 - (theta / T)^2 / 20) per mole as T / theta grows.
+    expected = 3 * 4 * _GAS_CONSTANT * (1.0 - (10.0 / 1000.0) ** 2 / 20.0) / 0.5
+
+    np.testing.assert_allclose(fit(np.array([1000.0])), [expected], rtol=1e-6)
+
+
+def test_measured_with_lattice_einstein_branch_matches_hand_calculation():
+    fit = make_measured_with_lattice_fit(
+        measured=_NO_MEASUREMENT,
+        molar_mass=1.0,
+        lattice={"debye": {"temperature": 1.0e6}, "einstein": [{"temperature": 150.0, "branches": 2}]},
+    )
+
+    # At T = theta_E, x = 1 and each branch carries R x^2 e^x / (e^x - 1)^2 = R e / (e - 1)^2.
+    expected = 2 * _GAS_CONSTANT * np.e / (np.e - 1.0) ** 2
+
+    np.testing.assert_allclose(fit(np.array([150.0])), [expected], rtol=1e-9)
+
+
+def test_measured_with_lattice_adds_electronic_term():
+    fit = make_measured_with_lattice_fit(
+        measured=_NO_MEASUREMENT, molar_mass=0.25, lattice={"debye": {"temperature": 1.0e6}, "electronic": 0.015}
+    )
+
+    # gamma T per mole, here per kg.
+    np.testing.assert_allclose(fit(np.array([100.0])), [0.015 * 100.0 / 0.25], rtol=1e-6)
+
+
+def test_measured_with_lattice_anharmonic_coefficient_divides_by_one_minus_alpha_t():
+    plain = make_measured_with_lattice_fit(
+        measured=_NO_MEASUREMENT, molar_mass=1.0, lattice={"debye": {"temperature": 10.0}}
+    )
+    anharmonic = make_measured_with_lattice_fit(
+        measured=_NO_MEASUREMENT, molar_mass=1.0, lattice={"debye": {"temperature": 10.0, "anharmonic": 2.0e-4}}
+    )
+
+    temperature = np.array([300.0])
+
+    np.testing.assert_allclose(anharmonic(temperature), plain(temperature) / (1.0 - 2.0e-4 * 300.0), rtol=1e-12)
+
+
+def test_measured_with_lattice_magnetic_remainder_falls_as_inverse_square_above_last_point():
+    fit = make_measured_with_lattice_fit(
+        measured=[[5.0, 40.0], [10.0, 8.0]], molar_mass=1.0, lattice={"debye": {"temperature": 1.0e6}}
+    )
+
+    # With no lattice heat capacity, 8 J/(kg K) at 10 K falls to 8 (10 / T)^2 above.
+    np.testing.assert_allclose(fit(np.array([10.0, 20.0, 40.0])), [8.0, 2.0, 0.5], rtol=1e-9)
+
+
+def test_measured_with_lattice_is_continuous_at_last_measured_point():
+    fit = make_measured_with_lattice_fit(
+        measured=[[5.0, 40.0], [20.0, 80.0]],
+        molar_mass=0.3,
+        lattice={"debye": {"temperature": 150.0, "atoms": 3}, "einstein": [{"temperature": 250.0, "branches": 2}]},
+    )
+
+    below, above = fit(np.array([20.0 - 1e-9, 20.0 + 1e-9]))
+
+    assert above == pytest.approx(below, rel=1e-6)
+
+
+def test_measured_with_lattice_preserves_temperature_array_shape():
+    fit = make_measured_with_lattice_fit(
+        measured=[[5.0, 40.0], [20.0, 80.0]], molar_mass=0.3, lattice={"debye": {"temperature": 150.0}}
+    )
+
+    assert fit(np.array([[5.0, 10.0], [100.0, 300.0]])).shape == (2, 2)
+
+
+def test_measured_with_lattice_is_registered():
+    assert PROPERTY_FITS["measured_with_lattice"] is make_measured_with_lattice_fit

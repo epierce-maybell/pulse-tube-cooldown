@@ -13,6 +13,7 @@ from pulse_tube_cooldown.core.types import Gas, Link, Material, Node
 def _linear_material() -> Material:
     return Material(
         name="Toy",
+        density=1.0,
         specific_heat=lambda temperature: 2.0 * temperature,
         thermal_conductivity=lambda temperature: 3.0 + 0.0 * temperature,
         conductivity_integral=lambda temperature: 3.0 * temperature,
@@ -91,6 +92,7 @@ def test_node_composition_pairs_materials_with_masses():
     copper = _linear_material()
     steel = Material(
         name="Steel",
+        density=1.0,
         specific_heat=lambda t: t,
         thermal_conductivity=lambda t: t,
         conductivity_integral=lambda t: t**2 / 2.0,
@@ -110,6 +112,7 @@ def test_node_without_materials_is_rejected():
 def test_node_with_nonpositive_mass_is_rejected(mass):
     steel = Material(
         name="Steel",
+        density=1.0,
         specific_heat=lambda t: t,
         thermal_conductivity=lambda t: t,
         conductivity_integral=lambda t: t**2 / 2.0,

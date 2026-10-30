@@ -45,16 +45,18 @@ class Material:
 
     Attributes:
         name: Identifier used by configuration files, such as "OFHC Cu RRR100".
+        density: Mass density in kg/m^3 at room temperature.
         specific_heat: Maps temperatures in K to specific heats in J/(kg K), elementwise.
-        thermal_conductivity: Maps temperatures in K to thermal conductivities in W/(m K), elementwise.
+        thermal_conductivity: Maps temperatures in K to thermal conductivities in W/(m K), elementwise, or None.
         conductivity_integral: Maps temperatures in K to the integral of thermal conductivity in W/m from a fixed
-            reference temperature, elementwise.
+            reference temperature, elementwise, or None where thermal_conductivity is None.
     """
 
     name: str
+    density: float
     specific_heat: Callable[[NDArray[np.float64]], NDArray[np.float64]]
-    thermal_conductivity: Callable[[NDArray[np.float64]], NDArray[np.float64]]
-    conductivity_integral: Callable[[NDArray[np.float64]], NDArray[np.float64]]
+    thermal_conductivity: Callable[[NDArray[np.float64]], NDArray[np.float64]] | None
+    conductivity_integral: Callable[[NDArray[np.float64]], NDArray[np.float64]] | None
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)

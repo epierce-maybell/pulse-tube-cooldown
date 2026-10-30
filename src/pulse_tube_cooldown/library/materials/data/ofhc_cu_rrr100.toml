@@ -1,5 +1,8 @@
 name = "OFHC Cu RRR100"
 
+# Density in kg/m^3 at 20 C: CRC Handbook of Chemistry and Physics.
+density = 8960.0
+
 # Specific heat in J/(kg K), independent of RRR.
 [specific_heat]
 form = "log_poly"

@@ -14,6 +14,7 @@ from pulse_tube_cooldown.library.materials.load import load_material
 # 1e4 at T = 9.
 _POLY_MATERIAL = """
     name = "Poly Metal"
+    density = 8000.0
 
     [specific_heat]
     form = "log_poly"
@@ -30,6 +31,7 @@ _POLY_MATERIAL = """
 
 _TABLE_MATERIAL = """
     name = "Table Metal"
+    density = 2700.0
 
     [specific_heat]
     form = "table"
@@ -67,6 +69,25 @@ def test_loads_table_fits_by_name(tmp_path):
 
     np.testing.assert_allclose(material.specific_heat(np.array([15.0, 30.0])), [2.0, 5.0])
     np.testing.assert_allclose(material.thermal_conductivity(np.array([25.0])), [250.0])
+
+
+def test_loads_density(tmp_path):
+    _write(tmp_path, "poly.toml", _POLY_MATERIAL)
+    _write(tmp_path, "table.toml", _TABLE_MATERIAL)
+
+    assert load_material("Poly Metal", directory=tmp_path).density == 8000.0
+    assert load_material("Table Metal", directory=tmp_path).density == 2700.0
+
+
+def test_loads_material_without_thermal_conductivity(tmp_path):
+    text = _POLY_MATERIAL.split("[thermal_conductivity]")[0]
+    _write(tmp_path, "poly.toml", text)
+
+    material = load_material("Poly Metal", directory=tmp_path)
+
+    np.testing.assert_allclose(material.specific_heat(np.array([10.0, 100.0])), [10.0, 100.0], rtol=1e-12)
+    assert material.thermal_conductivity is None
+    assert material.conductivity_integral is None
 
 
 def test_evaluates_at_nearest_range_end_outside_range(tmp_path):
