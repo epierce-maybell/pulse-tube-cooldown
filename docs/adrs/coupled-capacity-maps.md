@@ -71,7 +71,7 @@ with $M = 0$ at a plate and $`\dot{m}_k`$ summed over the gas volumes fed throug
 ## Data requirements
 Each pulse tube unit needs $C_1$, $C_2$, $a_1$, $a_2$, and its valve frequency $f$, the first four from post-tuning load map data and $f$ from the shipped setting.
 
-Drive values $\dot{V}_{c,k}$, $\kappa$, $\Delta P_{max,k}$, the gas charge, and the manifold's warm volume are obtained once per drive configuration, meaning the number and model of compressors on a manifold and its lines and buffers.
+Drive values $`\dot{V}_{c,k}`$, $\kappa$, $`\Delta P_{max,k}`$, the gas charge, and the manifold's warm volume are obtained once per drive configuration, meaning the number and model of compressors on a manifold and its lines and buffers.
 
 The values $V_j$, $x_R$, each column's layers ($M_k$, $`c_{m,k}`$, and pore volume), and $K_i$ depend on the geometry and materials of each fridge design.
 
