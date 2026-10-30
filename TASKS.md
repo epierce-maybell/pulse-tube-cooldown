@@ -37,8 +37,8 @@ Where DESIGN is silent, the code and its tests are the record.
 - [ ] **1.3 Exchange-gas link** · Auto
   Decided in discussion, not yet in DESIGN. One multi-node link that sums the switch's gap conductance over facing surface pairs, each pair giving `nodes`, `area`, and `gap`, including vacuum can to PRP, with N2 standing in for air. Pressure is the `monitor_ovc` P1(T_CFP) cubic from `../../dev/cc_routines`, in mbar rather than legacy's torr and clamped at zero, so the link shuts off near 68 K on its own. Share the gap conductance with the switch rather than duplicating it. Flows across the pairs sum to zero in both the viscous and free-molecular limits. Propose the DESIGN wording while you're at it.
 
-- [ ] **1.4 Multi-layer insulation** · Discuss
-  How MLI modifies radiative transfer, what it's parameterized by, and whether it's a separate link or an option on radiation. Legacy has MLI functions to start from. Then build it.
+- [x] **1.4 Multi-layer insulation** · Discuss
+  How MLI modifies radiative transfer, what it's parameterized by, and whether it's a separate link or an option on radiation. Legacy has MLI functions to start from. Then build it. Built as `multi_layer_insulation`: the Lockheed correlation with the blanket's coefficients and source in the link's table. DESIGN wording pending.
 
 - [ ] **1.5 Joint contact** · Discuss
   Contact conductance at bolted joints and the parameters or measurements it needs. Legacy has `thermal_conductance_calc.py` and `conductance_systems.json`. Then build it.

@@ -10,7 +10,7 @@
 1. Documentation says "what is," not "what isn't."
 2. Architectural Decision Records (ADRs) record significant or controversial decisions only.
 3. View previous decisions as mutable recommendations. If logic, elegance, or pragmatism contradict a decision encoded in the repository, the decision should be revisited.
-4. Keep values as close to their point of use as is reasonably possible.
+4. Values that could change between systems, materials, or runs live in configuration or library data files, with their sources. Values that define a formula live in the code at their point of use.
 5. Error handling is a slippery slope into insanity. Focus on errors that could (a) reasonably happen, (b) mess something else up down the line, and (c) need special handling beyond what native Python would throw. Lean towards parse-not-validate, but make sure parsing is solving a real problem.
 
 # Rules for interacting

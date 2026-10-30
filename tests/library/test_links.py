@@ -9,6 +9,10 @@ from pulse_tube_cooldown.core.errors import ConfigurationError
 from pulse_tube_cooldown.library.links import radiation
 from pulse_tube_cooldown.library.links.conduction import Conduction, load_conduction
 from pulse_tube_cooldown.library.links.load import LINK_TYPES, load_link
+from pulse_tube_cooldown.library.links.multi_layer_insulation import (
+    MultiLayerInsulation,
+    load_multi_layer_insulation,
+)
 from pulse_tube_cooldown.library.links.radiation import Radiation, load_radiation
 from pulse_tube_cooldown.library.materials.load import load_material
 from pulse_tube_cooldown.library.surfaces.load import load_surface
@@ -116,3 +120,60 @@ def test_radiation_pairs_must_hold_two_entries(surface_directory, pair):
 def test_unknown_surface_names_the_surface(surface_directory):
     with pytest.raises(ConfigurationError, match="Black Paint"):
         load_link(_SHIELD | {"surface": ["Bright Finish", "Black Paint"]})
+
+
+_BLANKET = {
+    "name": "Stage 1 blanket",
+    "type": "multi_layer_insulation",
+    "nodes": ["Stage 1", "Chamber"],
+    "area": 0.05,
+    "layers": 4,
+    "layer_density": 25.0,
+    "spacer_coefficient": 8.95e-8,
+    "layer_density_exponent": 2.56,
+    "radiation_coefficient": 5.39e-10,
+    "emissivity": 0.03,
+    "source": "Lockheed 1974, NTRS 20190030285",
+}
+
+
+def test_registers_multi_layer_insulation():
+    assert LINK_TYPES["multi_layer_insulation"] is load_multi_layer_insulation
+
+
+def test_loads_multi_layer_insulation():
+    link = load_link(_BLANKET)
+
+    assert isinstance(link, MultiLayerInsulation)
+    assert (link.name, link.nodes) == ("Stage 1 blanket", ("Stage 1", "Chamber"))
+    assert (
+        link.area,
+        link.layers,
+        link.layer_density,
+        link.spacer_coefficient,
+        link.layer_density_exponent,
+        link.radiation_coefficient,
+        link.emissivity,
+        link.source,
+    ) == (0.05, 4, 25.0, 8.95e-8, 2.56, 5.39e-10, 0.03, "Lockheed 1974, NTRS 20190030285")
+
+
+@pytest.mark.parametrize(
+    "missing",
+    [
+        "nodes",
+        "area",
+        "layers",
+        "layer_density",
+        "spacer_coefficient",
+        "layer_density_exponent",
+        "radiation_coefficient",
+        "emissivity",
+        "source",
+    ],
+)
+def test_missing_multi_layer_insulation_parameter_is_named(missing):
+    config = {key: value for key, value in _BLANKET.items() if key != missing}
+
+    with pytest.raises(ConfigurationError, match=missing):
+        load_link(config)
