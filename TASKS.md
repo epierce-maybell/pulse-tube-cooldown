@@ -51,7 +51,7 @@ The model is `docs/adrs/coupled-capacity-maps.md`. The milestone is reproducing 
   Add `he34pak` (`../../dev/he34pak`; pure He-4 is its `hepak` subpackage) as a dependency and expose He-4 density, isobaric specific heat, and isobaric expansion coefficient as array functions of temperature and pressure over 2 K to 300 K at the head's pressures. Check the near-ideal limit at 300 K and the real-gas regime at 4 K.
 
 - [ ] **2.2 Section physics** · Auto
-  The ADR's network equations for one head at given supply and return pressures, as plain functions of arrays and floats with no new types. The mass flow across each column boundary from the gas volumes beyond it, with each matrix node's pore gas at its own temperature and each pulse tube along a linear profile from the warm flange to its stage; the boundary resistances; and the stage enthalpy sinks from the swing and the waveform factor κ, with the real-gas correction at stage 2. Heat flows into the warm flange, column nodes, and stages sum to zero. The tube walls are separate conduction links. Check a hand-computed head, the ideal-gas limit, that one node per section reproduces the ADR's section equations, and that splitting a layer into more nodes leaves the steady state unchanged. Report the largest utilization per section as a diagnostic rather than capping it.
+  The ADR's network equations for one head at given supply and return pressures, as plain functions of arrays and floats with no new types, in `library/links/head.py`. Inputs: each column's node temperatures, matrix heat capacities, and pore volumes; the pulse-tube volumes; the warm-flange and stage temperatures; `P_h`, `P_l`, `f`, `a_1`, `a_2`, `C_1`, `C_2`, and κ. Outputs: the mass flow across each column boundary, and the heat flow into the warm flange, every column node, and both stages, summing to zero. The physics is the ADR as written, including `c_p` at each boundary's mean temperature and the real-gas enthalpy flow along the stage-2 column; helium properties come straight from `library/gases/helium.py`. The tube walls are separate conduction links, and the stage sinks' heat lands on the warm flange. Check a hand-computed head and the ideal-gas limit. Report the largest utilization per section, from the section's cold-end mass flow and its summed matrix heat capacity, as a diagnostic rather than capping it. Build it; the open physics questions are settled in the ADR.
 
 - [ ] **2.8 Drive solve** · Auto
   The mean pressure from the gas charge over every volume at its temperature, the manifold's warm volume included, then the pressure swing from the drive constraint for any number of heads and compressors on one manifold, under the smallest relief cap. Plain functions over 2.2's mass flows. Check the relief cap, that two heads on one compressor share the swing, and that two compressors on one head stay at the relief cap to a colder temperature than one.
@@ -76,6 +76,9 @@ The model is `docs/adrs/coupled-capacity-maps.md`. The milestone is reproducing 
 
 - [ ] **2.6 Cooler configuration** · Auto, after 2.5 passes
   Register `cooler` and load its nodes, head parameter files, design values, and compressor values from TOML. Spell a head's columns as 2.9 settles, so that their matrix Nodes and the link are built from one description. Each manifold is one link, so FP1's two heads share a link when they share a manifold.
+
+- [ ] **2.10 Column equivalence checks** · Auto, after 2.3
+  With 2.3's steady-state column solve: in the ideal-gas, constant-`c_m`, no-pore-gas limit, one node per section reproduces the ADR's section equations, and splitting a layer into more nodes changes the steady state by an amount that shrinks as the column is refined. Diagnostics on 2.2, not gates for it.
 
 ## 3. Plots
 

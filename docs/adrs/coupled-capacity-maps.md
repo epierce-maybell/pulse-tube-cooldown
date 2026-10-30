@@ -31,7 +31,7 @@ $$
 u_i = \frac{\dot{m}_i c_p}{f M_i c_{m,i}(\bar{T_i})},
 $$
 
-where $f$ is the valve frequency, $M_i$ is the mass matrix of the section, $c_{m,i}$ is the specific heat of the mass matrix, and $\bar{T_i}$ is the mean temperature of the section. This is essentially the heat capacity of the gas moving through a section per cycle divided by the heat capacity of the matrix it passes over. At $T_2$, helium is far from an ideal gas, so we add a correction to of the form $L_2 += (1 - \beta(T_2, \bar{P}) T_2) H_2$, where $\beta$ is helium's isobaric expansion coefficient. 
+where $f$ is the valve frequency, $M_i$ is the mass matrix of the section, $c_{m,i}$ is the specific heat of the mass matrix, and $\bar{T_i}$ is the mean temperature of the section. This is essentially the heat capacity of the gas moving through a section per cycle divided by the heat capacity of the matrix it passes over. Helium is far from an ideal gas below about 30 K, so even a perfect regenerator carries a cycle-averaged enthalpy flow: at fixed temperature the gas enthalpy still varies with pressure, $dh = c_p\,dT + (1 - \beta T)\,dP / \rho$, so the pressure wave alone moves $(1 - \beta(T, \bar{P})\,T)\,H_2$ toward stage 2 at each point of the stage-2 regenerator, where $\beta$ is helium's isobaric expansion coefficient and $T$ is the local temperature. Stage 2 receives $(1 - \beta(T_2, \bar{P})\,T_2)\,H_2$ of it against its gross cooling $H_2$, so its net cooling is $\beta(T_2, \bar{P})\,T_2\,H_2$. In the section equations this term is added to $L_2$; in the network form it is drawn from along the stage-2 column (see Graph structure). 
 
 Then, mass flows are given by:
 
@@ -63,10 +63,10 @@ where $C_i$ is an effective conductance for each valve.
 Network form. Each regenerator is a column of matrix layers between two plates: warm flange to stage 1, and stage 1 through the clamp to stage 2. Each layer is a Node, so the matrix stores heat and the column's temperature profile emerges. The loss is heat flow down the column. The boundary between adjacent nodes $k$ and $k+1$ has resistance $R_k$ equal to:
 
 $$
-R_k = \frac{f \left[ M_k c_{m,k}(T_k) + M_{k+1} c_{m,k+1}(T_k+1) \right]}{(2 a_i (\dot{m}_k c_p)^2)},
+R_k = \frac{f \left[ M_k c_{m,k}(T_k) + M_{k+1} c_{m,k+1}(T_{k+1}) \right]}{(2 a_i (\dot{m}_k c_p)^2)},
 $$
 
-with $M = 0$ at a plate and $`\dot{m}_k`$ summed over the gas volumes fed through that boundary. Resistances add, so one node per section recovers the section equations and finer cuts only resolve $`c_m(T)`$ and gas density. Pore gas takes its node's temperature; pulse tubes keep a linear profile from the warm flange to their stage. The clamp is the node containing $x_R$; the RGP plate is its own node, joined by a contact link. The cooler is one link per manifold over the warm flange, column nodes, and stage nodes.
+with $M = 0$ at a plate and $`\dot{m}_k`$ summed over the gas volumes fed through that boundary. Resistances add, so one node per section recovers the section equations and finer cuts only resolve $`c_m(T)`$ and gas density. Pore gas takes its node's temperature; pulse tubes keep a linear profile from the warm flange to their stage. $c_p$ in $R_k$ is evaluated at $\bar{P}$ and the mean of $T_k$ and $T_{k+1}$. Each boundary $b$ of the stage-2 column also carries the real-gas enthalpy flow $(1 - \beta(T_b, \bar{P})\,T_b)\,H_2$ toward stage 2, with $T_b$ the plate temperature at a plate boundary and the mean of the two node temperatures otherwise. Each node, the clamp included, supplies the change in that flow across it, so stage 2 receives exactly the term in $L_2$ above. The clamp is the node containing $x_R$; the RGP plate is its own node, joined by a contact link. The cooler is one link per manifold over the warm flange, column nodes, and stage nodes.
 
 ## Data requirements
 Each pulse tube unit needs $C_1$, $C_2$, $a_1$, $a_2$, and its valve frequency $f$, the first four from post-tuning load map data and $f$ from the shipped setting.
