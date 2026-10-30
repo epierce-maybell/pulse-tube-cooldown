@@ -50,7 +50,7 @@ The model is `docs/adrs/coupled-capacity-maps.md`. The milestone is reproducing 
 - [x] **2.1 Helium properties** · Auto
   Add `he34pak` (`../../dev/he34pak`; pure He-4 is its `hepak` subpackage) as a dependency and expose He-4 density, isobaric specific heat, and isobaric expansion coefficient as array functions of temperature and pressure over 2 K to 300 K at the head's pressures. Check the near-ideal limit at 300 K and the real-gas regime at 4 K.
 
-- [ ] **2.2 Section physics** · Auto
+- [ ] **2.2 Section physics** · Auto, after 2.9
   The ADR's network equations for one head at given supply and return pressures, as plain functions of arrays and floats with no new types, in `library/links/head.py`. Inputs: each column's node temperatures, matrix heat capacities, and pore volumes; the pulse-tube volumes; the warm-flange and stage temperatures; `P_h`, `P_l`, `f`, `a_1`, `a_2`, `C_1`, `C_2`, and κ. Outputs: the mass flow across each column boundary, and the heat flow into the warm flange, every column node, and both stages, summing to zero. The physics is the ADR as written, including `c_p` at each boundary's mean temperature and the real-gas enthalpy flow along the stage-2 column; helium properties come straight from `library/gases/helium.py`. The tube walls are separate conduction links, and the stage sinks' heat lands on the warm flange. Check a hand-computed head and the ideal-gas limit. Report the largest utilization per section, from the section's cold-end mass flow and its summed matrix heat capacity, as a diagnostic rather than capping it. Build it; the open physics questions are settled in the ADR.
 
 - [ ] **2.8 Drive solve** · Auto
