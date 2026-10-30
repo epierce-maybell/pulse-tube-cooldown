@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from hepak.properties import enthalpy_TP
 
-from pulse_tube_cooldown.library.cooler.helium import density, isobaric_expansion_coefficient, isobaric_specific_heat
+from pulse_tube_cooldown.library.gases.helium import density, isobaric_expansion_coefficient, isobaric_specific_heat
 
 _GAS_CONSTANT = 8.314462618  # J/(mol K)
 _MOLAR_MASS = 4.002602e-3  # kg/mol
