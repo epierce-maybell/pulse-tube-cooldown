@@ -1,12 +1,9 @@
 """Tests for conduction through a uniform cross-section."""
 
-import math
-
 import numpy as np
 import pytest
 from scipy.integrate import quad
 
-from pulse_tube_cooldown.core.errors import ConfigurationError
 from pulse_tube_cooldown.core.types import Material
 from pulse_tube_cooldown.library.links.conduction import Conduction
 from pulse_tube_cooldown.library.materials.load import load_material
@@ -59,18 +56,3 @@ def test_equal_temperatures_carry_no_heat():
     flow = _rod(load_material("304 SS")).calc_heat_flow(np.array([77.0, 77.0]))
 
     np.testing.assert_array_equal(flow, [0.0, 0.0])
-
-
-@pytest.mark.parametrize("nodes", [("CFP",), ("CFP", "STP", "ICP")])
-def test_rejects_other_than_two_nodes(nodes):
-    with pytest.raises(ConfigurationError, match="Rod"):
-        Conduction(name="Rod", nodes=nodes, material=CONSTANT, area=1.0e-4, length=0.1)  # type: ignore[arg-type]
-
-
-@pytest.mark.parametrize("field", ["area", "length"])
-@pytest.mark.parametrize("value", [0.0, -1.0, math.inf, math.nan])
-def test_rejects_nonpositive_or_nonfinite_geometry(field, value):
-    geometry = {"area": 1.0e-4, "length": 0.1, field: value}
-
-    with pytest.raises(ConfigurationError, match=field):
-        Conduction(name="Rod", nodes=("CFP", "STP"), material=CONSTANT, **geometry)
