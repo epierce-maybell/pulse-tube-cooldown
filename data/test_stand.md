@@ -14,8 +14,8 @@ Found across twelve cooldowns of at least six heads, all logged with the same cu
 
 - **T1** reads NaN between 70 and 76 K and between 219 and 230 K. Above 230 K it latches at a stale value, 259 to 292 K at rest.
 - **T2** reads NaN between 70 and 76 K, and between 20 and 21 K on some heads, SN09 included. At rest it reads 306 to 310 K while TPR reads 292 to 296 K.
-- **TPR** reads 33 to 35 K at base on every head, and SN09's two load maps agree within 0.7 K at matching loads. During cooldown it rises in a pattern that repeats on a given head and differs between heads: above room temperature on SN09 (325 and 351 K), SN038 (365 and 376 K), and SN035 (385 K), and below it on SN007, SN019, and SN028. It then drops to base within about 35 min once T1 reaches 45 to 60 K. The curves are identical across heads, so the rise is not a calibration error. Its cause is unknown.
+- **TPR** reads 33 to 35 K at base on every head, and SN09's two load maps agree within 0.7 K at matching loads. During cooldown it rises in a pattern that repeats on a given head and differs between heads: above room temperature on SN09 (325 and 351 K), SN038 (365 and 376 K), and SN035 (385 K), and below it on SN007, SN019, and SN028. It then drops to base within about 35 min once T1 reaches 45 to 60 K. The curves are identical across heads, so the rise is not a calibration error. Its cause is unknown. It is repeatable but does not read the clamp: the clamp sits 0.658 of the way from stage 1 to stage 2, yet across SN09's load-map points only 8% to 38% of the T1-to-T2 drop happens above TPR, while on the SN09 system the RGP plate clamped at the same position reads 11.1 K at base with PRP at 72.6 K and CFP at 2.8 K, 88% of the way down.
 
 ## Use
 
-Load-map fits use T1, TPR, and T2 at each point. Cooldown comparisons use T1 below 219 K, T2 throughout, and TPR after its drop to base.
+Load-map fits use T1 and T2 at each point. Cooldown comparisons use T1 below 219 K and T2 throughout. TPR is a diagnostic to plot beside the model's clamp node, not a target; the clamp is tested by the SN09 system's RGP trace.

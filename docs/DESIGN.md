@@ -307,7 +307,7 @@ Conditions and their arguments should be named for the physical event they mark,
 Some decisions are not obvious, but have leverage over the rest of the design.
 
 #### Coupled capacity maps
-We do not have extended load map data during cooldown for our pulse tubes. What we do have is one run per unit, post-tuning, on a test stand for exactly one cooldown curve. The decision for how to model coupled capacity maps is recorded in `docs/adrs/coupled-capacity-maps.md`.
+We do not have extended load map data during cooldown for our pulse tubes. What we do have is one run per unit, post-tuning, on a test stand for exactly one cooldown curve. The regenerator matrix is a chain of nodes along each column, and the cooler is one link per manifold over the warm flange, those nodes, and the stage nodes. The decision for how to model coupled capacity maps is recorded in `docs/adrs/coupled-capacity-maps.md`. 
 
 #### Gas pushing
 Gas pushing is its own specific link type, although future scenarios may extend this to consider different methods. Here, we focus on `gas_pushing_pm5`, which is currently deployed. The decision for how to model gas pushing is recorded in `docs/adrs/gas-pushing-routine.md`.
