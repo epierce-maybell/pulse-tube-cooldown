@@ -128,8 +128,8 @@ _BLANKET = {
     "nodes": ["Stage 1", "Chamber"],
     "area": 0.05,
     "layers": 4,
-    "layer_density": 25.0,
-    "spacer_coefficient": 8.95e-8,
+    "layer_density": 2500.0,
+    "spacer_coefficient": 6.789e-13,
     "layer_density_exponent": 2.56,
     "radiation_coefficient": 5.39e-10,
     "emissivity": 0.03,
@@ -155,7 +155,7 @@ def test_loads_multi_layer_insulation():
         link.radiation_coefficient,
         link.emissivity,
         link.source,
-    ) == (0.05, 4, 25.0, 8.95e-8, 2.56, 5.39e-10, 0.03, "Lockheed 1974, NTRS 20190030285")
+    ) == (0.05, 4, 2500.0, 6.789e-13, 2.56, 5.39e-10, 0.03, "Lockheed 1974, NTRS 20190030285")
 
 
 @pytest.mark.parametrize(

@@ -4,7 +4,7 @@ The blanket's heat flux in W/m^2 is the sum of conduction through the spacers an
 
     q = C_s * n^b * T_m * (T_h - T_c) / (N + 1) + C_r * e * (T_h^4.67 - T_c^4.67) / N,
 
-for warm and cold boundary temperatures T_h and T_c in K, their mean T_m, N layers packed n layers per cm, and the
+for warm and cold boundary temperatures T_h and T_c in K, their mean T_m, N layers packed n layers per m, and the
 layers' room-temperature emissivity e. The spacer coefficient C_s, layer density exponent b, radiation coefficient
 C_r, and emissivity e depend on the blanket's construction. Keller, Cunnington, and Glassford, "Thermal Performance of
 Multi-Layer Insulations," NASA CR-134477 (1974).
@@ -29,8 +29,8 @@ class MultiLayerInsulation:
         nodes: Names of the inner (wrapped) and outer nodes, in that order.
         area: Blanket area in m^2.
         layers: Number of reflective layers.
-        layer_density: Layers per cm of blanket thickness.
-        spacer_coefficient: C_s in W m^-2 K^-2 (layers/cm)^-b.
+        layer_density: Layers per m of blanket thickness.
+        spacer_coefficient: C_s in W m^-2 K^-2 (layers/m)^-b.
         layer_density_exponent: b.
         radiation_coefficient: C_r in W m^-2 K^-4.67.
         emissivity: Room-temperature emissivity of a layer.
@@ -76,7 +76,7 @@ def load_multi_layer_insulation(config: Mapping[str, Any]) -> MultiLayerInsulati
 
     Args:
         config: The link's `name`, `type`, `nodes` as `[inner, outer]`, `area` in m^2, `layers`, `layer_density` in
-            layers per cm, and the blanket's `spacer_coefficient`, `layer_density_exponent`, `radiation_coefficient`,
+            layers per m, and the blanket's `spacer_coefficient`, `layer_density_exponent`, `radiation_coefficient`,
             `emissivity`, and `source`.
 
     Raises:
