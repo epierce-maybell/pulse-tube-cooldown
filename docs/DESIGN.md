@@ -314,6 +314,49 @@ Some decisions are not obvious, but have leverage over the rest of the design.
 #### Coupled capacity maps
 We do not have extended load map data during cooldown for our pulse tubes. What we do have is one run per unit, post-tuning, on a test stand for exactly one cooldown curve. The regenerator matrix is a chain of nodes along each column, and the cooler is one link per manifold over the warm flange, those nodes, and the stage nodes. The decision for how to model coupled capacity maps is recorded in `docs/adrs/coupled-capacity-maps.md`. 
 
+#### Cooler configuration
+A cooler link covers one gas manifold: its warm flange, its compressors, and the heads on it. Each head names its two stage nodes, its model, and its per-unit parameter file:
+```toml
+[[fridge.links]]
+name = "Cooler"
+type = "cooler"
+warm_flange = "Warm flange"
+
+[[fridge.links.heads]]
+name = "PT"
+stages = ["PRP", "CFP"]
+model = "PT1.1"
+parameters = "data/sn09/pulse_tube/parameters.toml"
+```
+
+A head model is a TOML file in `library/heads/data/` describing the design shared by every head of that model: its two regenerator columns, its pulse-tube gas volumes, and the clamp position $x_R$ as a fraction of the stage-2 column's length from stage 1. Each layer of a column gives its position `index`, counting from 0 at the warm end, and its matrix material, matrix mass, pore gas volume, and fraction of the column's length:
+```toml
+name = "PT1.1"
+clamp_fraction = 0.658
+pulse_tube_volumes = [59.7e-6, 200.9e-6]  # m^3, stage 1 and stage 2
+source = "CAD 910-000018; Falter 2024; derived in data/sn09/pulse_tube/"
+
+[[stage_1_column]]
+index = 0
+material = "304 SS"
+mass = 0.976           # kg
+pore_volume = 2.85e-4  # m^3
+length_fraction = 0.72
+
+[[stage_1_column]]
+index = 1
+material = "Pb"
+mass = 1.112
+pore_volume = 6.01e-5
+length_fraction = 0.28
+
+[[stage_2_column]]
+# Pb, Er3Ni, HoCu2, Gd2O2S
+```
+In each column, the indices run from 0 to one less than the number of layers, each once, and the length fractions sum to one. Each layer becomes a Node whose composition is only its matrix, named `"<head> stage 1 Pb"` from the head, column, and material, or by the layer's optional `name`. Generated nodes follow the configured nodes, in link order, and the rest of the configuration refers to them by name. The cooler reads matrix mass, material, and pore volume from the same layer entries. The clamp is the stage-2 node whose span contains `clamp_fraction`; in a fridge, a contact link joins it to the RGP plate node.
+
+The parameter file holds the head's $a_1$, $a_2$, $C_1$, $C_2$, and valve frequency $f$, each with its source.
+
 #### Gas pushing
 Gas pushing is its own specific link type, although future scenarios may extend this to consider different methods. Here, we focus on `gas_pushing_pm5`, which is currently deployed. The decision for how to model gas pushing is recorded in `docs/adrs/gas-pushing-routine.md`.
 
@@ -450,6 +493,8 @@ src/pulse_tube_cooldown/
         surfaces/
             __init__.py
             load.py
+            data/...
+        heads/
             data/...
         links/
             __init__.py
