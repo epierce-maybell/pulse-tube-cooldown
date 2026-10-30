@@ -335,7 +335,7 @@ for gap width $d$, gas thermal conductivity $k_g$, accommodation coefficient $\a
 The pressure $P$ follows from conservation. Each switch seals after filling to pressure $P_{fill}$ at temperature $T_{fill}$, so the total amount of gas is $n = P_{fill} V / (R T_{fill})$. The gas is either free or held by the charcoal, so we have:
 
 $$
-n = \frac{P V}{R \bar{T}} + n_s \frac{K P}{1 + K P}, \qquad K = K_0 \, e^{E / R \bar{T}},
+n = \frac{P V}{R \bar{T}} + n_s \frac{K P}{1 + K P}, \qquad K = K_0   e^{E / R \bar{T}},
 $$
 
 where $n_s$ is the charcoal mass times its capacity and $K_0$ and $E$ are the gas adsorption constants on the charcoal. $P$ is the positive root of this quadratic, capped at some $P_{sat}(T_c)$. Gas properties and $k_b$ are evaluated at the mean temperature $\bar{T} = (T_h + T_c) / 2$.
@@ -382,6 +382,31 @@ type = "radiation"
 nodes = ["STP", "CFP"]
 area = [0.119, 0.45]
 surface = ["Polished OFHC Cu", "Polished OFHC Cu"]
+```
+
+#### Multi-layer insulation
+Multi-layer insulation (MLI) is its own link type, `multi_layer_insulation`. MLI Links connect exactly two nodes, ordered as `[inner, outer]`: the blanket wraps the inner node ($\Box_1$) and faces the outer node ($\Box_2$). An MLI Link replaces the Radiation Link over the area its blanket covers. Heat flow $Q$ follows the Lockheed correlation (Keller, Cunnington, and Glassford, NASA CR-134477, 1974), the sum of conduction through the spacers and radiation between the layers:
+
+$$
+Q = \pm A \left[C_s n^b \bar{T} \frac{T_2 - T_1}{N + 1} + C_r \epsilon \frac{T_2^{4.67} - T_1^{4.67}}{N} \right],
+$$
+
+for blanket area $A$, layer count $N$, layer density $n$ (layers per meter of blanket thickness), node temperatures $T_1$ and $T_2$, and their mean $\bar{T} = (T_1 + T_2) / 2$. The spacer coefficient $C_s$ (W m$^{-2}$ K$^{-2}$ (layers/m)$^{-b}$), layer density exponent $b$, radiation coefficient $C_r$ (W m$^{-2}$ K$^{-4.67}$), and layer emissivity $\epsilon$ depend on how the blanket is built. They are fit together, so $\epsilon$ is the blanket's room-temperature value. $Q$ is positive into the inner node and negative into the outer node, by construction.
+
+The link's table carries the blanket's coefficients and their source:
+```toml
+[[fridge.links]]
+name = "Stage 1 blanket"
+type = "multi_layer_insulation"
+nodes = ["Stage 1", "Chamber"]
+area = 0.05                       # m^2
+layers = 4
+layer_density = 2000.0            # layers/m
+spacer_coefficient = 6.789e-13    # # W m^-2 K^-2 (layers/m)^-b.
+layer_density_exponent = 2.56
+radiation_coefficient = 5.39e-10  # W m^-2 K^-4.67
+emissivity = 0.03
+source = "Lockheed 1974, NTRS 20190030285"
 ```
 
 ## Validation and testing
