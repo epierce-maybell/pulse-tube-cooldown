@@ -116,7 +116,7 @@ Things only a human can find. Check what's already in the repository and the rel
 
 - [x] **5.1 Test-stand inventory** · Human
   Masses and materials on each stage of the pulse-tube test stand. Stage 1: the head's upper cold-end heat exchanger, 392.8 g of copper (43.82 cm^3); the flange, 453.6 g of aluminum; the radiation shield, 1.191 kg of copper; and 70.9 g of mounting hardware, taken as stainless fasteners. Stage 2: the head's lower cold-end heat exchanger, 421.8 g of 304 stainless (52.55 cm^3, material as assigned in CAD 350-000162); and 39.7 g of copper mounting hardware. Clamp: a Lake Shore Cernox only, of negligible mass.
-  MLI: the overview's test configurations wrap the two regenerators, pulse tube 1, and both stages in 4 to 12 layers each, varying per run; S0009's Münster run had 7 on each regenerator and pulse tube 1, 4 on stage 1, and 5 on stage 2. Assume those counts for the Denver runs.
+  MLI: the overview's test configurations wrap the two regenerators, pulse tube 1, and both stages in 4 to 12 layers each, varying per run; S0009's Münster run had 7 on each regenerator and pulse tube 1, 4 on stage 1, and 5 on stage 2. Assume those counts for the Denver runs. Layer density is unmeasured; assume 2000 layers/m (20 layers/cm), the low end of the 20 to 30 layers/cm typical of installed blankets. Across 10 to 30 layers/cm the stage-1 flux changes by about a factor of 3.5, a fraction of a watt on the stand.
 
 - [ ] **5.2 FP1 pulse-tube records** · Human
   The test-stand cooldown and load map for each of FP1's two PT1.5 heads, under `data/fp1/pulse_tube/` like SN09's. Each head's Münster key points, valve settings, and shipped frequency are in the overview by serial, so the first step is the two serials.
