@@ -4,7 +4,7 @@ Target: Derive a model for pulse tube cooling power from first principles and wh
 
 ## Requirements
 1. We want a model that characterizes pulse tubes per unit - there's variability, and our model should capture that;
-2. For post-tuning data, we have continuous cooldown data on a test stand and load maps at cold temperatures only (including TR, but only at QR = 0);
+2. For post-tuning data, we have continuous cooldown data on a test stand and load maps at cold temperatures only;
 3. We may ask for targeted experiments iff we can show they are high-leverage, but we cannot ask for more data for every pulse tube unit;
 4. As much as possible, we don't want to hide behind calibration: a model that fits one fridge well but doesn't generalize is not useful, and if a model fails to fit a fridge, we need to be able to attribute that failure to a particular system;
 5. There is a regenerator clamp between stages 1 and 2, so the true map is of the form Q1(T1, T2, TR), Q2(T1, T2, TR), QR(T1, T2, TR). Our model should get as close to that fidelity as is reasonable, but it may not be possible to do so with the data we have;
@@ -45,7 +45,11 @@ $$
 \sum_{h} \dot{m}_{1,h} = \sum_{k} \dot{m}_{c,k}(P_h, P_l) = \rho(T_0, P_l) \sum_{k} \dot{V}_{c,k},
 $$
 
-where $h$ runs over the heads on the manifold, $k$ runs over its compressors, $\dot{m}_{c,k}$ is the flow characteristic of compressor $k$, and $\dot{V}_{c,k}$ is its volumetric displacement rate. The mean pressure is fixed by the gas charge and the total volume of the manifold, so $\bar{P} = (P_h + P_l) / 2$ always. The pressure swing $\Delta P = P_h - P_l$ is set by the drive constraint, subject to $`\Delta P \leq \Delta P_{max} = \min_k \Delta P_{max,k}`$, and falls as the heads cool. Heads on one manifold interact through the shared pressure wave. The pressure amplitude is then $P_a = \frac{1}{2} \kappa \Delta P$, where $\kappa$ is a waveform factor of order one that accounts for non-sinusoidal behavior.
+where $h$ runs over the heads on the manifold, $k$ runs over its compressors, $\dot{m}_{c,k}$ is the flow characteristic of compressor $k$, and $\dot{V}_{c,k}$ is its volumetric displacement rate. 
+
+The mean pressure $\bar{P} = (P_h + P_l)/ 2$ follows from a fixed gas charge and the total inventory of temperature-dependent gas volumes in the heads (and the warm volume at $T_0$), such that the mean pressure falls as the heads cool.
+
+The pressure swing $\Delta P = P_h - P_l$ is set by the drive constraint, subject to $`\Delta P \leq \Delta P_{max} = \min_k \Delta P_{max,k}`$, and falls as the heads cool. Heads on one manifold interact through the shared pressure wave. The pressure amplitude is then $P_a = \frac{1}{2} \kappa \Delta P$, where $\kappa$ is a waveform factor of order one that accounts for non-sinusoidal behavior.
 
 From this, we get the cycle-averaged enthalpy flow in each stage:
 
@@ -65,9 +69,9 @@ $$
 with $M = 0$ at a plate and $`\dot{m}_k`$ summed over the gas volumes fed through that boundary. Resistances add, so one node per section recovers the section equations and finer cuts only resolve $`c_m(T)`$ and gas density. Pore gas takes its node's temperature; pulse tubes keep a linear profile from the warm flange to their stage. The clamp is the node containing $x_R$; the RGP plate is its own node, joined by a contact link. The cooler is one link per manifold over the warm flange, column nodes, and stage nodes.
 
 ## Data requirements
-Each pulse tube unit needs $C_1$, $C_2$, $a_1$, and $a_2$ from post-tuning load map data.
+Each pulse tube unit needs $C_1$, $C_2$, $a_1$, $a_2$, and its valve frequency $f$, the first four from post-tuning load map data and $f$ from the shipped setting.
 
-Drive values $`\dot{V}_{c,k}`$, $\kappa$, $`\Delta P_{max,k}`$, $\bar{P}$, and $f$ are obtained once per drive configuration, meaning the number and model of compressors on a manifold.
+Drive values $\dot{V}_{c,k}$, $\kappa$, $\Delta P_{max,k}$, the gas charge, and the manifold's warm volume are obtained once per drive configuration, meaning the number and model of compressors on a manifold and its lines and buffers.
 
 The values $V_j$, $x_R$, each column's layers ($M_k$, $`c_{m,k}`$, and pore volume), and $K_i$ depend on the geometry and materials of each fridge design.
 
@@ -80,4 +84,4 @@ The values $V_j$, $x_R$, each column's layers ($M_k$, $`c_{m,k}`$, and pore volu
 6. $C_i$ is constant because the valve sits at $T_0$.
 7. $a_i$ is constant because the temperature dependence is carried entirely by $c_{m,i}$.
 8. The response of $Q_R$ to $T_R$ is captured by $a_2$ and is only tested by the RGP trace.
-9. $C_i$ and $a_i$ are independent of drive configuration.
+9. $C_i$ and $a_i$ are independent of drive configuration. (Tested by predicting SN09's two-compressor run from its one-compressor fit in task 2.5.)
