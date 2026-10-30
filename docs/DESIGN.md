@@ -94,9 +94,10 @@ The important structures are listed here. The Model holds information about the 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class Material:
     name: str
+    density: float
     specific_heat: Callable[[NDArray[np.float64]], NDArray[np.float64]]
-    thermal_conductivity: Callable[[NDArray[np.float64]], NDArray[np.float64]]
-    conductivity_integral: Callable[[NDArray[np.float64]], NDArray[np.float64]]
+    thermal_conductivity: Callable[[NDArray[np.float64]], NDArray[np.float64]] | None
+    conductivity_integral: Callable[[NDArray[np.float64]], NDArray[np.float64]] | None
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -231,6 +232,7 @@ As a general rule, physical values should always be specified in SI units.
 Materials are specified in individual TOML files in materials/data. Each entry should take the format:
 ```toml
 name = "OFHC Cu RRR100"
+density = 8960.0 # kg/m^3
 
 [specific_heat]
 form = "log_poly"
@@ -245,6 +247,8 @@ coefficients = []
 range = [4.0, 300.0]
 source = "NIST Cryogenic Material Properties"
 ```
+
+The `thermal_conductivity` table is optional.
 
 This library has to handle some mapping from the config file to actual objects:
 ```python
@@ -263,6 +267,7 @@ PROPERTY_FITS = {
     "log_poly": make_log_poly,
     "rational_poly": make_rational_poly,
     "table": make_fit_from_table,
+    "measured_with_lattice": make_measured_with_lattice_fit,
     ...
 }
 

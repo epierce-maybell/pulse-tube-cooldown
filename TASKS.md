@@ -66,7 +66,7 @@ The model is `docs/adrs/coupled-capacity-maps.md`. The milestone is reproducing 
 
 - [x] **2.7 Regenerator matrix materials** · Auto
   Material files in `library/materials` for lead, Er3Ni, HoCu2, and Gd2O2S: specific heat from 2 K to 300 K and density, with sources. The rare-earth heat capacities have peaks below 10 K that the fits must keep. Geometry and layer fractions come from 5.3.
-  Done: lead from Arblaster 2012; the rare earths as `measured_with_lattice` fits. Estimates: the Gd2O2S Debye temperature (325 K), the Er3Ni density, and Er3Ni above 30 K, which recovers 75% of its magnetic entropy. DESIGN wording for `density`, optional conductivity, and the new form is pending.
+  Done: lead from Arblaster 2012; the rare earths as `measured_with_lattice` fits. Estimates: the Gd2O2S Debye temperature (325 K), the Er3Ni density, and Er3Ni above 30 K, which recovers 75% of its magnetic entropy.
 
 - [ ] **2.6 Cooler configuration** · Auto, after 2.5 passes
   Register `cooler` and load its nodes, head parameter files, design values, and compressor values from TOML. Decide how a configuration spells a head's columns so that their matrix Nodes and the link are built from one description. Each manifold is one link, so FP1's two heads share a link when they share a manifold.
