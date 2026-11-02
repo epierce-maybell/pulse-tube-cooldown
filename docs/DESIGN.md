@@ -452,6 +452,28 @@ emissivity = 0.03
 source = "Lockheed 1974, NTRS 20190030285"
 ```
 
+#### Joint-contact resistance
+Joints, such as bolted flanges and clamps, are their own link type, `joint_contact`, connecting exactly two nodes. Contact conductance depends on the clamping force rather than the apparent contact area *(Dhuley, Cryogenics 101 (2019) 111–124)*, and the joint's conductance is modeled by a power-law of the form:
+
+$$
+G(T) = g F \left( \frac{T}{T_r} \right)^n,
+$$
+
+for clamping force $F$, conductance per unit force $g$ at reference temperature $T_r$, and temperature exponent $n$, which runs from 1 for clean metallic contacts toward 2 for oxidized bare copper. Heat flow is $Q = G(\bar{T}) (T_2 - T_1)$ into the first node, at the mean temperature $\bar{T}$. A bolt torque converts to force with Dhuley's Eq. A1.
+
+The link is configured as:
+```toml
+[[fridge.links]]
+name = "Stage 2 flange"
+type = "joint_contact"
+nodes = ["PT stage 2", "CFP"]
+force = 1.0e4                    # N
+conductance_per_force = 1.9e-3   # W/(K N)
+reference_temperature = 4.2      # K
+temperature_exponent = 1.1
+source = "Dhuley 2019, Tables 2 and 5, Au-plated Cu assembled warm"
+```
+
 ## Validation and testing
 Validation experiments should live in simulations/validation/identifier, where identifier is usually a subdirectory that stores the runner script, the configuration file(s), and output.
 
