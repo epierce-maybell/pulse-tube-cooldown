@@ -17,13 +17,108 @@ plate's temperature at a plate, otherwise the mean of its two nodes. Each stage 
 lands on the warm flange.
 """
 
+from dataclasses import dataclass
+from itertools import accumulate
+
 import numpy as np
 from numpy.typing import NDArray
 from scipy.special import roots_legendre
 
+from pulse_tube_cooldown.core.types import Node
 from pulse_tube_cooldown.library.gases import helium
 
-__all__ = ["calc_enthalpy_flow", "calc_gas_mass", "calc_heat_flow", "calc_mass_flow", "calc_utilization"]
+__all__ = [
+    "PulseTubeHead",
+    "RegeneratorLayer",
+    "calc_enthalpy_flow",
+    "calc_gas_mass",
+    "calc_heat_flow",
+    "calc_mass_flow",
+    "calc_utilization",
+]
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class RegeneratorLayer:
+    """One matrix node and its gas volume and span along a column.
+
+    Attributes:
+        node: Node whose composition holds the matrix material and mass in kg.
+        pore_volume: Gas volume in m^3 at the matrix temperature.
+        length_fraction: Fraction of the column's length occupied by this layer.
+    """
+
+    node: Node
+    pore_volume: float
+    length_fraction: float
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class PulseTubeHead:
+    """One unit's model geometry, matrix nodes, and per-unit parameters.
+
+    Attributes:
+        name: Unit's name in the configuration.
+        stages: Stage-1 and stage-2 node names.
+        columns: Stage-1 and stage-2 layers, each ordered from its warm end.
+        pulse_tube_volumes: Stage-1 and stage-2 pulse-tube gas volumes in m^3.
+        clamp_fraction: Clamp position along the stage-2 column, measured from stage 1.
+        packing_constants: Column packing constants a_1 and a_2.
+        conductances: Stage valve conductances C_1 and C_2 in W/Pa^2.
+        frequency: Valve frequency in Hz.
+    """
+
+    name: str
+    stages: tuple[str, str]
+    columns: tuple[tuple[RegeneratorLayer, ...], tuple[RegeneratorLayer, ...]]
+    pulse_tube_volumes: tuple[float, float]
+    clamp_fraction: float
+    packing_constants: tuple[float, float]
+    conductances: tuple[float, float]
+    frequency: float
+
+    @property
+    def matrix_nodes(self) -> tuple[Node, ...]:
+        """Matrix nodes in column order, stage 1 followed by stage 2."""
+        return tuple(layer.node for column in self.columns for layer in column)
+
+    @property
+    def clamp_node(self) -> str:
+        """Name of the stage-2 layer containing the clamp; a boundary belongs to the colder layer."""
+        ends = accumulate(layer.length_fraction for layer in self.columns[1])
+        for layer, end in zip(self.columns[1], ends, strict=True):
+            if self.clamp_fraction < end:
+                return layer.node.name
+        return self.columns[1][-1].node.name
+
+    @property
+    def pore_volume(self) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
+        """Pore gas volumes in m^3 at each node of the two columns."""
+        first, second = (np.array([layer.pore_volume for layer in column]) for column in self.columns)
+        return first, second
+
+    def chain_nodes(self, warm_flange: str) -> tuple[str, ...]:
+        """Node names from the warm flange through both columns and stages."""
+        return (
+            warm_flange,
+            *(layer.node.name for layer in self.columns[0]),
+            self.stages[0],
+            *(layer.node.name for layer in self.columns[1]),
+            self.stages[1],
+        )
+
+    def calc_heat_capacity(self, temperature: NDArray[np.float64]) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
+        """Matrix heat capacities in J/K, from temperatures in K along the head's chain."""
+        stage_1 = len(self.columns[0]) + 1
+        column_temperatures = (temperature[1:stage_1], temperature[stage_1 + 1 : -1])
+        first, second = (
+            np.array(
+                [layer.node.calc_heat_capacity(float(t)) for layer, t in zip(column, temperatures, strict=True)],
+                dtype=np.float64,
+            )
+            for column, temperatures in zip(self.columns, column_temperatures, strict=True)
+        )
+        return first, second
 
 
 def calc_mass_flow(

@@ -108,6 +108,26 @@ def test_node_without_materials_is_rejected():
         Node("PRP", ())
 
 
+@pytest.mark.parametrize(("temperature", "capacity"), [(4.0, 24.0), (300.0, 1800.0)])
+def test_node_evaluates_heat_capacity_at_its_temperature(temperature, capacity):
+    node = Node("PRP", ((_linear_material(), 3.0),))
+
+    # Matrix mass 3 kg times specific heat 2 T J/(kg K).
+    assert node.calc_heat_capacity(temperature) == pytest.approx(capacity)
+
+
+def test_node_heat_capacity_sums_its_material_contributions():
+    linear = _linear_material()
+    quadratic = dataclasses.replace(linear, name="Quadratic", specific_heat=lambda temperature: 0.5 * temperature**2)
+    constant = dataclasses.replace(
+        linear, name="Constant", specific_heat=lambda temperature: np.full_like(temperature, 400.0)
+    )
+    node = Node("RGP", ((linear, 6.35), (quadratic, 5.0), (constant, 0.25)))
+
+    # At 10 K: 6.35 kg * 20 J/(kg K) + 5 kg * 50 J/(kg K) + 0.25 kg * 400 J/(kg K).
+    assert node.calc_heat_capacity(10.0) == pytest.approx(477.0)
+
+
 @pytest.mark.parametrize("mass", [0.0, -1.0])
 def test_node_with_nonpositive_mass_is_rejected(mass):
     steel = Material(

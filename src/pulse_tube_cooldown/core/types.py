@@ -126,6 +126,11 @@ class Node:
         if nonpositive:
             raise ConfigurationError(f"Node {self.name!r} needs positive masses; these are not: {nonpositive}.")
 
+    def calc_heat_capacity(self, temperature: float) -> float:
+        """Calculates this node's heat capacity in J/K at a temperature in K."""
+        at_temperature = np.array([temperature], dtype=np.float64)
+        return float(sum(mass * material.specific_heat(at_temperature)[0] for material, mass in self.composition))
+
 
 class Link(Protocol):
     """Anything that transfers heat to or from its nodes.

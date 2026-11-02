@@ -23,13 +23,7 @@ def calc_heat_capacity(nodes: Sequence[Node], temperature: NDArray[np.float64]) 
     Returns:
         Heat capacity in J/K of each node.
     """
-    return np.array(
-        [
-            sum(mass * material.specific_heat(temperature[i : i + 1])[0] for material, mass in node.composition)
-            for i, node in enumerate(nodes)
-        ],
-        dtype=np.float64,
-    )
+    return np.array([node.calc_heat_capacity(float(temperature[i])) for i, node in enumerate(nodes)], dtype=np.float64)
 
 
 def calc_link_heat_flows(graph: Graph, temperature: NDArray[np.float64]) -> NDArray[np.float64]:

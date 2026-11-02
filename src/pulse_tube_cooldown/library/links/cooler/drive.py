@@ -10,12 +10,48 @@ for helium's density rho, up to the smallest of the compressors' relief swings.
 """
 
 from collections.abc import Callable, Sequence
+from dataclasses import dataclass
 
 from scipy.optimize import brentq
 
 from pulse_tube_cooldown.library.gases import helium
+from pulse_tube_cooldown.library.links.cooler.head import PulseTubeHead
 
-__all__ = ["calc_mean_pressure", "calc_pressure_swing"]
+__all__ = ["Compressor", "calc_charge", "calc_mean_pressure", "calc_pressure_swing"]
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class Compressor:
+    """A compressor's contribution to the manifold drive.
+
+    Attributes:
+        displacement_rate: Volumetric displacement rate in m^3/s at warm return conditions.
+        relief_swing: Maximum supply minus return pressure in Pa.
+    """
+
+    displacement_rate: float
+    relief_swing: float
+
+
+def calc_charge(
+    heads: Sequence[PulseTubeHead], fill_pressure: float, fill_temperature: float, warm_volume: float
+) -> float:
+    """Converts a uniform fill at rest to the manifold's total helium mass in kg.
+
+    Args:
+        heads: All units sharing the manifold.
+        fill_pressure: Absolute equalization pressure in Pa.
+        fill_temperature: Temperature in K of every gas volume when filled.
+        warm_volume: Lines' and buffers' gas volume in m^3.
+
+    Returns:
+        Charge in kg, from helium density at the fill state times the total gas volume.
+    """
+    volume = warm_volume + sum(
+        sum(layer.pore_volume for column in unit.columns for layer in column) + sum(unit.pulse_tube_volumes)
+        for unit in heads
+    )
+    return float(helium.density(fill_temperature, fill_pressure)) * volume
 
 
 def calc_mean_pressure(
