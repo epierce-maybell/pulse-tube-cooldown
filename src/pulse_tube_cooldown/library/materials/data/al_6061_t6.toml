@@ -1,0 +1,18 @@
+name = "Al 6061-T6"
+
+# Density in kg/m^3 at 20 C: ASM Handbook, Vol. 2, 6061.
+density = 2700.0
+
+# Specific heat in J/(kg K).
+[specific_heat]
+form = "log_poly"
+coefficients = [46.6467, -314.292, 866.662, -1298.3, 1162.27, -637.795, 210.351, -38.3094, 2.96344]
+range = [4.0, 300.0]
+source = "NIST Cryogenic Material Properties, 6061-T6 Aluminum (UNS A96061), https://trc.nist.gov/cryogenics/materials/6061%20Aluminum/6061_T6Aluminum_rev.htm; data 4-300 K, fit error 5%"
+
+# Thermal conductivity in W/(m K).
+[thermal_conductivity]
+form = "log_poly"
+coefficients = [0.07918, 1.0957, -0.07277, 0.08084, 0.02803, -0.09464, 0.04179, -0.00571, 0.0]
+range = [1.0, 300.0]
+source = "NIST Cryogenic Material Properties, 6061-T6 Aluminum (UNS A96061), https://trc.nist.gov/cryogenics/materials/6061%20Aluminum/6061_T6Aluminum_rev.htm; data 4-300 K, equation 1-300 K, fit error 0.5%"

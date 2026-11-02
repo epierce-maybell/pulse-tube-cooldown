@@ -87,6 +87,10 @@ The model is `docs/adrs/coupled-capacity-maps.md`. The milestone is reproducing 
 - [ ] **2.10 Column equivalence checks** · Auto, after 2.3
   With 2.3's steady-state column solve: in the ideal-gas, constant-`c_m`, no-pore-gas limit, one node per section reproduces the ADR's section equations, and splitting a layer into more nodes changes the steady state by an amount that shrinks as the column is refined. Diagnostics on 2.2, not gates for it.
 
+- [x] **2.13 Aluminum 6061-T6 material** · Auto
+  A material file in `library/materials` for 6061-T6, the test-stand flange's aluminum in 2.5 (5.1 does not name the alloy): density, specific heat, and thermal conductivity over 4 K to 300 K, with sources.
+  Done: `Al 6061-T6` from NIST's fits, specific heat 4 K to 300 K and conductivity 1 K to 300 K as NIST gives them; density from ASM. The specific-heat fit reads 954 J/(kg K) at 300 K, 6% above pure aluminum's 897.
+
 ## 3. Plots
 
 - [ ] **3.1 Heat-flow plot** · Auto

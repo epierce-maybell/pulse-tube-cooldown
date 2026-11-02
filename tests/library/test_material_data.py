@@ -131,6 +131,47 @@ def test_stainless_steel_specific_heat_is_valid_from_4_and_conductivity_from_1_t
         material.thermal_conductivity(np.array([301.0]))
 
 
+def test_aluminum_specific_heat_matches_nist_fit():
+    material = load_material("Al 6061-T6")
+    temperature = np.array([4.0, 20.0, 77.0, 300.0])
+
+    # NIST Cryogenic Material Properties, 6061-T6 Aluminum (UNS A96061), specific heat log-polynomial with coefficients
+    # a through i = 46.6467, -314.292, 866.662, -1298.3, 1162.27, -637.795, 210.351, -38.3094, 2.96344. Expected values
+    # in J/(kg K) evaluate NIST's equation with the legacy scalar `eval_log_poly` in branch Advanced_Feature_SIM.
+    expected = [0.29197648794453485, 8.854270288592081, 348.1279249115019, 953.8643601006279]
+
+    # The large alternating coefficients cancel, so different evaluation orders agree to about 1e-11.
+    np.testing.assert_allclose(material.specific_heat(temperature), expected, rtol=1e-9)
+
+
+def test_aluminum_thermal_conductivity_matches_nist_fit():
+    material = load_material("Al 6061-T6")
+    temperature = np.array([1.0, 4.0, 20.0, 77.0, 300.0])
+
+    # NIST Cryogenic Material Properties, 6061-T6 Aluminum (UNS A96061), thermal conductivity log-polynomial with
+    # coefficients a through i = 0.07918, 1.0957, -0.07277, 0.08084, 0.02803, -0.09464, 0.04179, -0.00571, 0. Expected
+    # values in W/(m K) evaluate NIST's equation with the legacy scalar `eval_log_poly` in branch Advanced_Feature_SIM.
+    expected = [1.199996557048116, 5.3474238985357285, 28.4275476264488, 83.53144194707231, 155.31878979363233]
+
+    np.testing.assert_allclose(material.thermal_conductivity(temperature), expected, rtol=1e-12)
+
+
+def test_aluminum_specific_heat_is_valid_from_4_and_conductivity_from_1_to_300_kelvin(recwarn):
+    material = load_material("Al 6061-T6")
+
+    # NIST gives the specific heat equation from 4 K to 300 K and the conductivity equation from 1 K to 300 K.
+    material.specific_heat(np.array([4.0, 300.0]))
+    material.thermal_conductivity(np.array([1.0, 300.0]))
+    assert not recwarn.list
+
+    with pytest.warns(RuntimeWarning, match=r"Al 6061-T6.*specific_heat.*below.*4.*300"):
+        material.specific_heat(np.array([3.9]))
+    with pytest.warns(RuntimeWarning, match=r"Al 6061-T6.*thermal_conductivity.*below.*1.*300"):
+        material.thermal_conductivity(np.array([0.9]))
+    with pytest.warns(RuntimeWarning, match=r"Al 6061-T6.*thermal_conductivity.*above.*1.*300"):
+        material.thermal_conductivity(np.array([301.0]))
+
+
 # Molar gas constant in J/(mol K) and the Avogadro constant in 1/mol, CODATA 2018.
 _GAS_CONSTANT = 8.314462618
 _AVOGADRO = 6.02214076e23
@@ -294,6 +335,7 @@ def test_rare_earth_heat_capacity_approaches_dulong_petit_at_room_temperature(na
         # Handbook values at room temperature, in kg/m^3.
         ("OFHC Cu RRR100", 8960.0),
         ("304 SS", 8000.0),
+        ("Al 6061-T6", 2700.0),
         ("Pb", 11340.0),
         # X-ray density, Z M / (N_A V), from the orthorhombic Imma cell a = 4.28, b = 6.76, c = 7.27 Angstrom with
         # Z = 4 of Smetana, Sima & Lebech (1986), COD 1525314.
