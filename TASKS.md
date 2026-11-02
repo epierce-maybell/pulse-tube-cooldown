@@ -28,8 +28,9 @@ Where DESIGN is silent, the code and its tests are the record.
 
 ## 1. Links
 
-- [o] **1.1 Gas-pushing link** · Auto
-  The `gas_pushing_pm5` model from the gas-pushing ADR, in `library/links/gas_pushing.py`: conductances between adjacent nodes in the chain from the downstream volumes and temperatures, summed into signed node flows that conserve energy. Register it so the DESIGN configuration example loads.
+- [x] **1.1 Gas-pushing link** · Auto
+  The `gas_pushing` model from the gas-pushing ADR, in `library/links/gas_pushing.py`: heat transfer between adjacent volume elements from the downstream volumes and log-mean temperatures, shared equally among each element's thermal nodes. Include the warm-manifold node's balancing flow so node flows conserve energy. Register the link for TOML configuration. Both the wave-strength and buffer-pressure limits apply; the routine sets both thresholds. Confirmed 2026-11-02: follow the ADR's volume elements and use the generic `gas_pushing` name. `nodes[0]` is the warm manifold. The cap-limited excursion follows from the buffer peak `P_min + delta_P / r = P_cap`, where `r = B / (A + B) * (1 - exp(-t_d / tau_d))` is the fraction of the peak pressure difference restored to the still during depressurization; combine this with the ADR's averaged refill-cycle `P_max` and use whichever limit is reached first.
+  Done: `GasPushing` and `GasVolume` implement the chain and both pressure limits; `gas_pushing` is registered for TOML loading. Twelve tests cover the hand-computed cycles, log-mean temperatures, shared-node flows, energy conservation, and a configured run. Review feedback addressed; final NumPy substitutions accepted without re-review. Scoped lint and formatting pass. Full suite: 459 passed, 5 xfailed, and 5 failures in the in-progress load-map work. DESIGN and the ADR are unchanged.
 
 - [ ] **1.2 Gas-gap switch link** · Auto
   The reduced-order switch in DESIGN "Gas-gap heat switch": pressure from the adsorption balance, capped at the cold node's vapor pressure, with the brackets in series. Finished when a configured run shows the switch carrying heat early and shutting itself off as it cools, with no phase change. The He-4 adsorption constants are a pending input (5.6); build against placeholders and swap them in when they arrive. The real hardware is described at the end of section 5.

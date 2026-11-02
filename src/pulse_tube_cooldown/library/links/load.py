@@ -16,6 +16,7 @@ from typing import Any
 from pulse_tube_cooldown.core.errors import ConfigurationError
 from pulse_tube_cooldown.core.types import Link
 from pulse_tube_cooldown.library.links.conduction import load_conduction
+from pulse_tube_cooldown.library.links.gas_pushing import load_gas_pushing
 from pulse_tube_cooldown.library.links.multi_layer_insulation import load_multi_layer_insulation
 from pulse_tube_cooldown.library.links.radiation import load_radiation
 
@@ -23,6 +24,7 @@ __all__ = ["LINK_TYPES", "load_link"]
 
 LINK_TYPES: Mapping[str, Callable[[Mapping[str, Any]], Link]] = {
     "conduction": load_conduction,
+    "gas_pushing": load_gas_pushing,
     "multi_layer_insulation": load_multi_layer_insulation,
     "radiation": load_radiation,
 }
