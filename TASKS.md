@@ -28,7 +28,7 @@ Where DESIGN is silent, the code and its tests are the record.
 
 ## 1. Links
 
-- [ ] **1.1 Gas-pushing link** · Auto
+- [o] **1.1 Gas-pushing link** · Auto
   The `gas_pushing_pm5` model from the gas-pushing ADR, in `library/links/gas_pushing.py`: conductances between adjacent nodes in the chain from the downstream volumes and temperatures, summed into signed node flows that conserve energy. Register it so the DESIGN configuration example loads.
 
 - [ ] **1.2 Gas-gap switch link** · Auto
