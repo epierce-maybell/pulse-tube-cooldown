@@ -2,7 +2,8 @@
 
 A head is a chain of the warm flange, the stage-1 regenerator column's nodes from its warm end, stage 1, the stage-2
 column's nodes, and stage 2. Temperatures and returned heat flows follow that order. A boundary joins two neighbors in
-the chain, so a head with n_1 and n_2 column nodes has n_1 + n_2 + 2 boundaries, ordered from the warm flange.
+the chain, so a head with n_1 and n_2 column nodes has n_1 + n_2 + 2 boundaries, ordered from the warm flange. Pore
+gas takes its node's temperature, and each pulse tube's gas a linear profile from the warm flange to its stage.
 
 Each boundary carries the regenerator loss toward the stage end as a conductance,
 
@@ -22,7 +23,7 @@ from scipy.special import roots_legendre
 
 from pulse_tube_cooldown.library.gases import helium
 
-__all__ = ["calc_enthalpy_flow", "calc_heat_flow", "calc_mass_flow", "calc_utilization"]
+__all__ = ["calc_enthalpy_flow", "calc_gas_mass", "calc_heat_flow", "calc_mass_flow", "calc_utilization"]
 
 
 def calc_mass_flow(
@@ -46,12 +47,29 @@ def calc_mass_flow(
     Returns:
         Mass flow in kg/s across each boundary, from the warm flange.
     """
-    mass_swing = _along_chain(*pore_volume) * _density_swing(temperature, supply_pressure, return_pressure)
-    for stage, volume in zip((_stage_1(pore_volume[0]), -1), pulse_tube_volume, strict=True):
-        mass_swing[stage] += volume * _mean_density_swing(
-            temperature[0], temperature[stage], supply_pressure, return_pressure
-        )
+    mass_swing = _gas_mass_along_chain(temperature, pore_volume, pulse_tube_volume, supply_pressure)
+    mass_swing -= _gas_mass_along_chain(temperature, pore_volume, pulse_tube_volume, return_pressure)
     return frequency * np.cumsum(mass_swing[::-1])[::-1][1:]
+
+
+def calc_gas_mass(
+    temperature: NDArray[np.float64],
+    pore_volume: tuple[NDArray[np.float64], NDArray[np.float64]],
+    pulse_tube_volume: tuple[float, float],
+    pressure: float,
+) -> float:
+    """Calculates the helium mass in a head's pores and pulse tubes at one pressure.
+
+    Args:
+        temperature: Temperatures in K along the head's chain.
+        pore_volume: Pore gas volume in m^3 of each node in the stage-1 and stage-2 columns.
+        pulse_tube_volume: Gas volumes in m^3 of the stage-1 and stage-2 pulse tubes.
+        pressure: Pressure in Pa.
+
+    Returns:
+        Helium mass in kg.
+    """
+    return float(_gas_mass_along_chain(temperature, pore_volume, pulse_tube_volume, pressure).sum())
 
 
 def calc_enthalpy_flow(conductance: float, pressure_swing: float, waveform_factor: float) -> float:
@@ -148,19 +166,24 @@ def _along_chain(stage_1_column: NDArray[np.float64], stage_2_column: NDArray[np
     return np.concatenate(([0.0], stage_1_column, [0.0], stage_2_column, [0.0]))
 
 
-def _density_swing(
-    temperature: NDArray[np.float64], supply_pressure: float, return_pressure: float
+def _gas_mass_along_chain(
+    temperature: NDArray[np.float64],
+    pore_volume: tuple[NDArray[np.float64], NDArray[np.float64]],
+    pulse_tube_volume: tuple[float, float],
+    pressure: float,
 ) -> NDArray[np.float64]:
-    """Helium density at supply pressure minus density at return pressure, in kg/m^3."""
-    return helium.density(temperature, supply_pressure) - helium.density(temperature, return_pressure)
+    """Helium mass in kg at each element of the chain, with each pulse tube's gas placed at its stage."""
+    mass = _along_chain(*pore_volume) * helium.density(temperature, pressure)
+    for stage, volume in zip((_stage_1(pore_volume[0]), -1), pulse_tube_volume, strict=True):
+        mass[stage] += volume * _mean_tube_density(temperature[0], temperature[stage], pressure)
+    return mass
 
 
-def _mean_density_swing(warm: float, cold: float, supply_pressure: float, return_pressure: float) -> float:
-    """Density swing in kg/m^3 averaged over a linear temperature profile from `warm` to `cold`.
+def _mean_tube_density(warm: float, cold: float, pressure: float) -> float:
+    """Helium density in kg/m^3 averaged over a linear temperature profile from `warm` to `cold`.
 
-    The average is integral(swing dT) / integral(dT), with both integrals taken by quadrature in log temperature.
+    The average is integral(density dT) / integral(dT), with both integrals taken by quadrature in log temperature.
     """
     points, weights = roots_legendre(48)
     temperature = np.exp(np.log(cold) + (points + 1) / 2 * np.log(warm / cold))
-    swing = _density_swing(temperature, supply_pressure, return_pressure)
-    return float(weights @ (swing * temperature) / (weights @ temperature))
+    return float(weights @ (helium.density(temperature, pressure) * temperature) / (weights @ temperature))

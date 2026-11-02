@@ -4,8 +4,9 @@ import numpy as np
 import pytest
 from scipy.constants import gas_constant
 
-from pulse_tube_cooldown.library.links.head import (
+from pulse_tube_cooldown.library.links.cooler.head import (
     calc_enthalpy_flow,
+    calc_gas_mass,
     calc_heat_flow,
     calc_mass_flow,
     calc_utilization,
@@ -65,6 +66,25 @@ def test_mass_flow_of_head_at_one_temperature():
     )
 
     np.testing.assert_allclose(mass_flow, _FREQUENCY * 1.901227 * volume_beyond, rtol=1e-6)
+
+
+def test_gas_mass_matches_hand_calculation():
+    # HEPAK density at 1.4 MPa times volume for the pores, and by adaptive quadrature over a linear profile from 300 K
+    # for the pulse tubes.
+    gas_mass = calc_gas_mass(
+        _TEMPERATURE, pore_volume=_PORE_VOLUME, pulse_tube_volume=_PULSE_TUBE_VOLUME, pressure=_MEAN_PRESSURE
+    )
+
+    assert gas_mass == pytest.approx(6.7574036e-3, rel=1e-6)
+
+
+def test_gas_mass_of_head_at_one_temperature():
+    # HEPAK's density at 300 K and 1.4 MPa, 2.2322996 kg/m^3, times the head's 4.1e-4 m^3 of gas volume.
+    gas_mass = calc_gas_mass(
+        np.full(6, 300.0), pore_volume=_PORE_VOLUME, pulse_tube_volume=_PULSE_TUBE_VOLUME, pressure=_MEAN_PRESSURE
+    )
+
+    assert gas_mass == pytest.approx(2.2322996 * 4.1e-4, rel=1e-6)
 
 
 def test_heat_flow_matches_hand_calculation():
