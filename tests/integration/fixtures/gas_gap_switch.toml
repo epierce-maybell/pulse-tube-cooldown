@@ -1,0 +1,44 @@
+[meta]
+experiment = "Gas-gap switch integration test"
+source = "Two-node test fixture; switch gap, area, fill, and charcoal from TASKS.md section 5"
+
+[[fridge.nodes]]
+name = "Plate"
+composition = [["OFHC Cu RRR100", 0.01]]
+
+[[fridge.nodes]]
+name = "Bath"
+composition = [["OFHC Cu RRR100", 1.0]]
+
+[[fridge.links]]
+name = "Switch"
+type = "gas_gap_switch"
+nodes = ["Plate", "Bath"]
+gas = "He-4"
+fill_pressure = 101325.0
+fill_temperature = 295.0
+gas_volume = 2.5e-6  # m^3; illustrative sealed volume from DESIGN's example
+gap = 0.5e-3
+area = 4.0e-3
+charcoal_mass = 1.0e-4
+brackets = [{ material = "OFHC Cu RRR100", area = 1.0e-4, length = 0.02 }]
+
+[[fridge.links]]
+name = "Support"
+type = "conduction"
+nodes = ["Plate", "Bath"]
+material = "304 SS"
+area = 1.0e-5
+length = 0.05
+
+[[procedure.phases]]
+name = "cooldown"
+
+[simulation]
+solver = "Radau"
+max_time = 2000.0
+save_every = 10.0
+rtol = 1.0e-7
+atol = 1.0e-8
+initial_temperature = [295.0, 6.0]
+fixed_boundary_nodes = ["Bath"]
