@@ -2,6 +2,7 @@
 
 import numpy as np
 import pytest
+from scipy.constants import R
 
 from pulse_tube_cooldown.library.gases.load import load_gas
 
@@ -52,12 +53,6 @@ def test_nitrogen_accommodation_coefficient_matches_room_temperature_measurement
     np.testing.assert_allclose(load_gas("N2").accommodation_coeff(np.array([77.0, 295.0])), [0.80, 0.80])
 
 
-_AWAITS_ADSORPTION = pytest.mark.xfail(
-    raises=KeyError, strict=True, reason="He-4 charcoal adsorption constants are supplied by task 9.3."
-)
-
-
-@_AWAITS_ADSORPTION
 def test_helium_constants_are_si():
     helium = load_gas("He-4")
 
@@ -65,7 +60,6 @@ def test_helium_constants_are_si():
     assert helium.heat_capacity_ratio == pytest.approx(5.0 / 3.0, rel=1e-6)
 
 
-@_AWAITS_ADSORPTION
 def test_helium_thermal_conductivity_agrees_with_nist_webbook():
     # NIST Chemistry WebBook isobar at 1 kPa, in W/(m K); about 1.3% above the ab initio value at 10 K.
     np.testing.assert_allclose(
@@ -73,7 +67,6 @@ def test_helium_thermal_conductivity_agrees_with_nist_webbook():
     )
 
 
-@_AWAITS_ADSORPTION
 def test_helium_saturation_pressure_agrees_with_its90():
     # ITS-90 He-4 vapor-pressure equation for 2.1768-5.0 K, inverted for pressure in Pa.
     temperature = np.array([2.1768, 2.2, 3.0, 4.2221, 5.0])
@@ -82,12 +75,22 @@ def test_helium_saturation_pressure_agrees_with_its90():
     np.testing.assert_allclose(load_gas("He-4").saturation_pressure(temperature), expected, rtol=1e-3)
 
 
-@_AWAITS_ADSORPTION
 def test_helium_accommodation_coefficient_matches_cited_measurements():
     # Corruccini (1959) about 0.6 at 20 K; Trott et al. (2011) 0.43 at room temperature.
     np.testing.assert_allclose(load_gas("He-4").accommodation_coeff(np.array([20.0, 300.0])), [0.6, 0.43])
 
 
-@_AWAITS_ADSORPTION
 def test_helium_does_not_condense_above_its_critical_point():
     assert np.all(np.isposinf(load_gas("He-4").saturation_pressure(np.array([5.5, 300.0]))))
+
+
+def test_helium_adsorption_matches_martins_isotherm_at_switch_coverage():
+    helium = load_gas("He-4")
+    # Martins et al. (2011) Eq. 3, carbon B: 20 cm^3/g at 25 C and 1 atm is at 13.22 K at 0.01 Pa and 19.60 K at 10 Pa.
+    amount = 0.81748  # mol/kg
+    pressure = np.array([0.01, 10.0])
+
+    langmuir_ratio = np.log(amount / (helium.adsorption_capacity - amount)) - np.log(helium.adsorption_constant)
+    temperature = helium.adsorption_energy / (R * (langmuir_ratio - np.log(pressure)))
+
+    np.testing.assert_allclose(temperature, [13.22, 19.60], atol=0.5)
