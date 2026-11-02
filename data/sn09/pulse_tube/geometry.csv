@@ -10,6 +10,7 @@ stage2_regenerator_outer_radius,16.51,mm,CAD 910-000018,0.65 in; the shorter tub
 stage2_regenerator_length,244.3,mm,CAD 910-000018,cylindrical face area 39.289 in^2 / (2 pi r)
 stage2_pulse_tube_outer_radius,12.50,mm,CAD 910-000018,0.492 in; the longer tube
 stage2_pulse_tube_length,444.1,mm,CAD 910-000018,cylindrical face area 54.051 in^2 / (2 pi r); runs from CFP past PRP to the warm flange
+stage2_pulse_tube_t3_below_stage1,0.0508,m,human 2026-11-02,approximately 2 inches below stage 1 on the main pulse tube reaching stage 2; sensor attachment unspecified
 tube_wall_thickness,0.5,mm,estimate,typical thin-wall cryocooler tube; not in CAD
 tube_wall_material,304 stainless steel,,Falter 2024,stainless regenerator tube; grade assumed
 stage1_regenerator_layer_SS,0.72,fraction of length,Falter 2024 Fig. 2,warm end; stainless screens; schematic measured to about 0.05
