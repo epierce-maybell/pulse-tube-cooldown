@@ -13,6 +13,7 @@ waveform_factor = 1.0
 [initial]
 packing_constant = [0.13, 0.1]
 conductance = [1.025e-10, 4.4e-11]  # W/Pa^2
+exchanger_effectiveness = 0.25  # TASKS 6.4: 1 K/W at the May profiles' 3.3 to 5.9 W/K capacity rate
 
 [sources]
 frequency = "pt_performance_overview_2026-10-30.pdf, S0009 final valve settings: f = 1.0 Hz"

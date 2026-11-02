@@ -5,7 +5,8 @@ is solved to steady state with no load on the clamp. The residual at each stage 
 and the stand's tube walls plus its heater power, zero where the parameters reproduce the point. Running this file
 writes a candidate parameter file, diagnostics, and a figure beside this module.
 The fit searches C_2 / a_2 on a selected equilibrium branch, with a nonnegative
-linear fit for a_1, a_2, and C_1 at each ratio. Heat-flow residuals are in W.
+linear fit for a_1, a_2, and C_1 at each ratio and eta / a_2 held at its initial value.
+Heat-flow residuals are in W.
 """
 
 import hashlib
@@ -88,11 +89,13 @@ class Parameters:
     Attributes:
         packing_constant: Packing constants a_1 and a_2 of the stage-1 and stage-2 columns.
         conductance: Effective conductances C_1 and C_2 of the stage valves in W/Pa^2.
+        exchanger_effectiveness: Stage-2 cold heat exchanger's effectiveness eta.
         frequency: Valve frequency in Hz.
     """
 
     packing_constant: tuple[float, float]
     conductance: tuple[float, float]
+    exchanger_effectiveness: float
     frequency: float
 
 
@@ -254,6 +257,7 @@ def evaluate_head(
             mass_flow,
             enthalpy,
             parameters.packing_constant,
+            parameters.exchanger_effectiveness,
             mean,
             parameters.frequency,
         ),
@@ -279,13 +283,14 @@ def solve_columns(
     """Solves matrix balances, gas inventory, and the capped compressor drive together.
 
     Matrix temperatures lie in the supported material range. The internal equations
-    are normalized to unit packing constants and retain C_2 / a_2. Mean pressure and
-    swing are unknowns in units of 1 MPa; thermal residuals use a 100 W scale.
+    are normalized to unit packing constants and retain C_2 / a_2 and eta / a_2. Mean
+    pressure and swing are unknowns in units of 1 MPa; thermal residuals use a 100 W scale.
     """
     nodes = column_indices(head)
     normalized = Parameters(
         packing_constant=(1.0, 1.0),
         conductance=(0.0, parameters.conductance[1] / parameters.packing_constant[1]),
+        exchanger_effectiveness=parameters.exchanger_effectiveness / parameters.packing_constant[1],
         frequency=parameters.frequency,
     )
     template = np.empty(head.stage_2 + 1)
@@ -446,14 +451,20 @@ def fit_at_ratio(
     *,
     warm_temperature: float,
     ratio: float,
+    effectiveness_ratio: float,
     frequency: float,
     guesses: Sequence[NDArray[np.float64] | None] | None = None,
 ) -> LoadMapFit:
-    """Fits three nonnegative linear coefficients after solving profiles at C_2 / a_2."""
+    """Fits three nonnegative linear coefficients after solving profiles at C_2 / a_2 and eta / a_2."""
     reference_conductance = 1e-10
     stages = np.column_stack([load_map.T1.values, load_map.T2.values])
     heater = np.column_stack([load_map.Q1.values, load_map.Q2.values])
-    normalized = Parameters(packing_constant=(1.0, 1.0), conductance=(0.0, ratio), frequency=frequency)
+    normalized = Parameters(
+        packing_constant=(1.0, 1.0),
+        conductance=(0.0, ratio),
+        exchanger_effectiveness=effectiveness_ratio,
+        frequency=frequency,
+    )
     if guesses is None:
         guesses = [None] * len(stages)
     profiles, matrices, target = [], [], []
@@ -470,9 +481,21 @@ def fit_at_ratio(
         mean = (column.supply_pressure + column.return_pressure) / 2
         swing = column.supply_pressure - column.return_pressure
         basis = [
-            Parameters(packing_constant=(1.0, 0.0), conductance=(0.0, 0.0), frequency=frequency),
-            Parameters(packing_constant=(0.0, 1.0), conductance=(0.0, ratio), frequency=frequency),
-            Parameters(packing_constant=(0.0, 0.0), conductance=(reference_conductance, 0.0), frequency=frequency),
+            Parameters(
+                packing_constant=(1.0, 0.0), conductance=(0.0, 0.0), exchanger_effectiveness=0.0, frequency=frequency
+            ),
+            Parameters(
+                packing_constant=(0.0, 1.0),
+                conductance=(0.0, ratio),
+                exchanger_effectiveness=effectiveness_ratio,
+                frequency=frequency,
+            ),
+            Parameters(
+                packing_constant=(0.0, 0.0),
+                conductance=(reference_conductance, 0.0),
+                exchanger_effectiveness=0.0,
+                frequency=frequency,
+            ),
         ]
         matrices.append(
             np.column_stack(
@@ -493,6 +516,7 @@ def fit_at_ratio(
     parameters = Parameters(
         packing_constant=(float(a1), float(a2)),
         conductance=(float(c1 * reference_conductance), float(ratio * a2)),
+        exchanger_effectiveness=float(effectiveness_ratio * a2),
         frequency=frequency,
     )
     columns = tuple(
@@ -523,10 +547,12 @@ def fit_load_map(
 ) -> LoadMapFit:
     """Searches one nonlinear ratio and solves three remaining coefficients linearly.
 
-    The branch is seeded by the profiles at the initial ratio. Each objective
-    evaluation starts from those same profiles. Failed column solves are explicit.
+    The ratio is C_2 / a_2, and eta / a_2 holds its initial value. The branch is seeded
+    by the profiles at the initial ratio. Each objective evaluation starts from those
+    same profiles. Failed column solves are explicit.
     """
     reference = initial.conductance[1] / initial.packing_constant[1]
+    effectiveness_ratio = initial.exchanger_effectiveness / initial.packing_constant[1]
     seed = fit_at_ratio(
         head,
         drive,
@@ -534,6 +560,7 @@ def fit_load_map(
         load_map,
         warm_temperature=warm_temperature,
         ratio=reference,
+        effectiveness_ratio=effectiveness_ratio,
         frequency=initial.frequency,
         guesses=guesses,
     )
@@ -549,6 +576,7 @@ def fit_load_map(
             load_map,
             warm_temperature=warm_temperature,
             ratio=reference * np.exp(log_ratio),
+            effectiveness_ratio=effectiveness_ratio,
             frequency=initial.frequency,
             guesses=guesses,
         )
@@ -571,6 +599,7 @@ def _write_parameters(path: Path, parameters: Parameters, sources: Mapping[str, 
         f"# Written by simulations/validation/sn09_load_map/fit.py.\n"
         f"packing_constants = [{a_1:.12g}, {a_2:.12g}]\n"
         f"conductances = [{c_1:.12e}, {c_2:.12e}]  # W/Pa^2\n"
+        f"exchanger_effectiveness = {parameters.exchanger_effectiveness:.12g}\n"
         f"frequency = {parameters.frequency}  # Hz\n"
         f"\n[sources]\n" + "".join(f'{key} = "{value}"\n' for key, value in sources.items()),
         encoding="utf-8",
@@ -649,6 +678,7 @@ def write_results(
         ratio_C2_over_a2=parameters.conductance[1] / parameters.packing_constant[1],
         packing_constants=list(parameters.packing_constant),
         conductances_W_per_Pa2=list(parameters.conductance),
+        exchanger_effectiveness=parameters.exchanger_effectiveness,
         frequency_Hz=parameters.frequency,
         sum_squared_residual_W2=float(np.sum(result.residual**2)),
         rms_residual_W=np.sqrt(np.mean(result.residual**2, axis=0)).tolist(),
@@ -660,6 +690,7 @@ def write_results(
     sources = dict(inputs["sources"])
     sources["packing_constants"] = "May map; least squares in W on the cooling branch, see results.json"
     sources["conductances"] = sources["packing_constants"]
+    sources["exchanger_effectiveness"] = "eta / a_2 held at inputs.toml's initial ratio; a_2 fitted"
     _write_parameters(HERE / "candidate_parameters.toml", parameters, sources)
     lines = [
         "SN09 May load-map fit: existing ADR equations",
@@ -738,6 +769,7 @@ def main() -> None:
     initial = Parameters(
         packing_constant=tuple(inputs["initial"]["packing_constant"]),
         conductance=tuple(inputs["initial"]["conductance"]),
+        exchanger_effectiveness=inputs["initial"]["exchanger_effectiveness"],
         frequency=inputs["frequency"],
     )
     seeds = json.loads((HERE / inputs["search"]["profile_seed"]).read_text(encoding="utf-8"))

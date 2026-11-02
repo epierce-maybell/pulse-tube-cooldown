@@ -45,4 +45,4 @@ index = 3
 material = "Gd2O2S"
 mass = 0.1792  # kg
 pore_volume = 1.495e-05  # m^3
-length_fraction = 0.20
+length_fraction = 0.2

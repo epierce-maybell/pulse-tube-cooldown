@@ -93,6 +93,7 @@ class PulseTubeCooler:
                     flow,
                     (first, second),
                     unit.packing_constants,
+                    unit.exchanger_effectiveness,
                     mean_pressure,
                     unit.frequency,
                 ),

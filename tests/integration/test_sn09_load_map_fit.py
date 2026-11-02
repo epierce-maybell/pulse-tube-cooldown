@@ -15,7 +15,9 @@ _spec.loader.exec_module(fit)
 _WARM_TEMPERATURE = 294.2
 # One F-70H, from TASKS 5.4, with 80 g of helium over the head and the stand's 29.6 L of lines and buffers.
 _DRIVE = fit.Drive(charge=0.08, warm_volume=29.6e-3, displacement_rate=(5.72e-3,), relief_swing=(1.93e6,))
-_TRUE = fit.Parameters(packing_constant=(1.0, 1.2), conductance=(2.0e-10, 1.0e-11), frequency=1.0)
+_TRUE = fit.Parameters(
+    packing_constant=(1.0, 1.2), conductance=(2.0e-10, 1.0e-11), exchanger_effectiveness=0.3, frequency=1.0
+)
 # Stage temperatures spanning the May load map.
 _STAGE_TEMPERATURE = [(55.0, 4.0), (53.0, 2.4), (40.0, 4.0), (38.0, 2.3)]
 
@@ -59,11 +61,15 @@ def test_fit_recovers_parameters_of_its_own_load_map(head, walls):
             "T2": ("point", stage_2),
         }
     )
-    initial = fit.Parameters(packing_constant=(0.7, 1.6), conductance=(1.5e-10, 1.4e-11), frequency=1.0)
+    # eta / a_2 is held at its initial ratio, 0.25 as in `_TRUE`.
+    initial = fit.Parameters(
+        packing_constant=(0.7, 1.6), conductance=(1.5e-10, 1.4e-11), exchanger_effectiveness=0.4, frequency=1.0
+    )
 
     result = fit.fit_load_map(head, _DRIVE, walls, load_map, warm_temperature=_WARM_TEMPERATURE, initial=initial)
 
     np.testing.assert_allclose(result.parameters.packing_constant, _TRUE.packing_constant, rtol=1e-3)
     np.testing.assert_allclose(result.parameters.conductance, _TRUE.conductance, rtol=1e-3)
+    assert result.parameters.exchanger_effectiveness == pytest.approx(_TRUE.exchanger_effectiveness, rel=1e-3)
     assert result.parameters.frequency == _TRUE.frequency
     np.testing.assert_allclose(result.residual, 0.0, atol=1e-6)

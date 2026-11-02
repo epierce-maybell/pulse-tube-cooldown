@@ -23,8 +23,10 @@ from pulse_tube_cooldown.library.links.cooler import (
 def parameters(tmp_path):
     path = tmp_path / "parameters.toml"
     path.write_text(
-        "packing_constants = [0.8, 1.3]\nconductances = [1e-10, 2e-12]\nfrequency = 1.0\n"
-        '[sources]\npacking_constants = "synthetic"\nconductances = "synthetic"\nfrequency = "synthetic"\n',
+        "packing_constants = [0.8, 1.3]\nconductances = [1e-10, 2e-12]\n"
+        "exchanger_effectiveness = 0.3\nfrequency = 1.0\n"
+        '[sources]\npacking_constants = "synthetic"\nconductances = "synthetic"\n'
+        'exchanger_effectiveness = "synthetic"\nfrequency = "synthetic"\n',
         encoding="utf-8",
     )
     return path
@@ -47,6 +49,7 @@ def test_model_builds_matrix_nodes_and_clamp_from_one_description(parameters):
     assert head.pulse_tube_volumes == (5.967e-5, 2.009e-4)
     assert head.packing_constants == (0.8, 1.3)
     assert head.conductances == (1e-10, 2e-12)
+    assert head.exchanger_effectiveness == 0.3
     assert head.frequency == 1.0
     assert head.matrix_nodes[0] is head.columns[0][0].node
     assert head.matrix_nodes[0].composition[0][1] == 0.9764
@@ -82,6 +85,33 @@ def test_model_layer_indices_order_and_optional_name(tmp_path, parameters):
     )
     assert [node.name for node in head.matrix_nodes] == ["PT stage 1 304 SS", "PT stage 1 Pb", "Clamp"]
     assert head.clamp_node == "Clamp"
+
+
+def test_repeated_layer_materials_are_numbered_from_warm_end(tmp_path, parameters):
+    directory = tmp_path / "heads"
+    directory.mkdir()
+    layer = 'material = "{}"\nmass = 1.0\npore_volume = 1e-5\nlength_fraction = {}\n'
+    (directory / "split.toml").write_text(
+        'name = "Split"\nclamp_fraction = 0.3\npulse_tube_volumes = [1e-4, 2e-4]\n'
+        + "[[stage_1_column]]\nindex = 0\n"
+        + layer.format("304 SS", 1.0)
+        + "[[stage_2_column]]\nindex = 2\n"
+        + layer.format("Gd2O2S", 0.25)
+        + "[[stage_2_column]]\nindex = 0\n"
+        + layer.format("Pb", 0.5)
+        + "[[stage_2_column]]\nindex = 1\n"
+        + layer.format("Gd2O2S", 0.25),
+        encoding="utf-8",
+    )
+    head = load_pulse_tube_head(
+        name="PT", stages=("S1", "S2"), model="Split", parameters=parameters, directory=directory
+    )
+    assert [node.name for node in head.matrix_nodes] == [
+        "PT stage 1 304 SS",
+        "PT stage 2 Pb",
+        "PT stage 2 Gd2O2S 1",
+        "PT stage 2 Gd2O2S 2",
+    ]
 
 
 @pytest.mark.parametrize("field, value", [("index", "2"), ("length_fraction", "0.5")])
@@ -125,6 +155,7 @@ def ideal_head(monkeypatch):
         clamp_fraction=0.5,
         packing_constants=(0.8, 1.3),
         conductances=(1e-10, 2e-12),
+        exchanger_effectiveness=0.3,
         frequency=1.2,
     )
 
@@ -179,16 +210,18 @@ def test_manifold_flows_match_analytic_ideal_gas(ideal_head, head_count, displac
         capacities = np.array([2 * t[1], 2 * t[1], 3 * t[3], 3 * t[3]])
         loss = 2 * np.array([0.8, 0.8, 1.3, 1.3]) * (flows * 10) ** 2 * (-np.diff(t)) / (head.frequency * capacities)
         h1, h2 = np.array(head.conductances) * (0.8 * swing / 2) ** 2 / 2
-        # With beta T = 1 the stage-2 boundaries carry only the finite-capacity flow eps / (1 + eps) E_2, for the
-        # stage-2 node's eps = V rho c_p / C and E_2 = h2 (T_1 / T_2)^(1 / (1 + eps)) at stage 1 and h2 at stage 2.
+        # The stage-2 column ends at its node, which sinks h2; the exchanger carries eta m c_p (T_m - T_2) on to
+        # stage 2. With beta T = 1 the stage-1 boundary carries only the finite-capacity flow eps / (1 + eps) E_2, for
+        # the stage-2 node's eps = V rho c_p / C and E_2 = h2 (T_1 / T_m)^(1 / (1 + eps)).
+        exchange = 0.3 * flows[3] * 10 * (t[3] - t[4])
         ratio = 2e-4 * (mean / t[3]) * 10 / (3 * t[3])
-        pressure_driven = ratio / (1 + ratio) * h2 * np.array([(t[2] / t[4]) ** (1 / (1 + ratio)), 1.0])
+        pressure_driven = ratio / (1 + ratio) * h2 * (t[2] / t[3]) ** (1 / (1 + ratio))
         values = [
             h1 + h2 - loss[0],
             loss[0] - loss[1],
-            loss[1] - loss[2] - h1 - pressure_driven[0],
-            loss[2] - loss[3] + pressure_driven[0] - pressure_driven[1],
-            loss[3] - h2 + pressure_driven[1],
+            loss[1] - loss[2] - h1 - pressure_driven,
+            loss[2] + pressure_driven - exchange - h2,
+            exchange,
         ]
         for name, value in zip(
             ("Warm", head.matrix_nodes[0].name, "S1", head.matrix_nodes[1].name, "S2"), values, strict=True
@@ -218,13 +251,13 @@ def test_cooler_flows_follow_graph_node_order(ideal_head):
     )
 
     # At uniform temperature the ideal gas carries no column loss. At the 1 MPa relief swing,
-    # H = C * (dP / 2)^2 / 2 gives 12.5 W and 0.25 W of stage cooling, rejected to the warm flange. The stage-2
-    # column's pore gas, with eps = V rho c_p / C at 1.7 MPa and 300 K, still moves eps / (1 + eps) H_2 from stage 1
-    # to stage 2.
+    # H = C * (dP / 2)^2 / 2 gives 12.5 W and 0.25 W of cooling at stage 1 and the stage-2 column's cold end, rejected
+    # to the warm flange. The stage-2 column's pore gas, with eps = V rho c_p / C at 1.7 MPa and 300 K, still moves
+    # eps / (1 + eps) H_2 from stage 1 to the cold end, and the exchanger carries nothing on to stage 2.
     ratio = 2e-4 * (1.7e6 / 300) * 10 / (3 * 300)
     moved = ratio / (1 + ratio) * 0.25
     np.testing.assert_allclose(
         calc_net_heat_flow(graph, np.full(6, 300.0)),
-        [-0.25 + moved, 0.0, 0.0, 12.75, -12.5 - moved, 0.0],
+        [0.0, 0.0, -0.25 + moved, 12.75, -12.5 - moved, 0.0],
         atol=1e-12,
     )

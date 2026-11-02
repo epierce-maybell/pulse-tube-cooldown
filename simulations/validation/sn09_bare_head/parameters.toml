@@ -1,6 +1,7 @@
 # Snapshot of simulations/validation/sn09_load_map/candidate_parameters.toml, 2026-11-02.
 packing_constants = [0.128883166317, 0.0969125397149]
 conductances = [1.022002311231e-10, 4.293780149459e-11]  # W/Pa^2
+exchanger_effectiveness = 0.25
 frequency = 1.0  # Hz
 
 [sources]
@@ -13,3 +14,4 @@ waveform_factor = "TASKS 5.4: fixed at 1 and absorbed into the conductances"
 warm_temperature = "first TPR reading of the paired cooldown"
 packing_constants = "May map; least squares in W on the cooling branch, see may_fit_snapshot.json"
 conductances = "May map; least squares in W on the cooling branch, see may_fit_snapshot.json"
+exchanger_effectiveness = "TASKS 6.4 estimate of 1 K/W at the May profiles; not fitted, and the snapshot predates the coupling"

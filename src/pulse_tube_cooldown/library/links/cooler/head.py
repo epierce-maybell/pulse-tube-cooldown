@@ -5,23 +5,30 @@ column's nodes, and stage 2. Temperatures and returned heat flows follow that or
 the chain, so a head with n_1 and n_2 column nodes has n_1 + n_2 + 2 boundaries, ordered from the warm flange. Pore
 gas takes its node's temperature, and each pulse tube's gas a linear profile from the warm flange to its stage.
 
-Each boundary carries the regenerator loss toward the stage end as a conductance,
+Each column boundary carries the regenerator loss toward the stage end as a conductance,
 
     G = 2 * a * (m * c_p)^2 / (f * (C_warm + C_cold)),
 
 for the column's packing constant a, the mass flow m across the boundary, helium's isobaric specific heat c_p at the
 mean pressure and the boundary's mean temperature, the valve frequency f, and the heat capacities C of the matrix on
-either side, zero at a plate. Each stage-2 boundary also carries the pressure-driven enthalpy flow
+either side, zero at a plate. The stage-2 column ends at its coldest node, the regenerator's cold end at temperature
+T_m. The last boundary is the cold heat exchanger, joining that node to stage 2 with the conductance
+
+    G_hx = eta * m_2 * c_p(T_2),
+
+for the exchanger effectiveness eta, the mass flow m_2 into the stage-2 pulse tube, and c_p at the mean pressure and
+stage 2's temperature T_2. Each stage-2 column boundary also carries the pressure-driven enthalpy flow
 
     (1 - beta * T / (1 + eps)) * E_2(T)
 
 toward stage 2, for helium's isobaric expansion coefficient beta at the mean pressure, the pore-gas to matrix
-heat-capacity ratio eps, and the acoustic power E_2 at the boundary. E_2 grows from H_2 at stage 2 as
+heat-capacity ratio eps, and the acoustic power E_2 at the boundary. E_2 grows from H_2 at the cold end as
 d ln E_2 / dT = beta / (1 + eps), with each node's eps held over the temperatures it spans, so at a boundary it is H_2
 times the product over the colder nodes of (rho_cold / rho_warm)^(1 / (1 + eps)), for helium's density rho at a
-node's two boundaries. The boundary temperature T is the plate's temperature at a plate, otherwise the mean of its two
-nodes, and eps is the adjacent node's at a plate, otherwise the mean of its two nodes'. Each stage sinks its enthalpy
-flow H, which lands on the warm flange.
+node's two ends. The boundary temperature T is stage 1's temperature at stage 1, otherwise the mean of its two nodes,
+and eps is the adjacent node's at stage 1, otherwise the mean of its two nodes'. The coldest node spans from its warm
+boundary to its own temperature. Stage 1 and the cold end sink their enthalpy flows H_1 and H_2, which land on the warm
+flange.
 """
 
 from dataclasses import dataclass
@@ -74,6 +81,7 @@ class PulseTubeHead:
         clamp_fraction: Clamp position along the stage-2 column, measured from stage 1.
         packing_constants: Column packing constants a_1 and a_2.
         conductances: Stage valve conductances C_1 and C_2 in W/Pa^2.
+        exchanger_effectiveness: Stage-2 cold heat exchanger's effectiveness eta.
         frequency: Valve frequency in Hz.
     """
 
@@ -84,6 +92,7 @@ class PulseTubeHead:
     clamp_fraction: float
     packing_constants: tuple[float, float]
     conductances: tuple[float, float]
+    exchanger_effectiveness: float
     frequency: float
 
     @property
@@ -197,6 +206,7 @@ def calc_heat_flow(
     mass_flow: NDArray[np.float64],
     enthalpy_flow: tuple[float, float],
     packing_constant: tuple[float, float],
+    exchanger_effectiveness: float,
     mean_pressure: float,
     frequency: float,
 ) -> NDArray[np.float64]:
@@ -208,8 +218,9 @@ def calc_heat_flow(
         capacity_ratio: Pore-gas to matrix heat-capacity ratio of each node in the two columns, from
             `calc_capacity_ratio`.
         mass_flow: Mass flow in kg/s across each boundary, from `calc_mass_flow`.
-        enthalpy_flow: Enthalpy flows H_1 and H_2 in W away from stages 1 and 2.
+        enthalpy_flow: Enthalpy flows H_1 and H_2 in W away from stage 1 and the stage-2 column's cold end.
         packing_constant: Packing constants a_1 and a_2 of the stage-1 and stage-2 columns.
+        exchanger_effectiveness: Stage-2 cold heat exchanger's effectiveness eta.
         mean_pressure: Mean of supply and return pressures in Pa.
         frequency: Valve frequency in Hz.
 
@@ -219,22 +230,27 @@ def calc_heat_flow(
     stage_1 = _stage_1(heat_capacity[0])
     capacity = _along_chain(*heat_capacity)
     warm_side, cold_side = temperature[:-1], temperature[1:]
-    mean_temperature = (warm_side + cold_side) / 2
-    packing = np.repeat(packing_constant, [stage_1, len(mass_flow) - stage_1])
-    specific_heat = helium.isobaric_specific_heat(mean_temperature, mean_pressure)
-    conductance = 2 * packing * (mass_flow * specific_heat) ** 2 / (frequency * (capacity[:-1] + capacity[1:]))
-    flow_toward_stage = conductance * (warm_side - cold_side)
+    column_temperature = (warm_side[:-1] + cold_side[:-1]) / 2
+    packing = np.repeat(packing_constant, [stage_1, len(column_temperature) - stage_1])
+    specific_heat = helium.isobaric_specific_heat(column_temperature, mean_pressure)
+    loss_conductance = (
+        2 * packing * (mass_flow[:-1] * specific_heat) ** 2 / (frequency * (capacity[:-2] + capacity[1:-1]))
+    )
+    exchanger_conductance = (
+        exchanger_effectiveness * mass_flow[-1] * helium.isobaric_specific_heat(temperature[-1:], mean_pressure)
+    )
+    flow_toward_stage = np.concatenate((loss_conductance, exchanger_conductance)) * (warm_side - cold_side)
 
-    boundary_temperature = _stage_2_boundary_temperature(temperature, stage_1)
+    boundary_temperature = _stage_2_boundary_temperature(temperature, stage_1)[:-1]
     ratio = capacity_ratio[1]
-    boundary_ratio = np.concatenate(([ratio[0]], (ratio[:-1] + ratio[1:]) / 2, [ratio[-1]]))
+    boundary_ratio = np.concatenate(([ratio[0]], (ratio[:-1] + ratio[1:]) / 2))
     expansion = helium.isobaric_expansion_coefficient(boundary_temperature, mean_pressure) * boundary_temperature
-    acoustic_power = calc_acoustic_power(temperature, capacity_ratio, enthalpy_flow[1], mean_pressure)
-    flow_toward_stage[stage_1:] += (1 - expansion / (1 + boundary_ratio)) * acoustic_power
+    acoustic_power = calc_acoustic_power(temperature, capacity_ratio, enthalpy_flow[1], mean_pressure)[:-1]
+    flow_toward_stage[stage_1:-1] += (1 - expansion / (1 + boundary_ratio)) * acoustic_power
 
     heat_flow = -np.diff(flow_toward_stage, prepend=0.0, append=0.0)
     heat_flow[stage_1] -= enthalpy_flow[0]
-    heat_flow[-1] -= enthalpy_flow[1]
+    heat_flow[-2] -= enthalpy_flow[1]
     heat_flow[0] += sum(enthalpy_flow)
     return heat_flow
 
@@ -297,20 +313,21 @@ def calc_acoustic_power(
     enthalpy_flow: float,
     mean_pressure: float,
 ) -> NDArray[np.float64]:
-    """Calculates the acoustic power at each boundary of the stage-2 column.
+    """Calculates the acoustic power along the stage-2 column.
 
-    The power grows from H_2 at stage 2 as d ln E_2 / dT = beta / (1 + eps), with each node's ratio eps held over
-    the temperatures between its two boundaries.
+    The power grows from H_2 at the column's cold end as d ln E_2 / dT = beta / (1 + eps), with each node's ratio eps
+    held over the temperatures it spans: from its warm boundary to its cold boundary, or to its own temperature for
+    the coldest node.
 
     Args:
         temperature: Temperatures in K along the head's chain.
         capacity_ratio: Pore-gas to matrix heat-capacity ratio of each node in the two columns, from
             `calc_capacity_ratio`.
-        enthalpy_flow: Enthalpy flow H_2 in W away from stage 2.
+        enthalpy_flow: Enthalpy flow H_2 in W away from the stage-2 column's cold end.
         mean_pressure: Mean of supply and return pressures in Pa.
 
     Returns:
-        Acoustic power in W at each stage-2 boundary, from stage 1 to stage 2.
+        Acoustic power in W at each stage-2 column boundary from stage 1, followed by H_2 at the cold end.
     """
     stage_1 = _stage_1(capacity_ratio[0])
     density = helium.density(_stage_2_boundary_temperature(temperature, stage_1), mean_pressure)
@@ -329,9 +346,13 @@ def _along_chain(stage_1_column: NDArray[np.float64], stage_2_column: NDArray[np
 
 
 def _stage_2_boundary_temperature(temperature: NDArray[np.float64], stage_1: int) -> NDArray[np.float64]:
-    """Temperature in K at each stage-2 boundary: the plate's at a plate, otherwise the mean of its two nodes."""
+    """Temperature in K at each stage-2 column boundary from stage 1, followed by the cold end's.
+
+    A boundary takes stage 1's temperature at stage 1 and the mean of its two nodes otherwise; the cold end takes the
+    coldest node's.
+    """
     boundary = (temperature[stage_1:-1] + temperature[stage_1 + 1 :]) / 2
-    boundary[[0, -1]] = temperature[[stage_1, -1]]
+    boundary[[0, -1]] = temperature[[stage_1, -2]]
     return boundary
 
 

@@ -22,6 +22,7 @@ def test_equilibrium_can_have_a_matrix_node_below_stage_2():
     parameters = fit.Parameters(
         packing_constant=(0.1555441973538624, 0.01),
         conductance=(2.5092762169316817e-10, 1e-11),
+        exchanger_effectiveness=0.025,
         frequency=inputs["frequency"],
     )
     guess = np.array(
@@ -46,18 +47,22 @@ def test_equilibrium_can_have_a_matrix_node_below_stage_2():
     ],
 )
 def test_synthetic_load_map_recovers_its_parameters(cooling):
-    """Recovers four known coefficients from a model-generated load map."""
+    """Recovers four known coefficients, and eta at its fixed ratio to a_2, from a model-generated load map."""
     import xarray as xr
 
     head = fit.read_head("PT1.1")
     _, _, warm, drive = fit.read_experiment()
-    known = fit.Parameters(packing_constant=(1.0, 1.2), conductance=(2e-10, 1e-11), frequency=1.0)
+    known = fit.Parameters(
+        packing_constant=(1.0, 1.2), conductance=(2e-10, 1e-11), exchanger_effectiveness=0.3, frequency=1.0
+    )
     stages = [(55.0, 4.0), (53.0, 2.4), (40.0, 4.0), (38.0, 2.3)]
     walls = fit.build_walls()
     guesses = [None] * len(stages)
     bounds = None
     if cooling:
-        known = fit.Parameters(packing_constant=(0.13, 0.1), conductance=(1e-10, 4.4e-11), frequency=1.0)
+        known = fit.Parameters(
+            packing_constant=(0.13, 0.1), conductance=(1e-10, 4.4e-11), exchanger_effectiveness=0.25, frequency=1.0
+        )
         seeds = json.loads(Path(__file__).with_name("cooling_seed.json").read_text())
         guesses = [np.array(seeds["temperatures"][i]) for i in [0, 2, 3, 5]]
         bounds = (4.2e-10, 4.6e-10)
@@ -77,14 +82,19 @@ def test_synthetic_load_map_recovers_its_parameters(cooling):
             "Q2": ("point", -flows[:, 1]),
         }
     )
-    initial = fit.Parameters(packing_constant=(0.7, 1.6), conductance=(1.5e-10, 1.4e-11), frequency=1.0)
+    initial = fit.Parameters(
+        packing_constant=(0.7, 1.6), conductance=(1.5e-10, 1.4e-11), exchanger_effectiveness=0.4, frequency=1.0
+    )
     if cooling:
-        initial = fit.Parameters(packing_constant=(0.1, 0.12), conductance=(0.8e-10, 5.4e-11), frequency=1.0)
+        initial = fit.Parameters(
+            packing_constant=(0.1, 0.12), conductance=(0.8e-10, 5.4e-11), exchanger_effectiveness=0.3, frequency=1.0
+        )
     result = fit.fit_load_map(
         head, drive, walls, data, warm_temperature=warm, initial=initial, ratio_bounds=bounds, guesses=guesses
     )
     np.testing.assert_allclose(result.parameters.packing_constant, known.packing_constant, rtol=1e-5)
     np.testing.assert_allclose(result.parameters.conductance, known.conductance, rtol=1e-5)
+    assert result.parameters.exchanger_effectiveness == pytest.approx(known.exchanger_effectiveness, rel=1e-5)
     np.testing.assert_allclose(result.residual, 0, atol=1e-6)
 
 
@@ -98,6 +108,7 @@ def test_candidate_balances_with_an_independently_solved_drive():
     candidate = fit.Parameters(
         packing_constant=tuple(parameters["packing_constants"]),
         conductance=tuple(parameters["conductances"]),
+        exchanger_effectiveness=parameters["exchanger_effectiveness"],
         frequency=parameters["frequency"],
     )
     for point, row in enumerate(report["points"]):
@@ -118,6 +129,7 @@ def test_candidate_balances_with_an_independently_solved_drive():
         changed = fit.Parameters(
             packing_constant=(candidate.packing_constant[0] * 2, candidate.packing_constant[1]),
             conductance=(candidate.conductance[0] * 2, candidate.conductance[1]),
+            exchanger_effectiveness=candidate.exchanger_effectiveness,
             frequency=1.0,
         )
         repeat = fit.solve_columns(head, changed, drive, warm_temperature=warm, stage_temperature=(t[3], t[8]), guess=t)

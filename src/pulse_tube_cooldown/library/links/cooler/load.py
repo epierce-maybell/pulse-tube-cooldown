@@ -3,6 +3,7 @@
 import math
 import os
 import tomllib
+from collections import Counter
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
@@ -30,7 +31,7 @@ def load_pulse_tube_head(
         name: Unit's name, used in generated matrix node names.
         stages: Names of the stage-1 and stage-2 nodes.
         model: Model's name in the library, such as "PT1.1".
-        parameters: Per-unit TOML file with packing_constants, conductances, and frequency.
+        parameters: Per-unit TOML file with packing_constants, conductances, exchanger_effectiveness, and frequency.
         directory: Directory containing the head model TOML files.
 
     Returns:
@@ -60,6 +61,7 @@ def load_pulse_tube_head(
         clamp_fraction=clamp_fraction,
         packing_constants=(float(first_packing), float(second_packing)),
         conductances=(float(first_conductance), float(second_conductance)),
+        exchanger_effectiveness=float(unit["exchanger_effectiveness"]),
         frequency=float(unit["frequency"]),
     )
 
@@ -67,21 +69,33 @@ def load_pulse_tube_head(
 def _load_column(
     entries: Sequence[Mapping[str, Any]], head_name: str, stage: int, label: str
 ) -> tuple[RegeneratorLayer, ...]:
-    """Parses a column's indexed layers into matrix Nodes and their gas volumes."""
+    """Parses a column's indexed layers into matrix Nodes and their gas volumes.
+
+    A layer's node is named from the head, stage, and material, numbered from the warm end where the material fills
+    several layers of the column, unless the layer gives its own name.
+    """
     layers = sorted(entries, key=lambda layer: layer["index"])
     if not layers or [layer["index"] for layer in layers] != list(range(len(layers))):
         raise ConfigurationError(f"{head_name} {label}: indices must run from 0 to {len(layers) - 1}, each once.")
     fractions = [float(layer["length_fraction"]) for layer in layers]
     if any(fraction <= 0 for fraction in fractions) or not math.isclose(sum(fractions), 1.0):
         raise ConfigurationError(f"{head_name} {label}: positive length fractions must sum to one.")
+    materials = Counter(layer["material"] for layer in layers)
+    seen: Counter[str] = Counter()
+    names = []
+    for layer in layers:
+        material = layer["material"]
+        seen[material] += 1
+        number = f" {seen[material]}" if materials[material] > 1 else ""
+        names.append(layer.get("name", f"{head_name} stage {stage} {material}{number}"))
     return tuple(
         RegeneratorLayer(
             node=Node(
-                name=layer.get("name", f"{head_name} stage {stage} {layer['material']}"),
+                name=name,
                 composition=((load_material(layer["material"]), float(layer["mass"])),),
             ),
             pore_volume=float(layer["pore_volume"]),
             length_fraction=float(layer["length_fraction"]),
         )
-        for layer in layers
+        for layer, name in zip(layers, names, strict=True)
     )
