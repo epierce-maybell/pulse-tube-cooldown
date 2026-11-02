@@ -6,7 +6,7 @@ Target: Derive a model for pulse tube cooling power from first principles and wh
 1. We want a model that characterizes pulse tubes per unit - there's variability, and our model should capture that;
 2. For post-tuning data, we have continuous cooldown data on a test stand and load maps at cold temperatures only;
 3. We may ask for targeted experiments iff we can show they are high-leverage, but we cannot ask for more data for every pulse tube unit;
-4. As much as possible, we don't want to hide behind calibration: a model that fits one fridge well but doesn't generalize is not useful, and if a model fails to fit a fridge, we need to be able to attribute that failure to a particular system;
+4. As much as possible, we don't want to hide behind calibration: a model that fits one fridge well but doesn't generalize is not useful, and if a model fails to fit a fridge, we ideally would like to be able to attribute that failure to a particular system;
 5. There is a regenerator clamp between stages 1 and 2, so the true map is of the form Q1(T1, T2, TR), Q2(T1, T2, TR), QR(T1, T2, TR). Our model should get as close to that fidelity as is reasonable, but it may not be possible to do so with the data we have;
 6. Heads and compressors share gas manifolds in more than one arrangement. The drive model should handle any number of heads and compressors on one manifold.
 
