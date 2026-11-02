@@ -500,12 +500,15 @@ src/pulse_tube_cooldown/
             __init__.py
             conduction.py
             radiation.py
-            cooler.py
             gas_gap_switch.py
             gas_pushing.py
             exchange_gas.py
             multi_layer_insulation.py
             joint_contact.py
+            cooler/
+                __init__.py
+                head.py
+                drive.py
     plot/
         __init__.py
         graph.py
