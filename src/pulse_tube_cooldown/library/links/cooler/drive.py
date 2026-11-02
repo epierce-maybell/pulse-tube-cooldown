@@ -59,7 +59,7 @@ def calc_mean_pressure(
     charge: float,
     warm_volume: float,
     warm_temperature: float,
-    pressure_bracket: tuple[float, float] = (1.0e4, 5.0e6),
+    pressure_bracket: tuple[float, float] = (1.0e4, 2.5e6),
 ) -> float:
     """Calculates the mean pressure at which a manifold holds its gas charge.
 
