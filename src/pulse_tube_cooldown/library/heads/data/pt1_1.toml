@@ -1,0 +1,48 @@
+# Written by data/sn09/pulse_tube/derive_head_model.py from geometry.csv.
+# Estimates: tube_wall_thickness, matrix_porosity_spheres, matrix_porosity_screens.
+name = "PT1.1"
+clamp_fraction = 0.658
+pulse_tube_volumes = [5.962e-05, 2.009e-04]  # m^3, stage 1 and stage 2
+source = "CAD 910-000018; Falter 2024 Fig. 2; derived in data/sn09/pulse_tube/"
+
+[[stage_1_column]]
+index = 0
+material = "304 SS"
+mass = 0.9764  # kg
+pore_volume = 2.848e-04  # m^3
+length_fraction = 0.72
+
+[[stage_1_column]]
+index = 1
+material = "Pb"
+mass = 1.112  # kg
+pore_volume = 6.012e-05  # m^3
+length_fraction = 0.28
+
+[[stage_2_column]]
+index = 0
+material = "Pb"
+mass = 0.2213  # kg
+pore_volume = 1.196e-05  # m^3
+length_fraction = 0.16
+
+[[stage_2_column]]
+index = 1
+material = "Er3Ni"
+mass = 0.3532  # kg
+pore_volume = 2.392e-05  # m^3
+length_fraction = 0.32
+
+[[stage_2_column]]
+index = 2
+material = "HoCu2"
+mass = 0.3599  # kg
+pore_volume = 2.392e-05  # m^3
+length_fraction = 0.32
+
+[[stage_2_column]]
+index = 3
+material = "Gd2O2S"
+mass = 0.1792  # kg
+pore_volume = 1.495e-05  # m^3
+length_fraction = 0.20
