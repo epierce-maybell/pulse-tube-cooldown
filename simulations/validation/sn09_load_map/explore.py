@@ -1,235 +1,180 @@
-"""Exploratory branch searches for the SN09 load-map experiment.
-
-Run with warm, cooling-up, cooling-down, low, roots, low-roots, or mixed.
-JSON records retain converged roots and the first failed continuation step.
-"""
+"""Seeds, scans, and refines the May fit using the current head equations."""
 
 import argparse
-import itertools
 import json
-from pathlib import Path
+from dataclasses import replace
 
 import fit
 import numpy as np
-from scipy.optimize import nnls
 
 
-def find_roots() -> None:
-    """Searches several initial profiles at the first and last May points."""
-    inputs, lm, warm, drive = fit.read_experiment()
-    head = fit.read_head(inputs["head"])
+def refine_gos(head, count):
+    """Divides the complete cold GOS layer into equal-volume entries."""
+    warm = next(i for i, material in enumerate(head.material[1]) if material.name == "Gd2O2S")
+    return replace(
+        head,
+        material=(head.material[0], head.material[1][:warm] + (head.material[1][warm],) * count),
+        mass=(head.mass[0], np.r_[head.mass[1][:warm], np.full(count, head.mass[1][warm:].sum() / count)]),
+        pore_volume=(
+            head.pore_volume[0],
+            np.r_[head.pore_volume[1][:warm], np.full(count, head.pore_volume[1][warm:].sum() / count)],
+        ),
+    )
+
+
+def interpolate_profile(old, new, temperature):
+    """Interpolates the GOS entry centers while retaining the plates and other materials."""
+    first = next(i for i, material in enumerate(old.material[1]) if material.name == "Gd2O2S") + old.stage_1 + 1
+    old_count, new_count = old.stage_2 - first, new.stage_2 - first
+    gos = np.interp(
+        (np.arange(new_count) + 0.5) / new_count, (np.arange(old_count) + 0.5) / old_count, temperature[first:-1]
+    )
+    return np.r_[temperature[:first], gos, temperature[-1]]
+
+
+def parameters(saved):
+    """Reads the five fitted parameters from a results record."""
+    return fit.Parameters(
+        packing_constant=tuple(saved["packing_constants"]),
+        conductance=tuple(saved["conductances_W_per_Pa2"]),
+        exchanger_effectiveness=saved["exchanger_effectiveness"],
+        frequency=saved["frequency_Hz"],
+    )
+
+
+def mesh(folder=fit.HERE, counts=(4, 8, 16), gos_warm_guess=None):
+    """Checks fixed-parameter stage powers and profiles across GOS entry counts."""
+    saved = json.loads((folder / "results.json").read_text())
+    inputs, _, warm, drive = fit.read_experiment()
+    original = replace(fit.read_head(inputs["head"]), cold_exchanger_coupling=saved["cold_exchanger_coupling"])
+    p = parameters(saved)
+    old = original
+    templates = [np.array(row["temperature_K"]) for row in saved["points"]]
     rows = []
-    for point in [0, 5]:
-        stages = (float(lm.T1[point]), float(lm.T2[point]))
-        for ratio in [5e-10, 1e-9, 3e-9, 1e-8]:
-            params = fit.Parameters(
-                packing_constant=(0.15, 0.01), conductance=(2.5e-10, 0.01 * ratio), frequency=inputs["frequency"]
-            )
-            roots = []
-            for temps in [
-                [stages[0] * 0.9, stages[0] * 0.6, 8, 4.5],
-                [stages[0] * 0.6, 10, 5, 4],
-                [25, 8, 4, 3],
-                [stages[0] - 1, stages[0] - 2, 15, 5.1],
-                [10, 7, 4, 2.15],
-            ]:
-                guess = np.array([warm, 220, 90, stages[0], *temps, stages[1]])
-                try:
-                    c = fit.solve_columns(
-                        head, params, drive, warm_temperature=warm, stage_temperature=stages, guess=guess, max_nfev=120
-                    )
-                    if any(np.max(abs(c.temperature - r.temperature)) < 1e-3 for r in roots):
-                        continue
-                    roots.append(c)
-                    growth = fit.calc_growth_rate(head, params, drive, c)
-                    row = dict(
-                        point=point,
-                        ratio=ratio,
-                        temperature=c.temperature.tolist(),
-                        growth=growth,
-                        stage_flow=c.heat_flow[[3, 8]].tolist(),
-                    )
-                    rows.append(row)
-                    print("ROOT", row, flush=True)
-                except RuntimeError as error:
-                    print("FAIL", point, ratio, temps, str(error), flush=True)
-    Path(__file__).with_name("branches.json").write_text(json.dumps(rows, indent=2))
-
-
-def find_low_roots() -> None:
-    """Continues distinct low-temperature roots through all May points."""
-    inputs, lm, warm, drive = fit.read_experiment()
-    head = fit.read_head(inputs["head"])
-    params = fit.Parameters(packing_constant=(1.0, 1.0), conductance=(0.0, 1e-9), frequency=inputs["frequency"])
-    roots = json.loads(Path(__file__).with_name("branches.json").read_text())
-    out = []
-    for point in [0, 1, 2, 5, 4, 3]:
-        t1, t2 = float(lm.T1[point]), float(lm.T2[point])
-        found = []
-        seeds = [r["temperature"] for r in roots if r["ratio"] == 1e-9 and r["growth"] < 0]
-        seeds.extend([r["temperature"] for r in out])
-        for seed in seeds:
-            guess = np.array(seed)
-            guess[[0, 3, 8]] = [warm, t1, t2]
+    for count in counts:
+        head = refine_gos(original, count)
+        columns = []
+        for point, t in zip(saved["points"], templates, strict=True):
+            guess = interpolate_profile(old, head, t)
+            if gos_warm_guess is not None:
+                first = next(i for i, m in enumerate(head.material[1]) if m.name == "Gd2O2S") + head.stage_1 + 1
+                guess[first] = gos_warm_guess
             try:
-                c = fit.solve_columns(
-                    head, params, drive, warm_temperature=warm, stage_temperature=(t1, t2), guess=guess
-                )
-                if any(max(abs(c.temperature - np.array(r["temperature"]))) < 1e-3 for r in found):
-                    continue
-                p = fit.Parameters(
-                    packing_constant=(0.15, 0.01), conductance=(2.5e-10, 1e-11), frequency=inputs["frequency"]
-                )
-                growth = fit.calc_growth_rate(head, p, drive, c)
-                row = dict(point=point, ratio=1e-9, growth=growth, temperature=c.temperature.tolist())
-                found.append(row)
-                out.append(row)
-                print("ROOT", row, flush=True)
-            except RuntimeError as e:
-                print("FAIL", point, str(e), flush=True)
-    Path(__file__).with_name("low_branch.json").write_text(json.dumps(out, indent=2))
-
-
-def compare_branches() -> None:
-    """Compares all positive hot/cold branch assignments on an overlapping ratio interval."""
-    inputs, lm, warm, drive = fit.read_experiment()
-    head = fit.read_head(inputs["head"])
-    hot = json.loads(Path(__file__).with_name("scan.json").read_text())
-    cold = json.loads(Path(__file__).with_name("scan_cold_down.json").read_text())
-    rows = []
-    for ratio in np.linspace(4.1e-10, 5.2e-10, 9):
-        matrices = []
-        profiles = []
-        targets = []
-        for point, (t1, t2) in enumerate(zip(lm.T1.values, lm.T2.values, strict=True)):
-            variants = []
-            states = []
-            for branch, data in [("hot", hot), ("cold", cold)]:
-                seed = min((r for r in data if "temperatures" in r), key=lambda r: abs(np.log(r["ratio"] / ratio)))
-                p = fit.Parameters(packing_constant=(1.0, 1.0), conductance=(0.0, ratio), frequency=inputs["frequency"])
-                try:
-                    col = fit.solve_columns(
+                columns.append(
+                    fit.solve_columns(
                         head,
                         p,
                         drive,
                         warm_temperature=warm,
-                        stage_temperature=(t1, t2),
-                        guess=np.array(seed["temperatures"][point]),
+                        stage_temperature=tuple(point["stage_temperature_K"]),
+                        guess=guess,
+                        max_nfev=200,
                     )
-                except RuntimeError:
-                    continue
-                mean = (col.supply_pressure + col.return_pressure) / 2
-                sw = col.supply_pressure - col.return_pressure
-                basis = [
-                    fit.Parameters(packing_constant=(1.0, 0.0), conductance=(0.0, 0.0), frequency=inputs["frequency"]),
-                    fit.Parameters(
-                        packing_constant=(0.0, 1.0), conductance=(0.0, ratio), frequency=inputs["frequency"]
-                    ),
-                    fit.Parameters(
-                        packing_constant=(0.0, 0.0), conductance=(1e-10, 0.0), frequency=inputs["frequency"]
-                    ),
-                ]
-                matrix = np.column_stack(
-                    [fit.evaluate_head(head, p, drive, col.temperature, mean, sw).heat_flow[[3, 8]] for p in basis]
                 )
-                variants.append(matrix)
-                states.append((branch, col))
-            matrices.append(variants)
-            profiles.append(states)
-            wall = fit.calc_link_heat_flow(fit.build_walls(), {fit.WARM_FLANGE: warm, fit.STAGE_1: t1, fit.STAGE_2: t2})
-            targets.extend([-float(lm.Q1[point]) - wall[fit.STAGE_1], -float(lm.Q2[point]) - wall[fit.STAGE_2]])
-        best = None
-        for assignment in itertools.product(*(range(len(v)) for v in matrices)):
-            matrix = np.concatenate([variants[choice] for variants, choice in zip(matrices, assignment, strict=True)])
-            coeff, norm = nnls(matrix, np.array(targets))
-            if min(coeff) > 0 and (best is None or norm < best[0]):
-                best = (norm, coeff, assignment, matrix)
-        norm, co, assign, matrix = best
-        a1, a2, c1 = co
-        params = fit.Parameters(
-            packing_constant=(a1, a2), conductance=(c1 * 1e-10, ratio * a2), frequency=inputs["frequency"]
-        )
-        chosen = [states[choice] for states, choice in zip(profiles, assign, strict=True)]
-        growth = [fit.calc_growth_rate(head, params, drive, c) for _, c in chosen]
+            except RuntimeError as error:
+                rows.append(dict(gos_entries=count, failed_point=point["point"], error=str(error)))
+                (folder / "mesh_convergence.json").write_text(json.dumps(rows, indent=2) + "\n")
+                print(rows[-1], flush=True)
+                return
+        powers = np.array([c.heat_flow[[head.stage_1, head.stage_2]] for c in columns])
         row = dict(
-            ratio=float(ratio),
-            cost=norm**2,
-            parameters=[a1, a2, c1 * 1e-10, ratio * a2],
-            branches=[b for b, _ in chosen],
-            growth=growth,
-            residual=(matrix @ co - np.array(targets)).reshape(-1, 2).tolist(),
-            temperatures=[c.temperature.tolist() for _, c in chosen],
+            gos_entries=count,
+            stage_heat_flow_W=powers.tolist(),
+            temperatures_K=[c.temperature.tolist() for c in columns],
+            clamp_temperature_K=[float(c.temperature[head.clamp]) for c in columns],
+            cold_temperature_K=[float(c.temperature[-2]) for c in columns],
         )
+        row["growth_rate_per_s"] = [fit.calc_growth_rate(head, p, drive, c) for c in columns]
+        row["gos_warm_guess_K"] = gos_warm_guess
+        if rows:
+            row["max_power_change_from_previous_W"] = np.max(
+                abs(powers - np.array(rows[-1]["stage_heat_flow_W"])), axis=0
+            ).tolist()
         rows.append(row)
-        print("FIT", ratio, row["cost"], row["parameters"], row["branches"], flush=True)
-    Path(__file__).with_name("mixed_branches.json").write_text(json.dumps(rows, indent=2))
+        print(
+            json.dumps({k: v for k, v in row.items() if k not in ("temperatures_K", "stage_heat_flow_W")}), flush=True
+        )
+        (folder / "mesh_convergence.json").write_text(json.dumps(rows, indent=2) + "\n")
+        old, templates = head, [c.temperature for c in columns]
 
 
-def scan_branch(name: str) -> None:
-    """Continues one branch in ratio and records the associated nonnegative fits."""
-    inputs, load_map, warm, drive = fit.read_experiment()
+def seed():
+    """Resolves a cold branch from the baseline's warm layers and a cold GOS guess."""
+    inputs, lm, warm, drive = fit.read_experiment()
     head = fit.read_head(inputs["head"])
-    if name == "warm":
-        ratios = np.geomspace(1e-13, 3e-9, 65)
-        previous = None
-        output = "scan.json"
-    elif name == "low":
-        ratios = np.geomspace(1e-9, 3e-10, 30)
-        seeds = json.loads(Path(__file__).with_name("low_branch.json").read_text())
-        previous = [np.array(next(row["temperature"] for row in seeds if row["point"] == i)) for i in range(6)]
-        output = "scan_low.json"
-    else:
-        seeds = json.loads(Path(__file__).with_name("cooling_seed.json").read_text())
-        previous = [np.array(t) for t in seeds["temperatures"]]
-        if name == "cooling-up":
-            ratios = np.geomspace(5e-10, 3e-9, 30)
-            output = "scan_cold.json"
-        else:
-            ratios = np.geomspace(5e-10, 1e-10, 25)
-            output = "scan_cold_down.json"
+    baseline = json.loads((fit.HERE / "baseline/results.json").read_text())
+    p = fit.Parameters(
+        packing_constant=tuple(inputs["initial"]["packing_constant"]),
+        conductance=tuple(inputs["initial"]["conductance"]),
+        exchanger_effectiveness=inputs["initial"]["exchanger_effectiveness"],
+        frequency=inputs["frequency"],
+    )
+    count = head.stage_2 - 7
+    columns = []
+    for row in baseline["points"]:
+        t = np.array(row["temperature_K"])
+        guess = np.r_[t[:7], np.linspace(5.1, t[-1] - 0.3, count), t[-1]]
+        columns.append(
+            fit.solve_columns(
+                head,
+                p,
+                drive,
+                warm_temperature=warm,
+                stage_temperature=tuple(row["stage_temperature_K"]),
+                guess=guess,
+                max_nfev=500,
+            )
+        )
+    output = dict(
+        source="explore.py seed; baseline warm layers, linear GOS guess from 5.1 K to T2 - 0.3 K",
+        temperatures=[c.temperature.tolist() for c in columns],
+    )
+    (fit.HERE / "cooling_seed.json").write_text(json.dumps(output, indent=2) + "\n")
+
+
+def scan(ratios, effectiveness_ratio):
+    """Continues a cold branch in C_2/a_2 at an explicit eta/a_2."""
+    inputs, lm, warm, drive = fit.read_experiment()
+    head = fit.read_head(inputs["head"])
+    guesses = [np.array(t) for t in json.loads((fit.HERE / "cooling_seed.json").read_text())["temperatures"]]
     rows = []
     for ratio in ratios:
-        try:
-            result = fit.fit_at_ratio(
-                head,
-                drive,
-                fit.build_walls(),
-                load_map,
-                warm_temperature=warm,
-                ratio=ratio,
-                frequency=inputs["frequency"],
-                guesses=previous,
-            )
-            previous = [column.temperature for column in result.columns]
-            growth = [fit.calc_growth_rate(head, result.parameters, drive, c) for c in result.columns]
-            row = dict(
-                ratio=ratio,
-                parameters=[*result.parameters.packing_constant, *result.parameters.conductance],
-                cost=float(np.sum(result.residual**2)),
-                residual=result.residual.tolist(),
-                growth=growth,
-                temperatures=[c.temperature.tolist() for c in result.columns],
-            )
-            rows.append(row)
-            print("FIT", ratio, row["cost"], row["parameters"], "growth", growth, flush=True)
-        except RuntimeError as error:
-            print("FAILED", ratio, str(error), flush=True)
-            rows.append(dict(ratio=ratio, error=str(error)))
-            break
-    Path(__file__).with_name(output).write_text(json.dumps(rows, indent=2) + "\n", encoding="utf-8")
-
-
-def main() -> None:
-    """Runs one explicitly selected exploratory search."""
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("search", choices=["warm", "cooling-up", "cooling-down", "low", "roots", "low-roots", "mixed"])
-    arguments = parser.parse_args()
-    searches = {"roots": find_roots, "low-roots": find_low_roots, "mixed": compare_branches}
-    if arguments.search in searches:
-        searches[arguments.search]()
-    else:
-        scan_branch(arguments.search)
+        result = fit.fit_at_ratio(
+            head,
+            drive,
+            fit.build_walls(),
+            lm,
+            warm_temperature=warm,
+            ratio=ratio,
+            effectiveness_ratio=effectiveness_ratio,
+            frequency=inputs["frequency"],
+            guesses=guesses,
+        )
+        guesses = [c.temperature for c in result.columns]
+        row = dict(
+            ratio=ratio,
+            effectiveness_ratio=effectiveness_ratio,
+            rms_W=np.sqrt(np.mean(result.residual**2, axis=0)).tolist(),
+            eta=result.parameters.exchanger_effectiveness,
+            temperatures=[t.tolist() for t in guesses],
+            growth_rate_per_s=[fit.calc_growth_rate(head, result.parameters, drive, c) for c in result.columns],
+        )
+        rows.append(row)
+        print(json.dumps({k: v for k, v in row.items() if k != "temperatures"}), flush=True)
+        (fit.HERE / "coupled_scan.json").write_text(json.dumps(rows, indent=2) + "\n")
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("action", choices=("seed", "mesh", "scan"))
+    parser.add_argument("--counts", nargs="+", type=int, default=[4, 8, 16])
+    parser.add_argument("--gos-warm-guess", type=float)
+    parser.add_argument("--ratios", nargs="+", type=float)
+    parser.add_argument("--effectiveness-ratio", type=float, default=2.5)
+    args = parser.parse_args()
+    if args.action == "seed":
+        seed()
+    elif args.action == "mesh":
+        mesh(counts=args.counts, gos_warm_guess=args.gos_warm_guess)
+    else:
+        scan(args.ratios, args.effectiveness_ratio)

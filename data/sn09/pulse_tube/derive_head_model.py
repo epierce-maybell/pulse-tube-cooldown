@@ -9,8 +9,7 @@ from pulse_tube_cooldown.library.materials.load import load_material
 GEOMETRY = Path(__file__).with_name("geometry.csv")
 OUTPUT = Path(__file__).parents[3] / "src/pulse_tube_cooldown/library/heads/data/pt1_1.toml"
 
-# Each column's tube, and its layers from the warm end as (length fraction, material, porosity, entries). A layer
-# divides into its number of entries of equal length, mass, and pore volume.
+# Each column's tube, and its layers from the warm end as (length fraction, material, porosity, node count).
 COLUMNS = {
     "stage_1_column": (
         "stage1_regenerator",
@@ -25,7 +24,7 @@ COLUMNS = {
             ("stage2_regenerator_layer_Pb", "Pb", "matrix_porosity_spheres", 1),
             ("stage2_regenerator_layer_Er3Ni", "Er3Ni", "matrix_porosity_spheres", 1),
             ("stage2_regenerator_layer_HoCu2", "HoCu2", "matrix_porosity_spheres", 1),
-            ("stage2_regenerator_layer_GOS", "Gd2O2S", "matrix_porosity_spheres", 1),
+            ("stage2_regenerator_layer_GOS", "Gd2O2S", "matrix_porosity_spheres", 8),
         ],
     ),
 }
@@ -64,13 +63,8 @@ def render(rows, columns=COLUMNS):
     ]
     for column, (tube, layers) in columns.items():
         column_volume = bore_volume(rows, tube)
-        entries = [
-            (fraction, material, porosity, count)
-            for fraction, material, porosity, count in layers
-            for _ in range(count)
-        ]
-        for index, (fraction, material, porosity, count) in enumerate(entries):
-            entry_fraction = value(rows, fraction) / count
+        for index, (fraction, material, porosity, count) in enumerate(layers):
+            entry_fraction = value(rows, fraction)
             entry_volume = column_volume * entry_fraction
             pore_fraction = value(rows, porosity)
             lines += [
@@ -82,6 +76,8 @@ def render(rows, columns=COLUMNS):
                 f"pore_volume = {entry_volume * pore_fraction:.3e}  # m^3",
                 f"length_fraction = {entry_fraction:.6g}",
             ]
+            if count > 1:
+                lines.append(f"node_count = {count}")
     return "\n".join(lines) + "\n"
 
 

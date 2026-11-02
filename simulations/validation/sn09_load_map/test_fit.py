@@ -13,92 +13,25 @@ fit = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(fit)
 
 
-@pytest.mark.xfail(strict=True, reason="Solved before the finite-capacity terms of task 6.2; task 6.3 refits.")
 def test_equilibrium_can_have_a_matrix_node_below_stage_2():
-    """Preserves a real root excluded by the old plate-temperature bounds."""
+    """A stable fitted root has a matrix minimum below the measured plate."""
     head = fit.read_head("PT1.1")
     inputs, load_map, warm, drive = fit.read_experiment()
     stages = (float(load_map.T1[0]), float(load_map.T2[0]))
+    report = json.loads(Path(__file__).with_name("results.json").read_text())
     parameters = fit.Parameters(
-        packing_constant=(0.1555441973538624, 0.01),
-        conductance=(2.5092762169316817e-10, 1e-11),
-        exchanger_effectiveness=0.025,
+        packing_constant=tuple(report["packing_constants"]),
+        conductance=tuple(report["conductances_W_per_Pa2"]),
+        exchanger_effectiveness=report["exchanger_effectiveness"],
         frequency=inputs["frequency"],
     )
-    guess = np.array(
-        [warm, 223.97518913, 92.18649583, stages[0], 50.2584913, 34.57765293, 6.85818033, 2.88528551, stages[1]]
-    )
+    guess = np.array(report["points"][0]["temperature_K"])
     column = fit.solve_columns(head, parameters, drive, warm_temperature=warm, stage_temperature=stages, guess=guess)
-    np.testing.assert_allclose(column.heat_flow[[1, 2, 4, 5, 6, 7]], 0, atol=1e-7)
-    assert column.temperature[7] < stages[1]
-    assert fit.calc_growth_rate(head, parameters, drive, column) > 0.1
+    np.testing.assert_allclose(column.heat_flow[fit.column_indices(head)], 0, atol=1e-7)
+    assert column.temperature[-2] < stages[1]
+    assert fit.calc_growth_rate(head, parameters, drive, column) < 0
 
 
-@pytest.mark.parametrize(
-    "cooling",
-    [
-        False,
-        pytest.param(
-            True,
-            marks=pytest.mark.xfail(
-                strict=True, reason="Seeded before the finite-capacity terms of task 6.2; task 6.3 refits."
-            ),
-        ),
-    ],
-)
-def test_synthetic_load_map_recovers_its_parameters(cooling):
-    """Recovers four known coefficients, and eta at its fixed ratio to a_2, from a model-generated load map."""
-    import xarray as xr
-
-    head = fit.read_head("PT1.1")
-    _, _, warm, drive = fit.read_experiment()
-    known = fit.Parameters(
-        packing_constant=(1.0, 1.2), conductance=(2e-10, 1e-11), exchanger_effectiveness=0.3, frequency=1.0
-    )
-    stages = [(55.0, 4.0), (53.0, 2.4), (40.0, 4.0), (38.0, 2.3)]
-    walls = fit.build_walls()
-    guesses = [None] * len(stages)
-    bounds = None
-    if cooling:
-        known = fit.Parameters(
-            packing_constant=(0.13, 0.1), conductance=(1e-10, 4.4e-11), exchanger_effectiveness=0.25, frequency=1.0
-        )
-        seeds = json.loads(Path(__file__).with_name("cooling_seed.json").read_text())
-        guesses = [np.array(seeds["temperatures"][i]) for i in [0, 2, 3, 5]]
-        bounds = (4.2e-10, 4.6e-10)
-    flows = np.array(
-        [
-            fit.calc_stage_heat_flow(
-                head, known, drive, walls, warm_temperature=warm, stage_temperature=stage, guess=guess
-            )[0]
-            for stage, guess in zip(stages, guesses, strict=True)
-        ]
-    )
-    data = xr.Dataset(
-        {
-            "T1": ("point", np.array(stages)[:, 0]),
-            "T2": ("point", np.array(stages)[:, 1]),
-            "Q1": ("point", -flows[:, 0]),
-            "Q2": ("point", -flows[:, 1]),
-        }
-    )
-    initial = fit.Parameters(
-        packing_constant=(0.7, 1.6), conductance=(1.5e-10, 1.4e-11), exchanger_effectiveness=0.4, frequency=1.0
-    )
-    if cooling:
-        initial = fit.Parameters(
-            packing_constant=(0.1, 0.12), conductance=(0.8e-10, 5.4e-11), exchanger_effectiveness=0.3, frequency=1.0
-        )
-    result = fit.fit_load_map(
-        head, drive, walls, data, warm_temperature=warm, initial=initial, ratio_bounds=bounds, guesses=guesses
-    )
-    np.testing.assert_allclose(result.parameters.packing_constant, known.packing_constant, rtol=1e-5)
-    np.testing.assert_allclose(result.parameters.conductance, known.conductance, rtol=1e-5)
-    assert result.parameters.exchanger_effectiveness == pytest.approx(known.exchanger_effectiveness, rel=1e-5)
-    np.testing.assert_allclose(result.residual, 0, atol=1e-6)
-
-
-@pytest.mark.xfail(strict=True, reason="Solved before the finite-capacity terms of task 6.2; task 6.3 refits.")
 def test_candidate_balances_with_an_independently_solved_drive():
     """Checks the archived candidate against the library equations and its reported residuals."""
     parameters = tomllib.loads(Path(__file__).with_name("candidate_parameters.toml").read_text())
@@ -116,8 +49,10 @@ def test_candidate_balances_with_an_independently_solved_drive():
         mean, swing = fit.calc_pressures(head, candidate, drive, t)
         column = fit.evaluate_head(head, candidate, drive, t, mean, swing)
         np.testing.assert_allclose(column.heat_flow[fit.column_indices(head)], 0, atol=1e-7)
-        wall = fit.calc_link_heat_flow(fit.build_walls(), {fit.WARM_FLANGE: warm, fit.STAGE_1: t[3], fit.STAGE_2: t[8]})
-        residual = column.heat_flow[[3, 8]] + [
+        wall = fit.calc_link_heat_flow(
+            fit.build_walls(), {fit.WARM_FLANGE: warm, fit.STAGE_1: t[head.stage_1], fit.STAGE_2: t[head.stage_2]}
+        )
+        residual = column.heat_flow[[head.stage_1, head.stage_2]] + [
             wall[fit.STAGE_1] + float(load_map.Q1[point]),
             wall[fit.STAGE_2] + float(load_map.Q2[point]),
         ]
@@ -132,17 +67,64 @@ def test_candidate_balances_with_an_independently_solved_drive():
             exchanger_effectiveness=candidate.exchanger_effectiveness,
             frequency=1.0,
         )
-        repeat = fit.solve_columns(head, changed, drive, warm_temperature=warm, stage_temperature=(t[3], t[8]), guess=t)
+        repeat = fit.solve_columns(
+            head, changed, drive, warm_temperature=warm, stage_temperature=(t[head.stage_1], t[head.stage_2]), guess=t
+        )
         np.testing.assert_allclose(repeat.temperature, t, atol=1e-7)
         assert repeat.heat_flow[-1] == pytest.approx(column.heat_flow[-1], abs=1e-7)
 
 
 def test_archived_capacity_ratio_matches_coupling_findings():
     """The May-fit profiles' pore-gas to matrix heat-capacity ratio, estimated in coupling_findings.txt."""
-    report = json.loads(Path(__file__).with_name("results.json").read_text())
+    report = json.loads((Path(__file__).parent / "baseline/results.json").read_text())
     middle_load = [row for row in report["points"] if row["heater_power_W"][1] == 0.5]
     assert len(middle_load) == 2
     for row in middle_load:
         stage_2_column = np.array(row["capacity_ratio"][1])
         assert 0.04 <= stage_2_column.min() <= 0.08
         assert 0.38 <= stage_2_column.max() <= 0.59
+
+
+def test_refit_improves_stage_2_and_retains_comparison():
+    """The accepted May refit beats the preserved stage-2 RMS and includes the uncoupled control."""
+    folder = Path(__file__).parent
+    baseline = json.loads((folder / "baseline/results.json").read_text())
+    result = json.loads((folder / "results.json").read_text())
+    control = json.loads((folder / "uncoupled/results.json").read_text())
+    assert result["rms_residual_W"][1] < baseline["rms_residual_W"][1]
+    assert control["cold_exchanger_coupling"] is False
+    assert result["cold_exchanger_coupling"] is True
+    assert result["exchanger_effectiveness"] > 0
+
+
+def test_decomposition_reconstructs_stage_power():
+    """Each archived component balance reconstructs the available power independently of the fitter."""
+    folder = Path(__file__).parent
+    for variant in (folder, folder / "uncoupled"):
+        result = json.loads((variant / "results.json").read_text())
+        decomposition = json.loads((variant / "decomposition.json").read_text())
+        for point, terms in zip(result["points"], decomposition, strict=True):
+            np.testing.assert_allclose(
+                [terms["Q1_W"], terms["Q2_W"]],
+                np.array(point["heater_power_W"]) - point["residual_W"],
+                atol=1e-7,
+                rtol=0,
+            )
+
+
+def test_uncoupled_control_matches_hand_computed_finite_capacity_head():
+    """The task-6.2 hand calculation fixes the uncoupled control's plate boundary."""
+    for effectiveness in (0.0, 0.8):
+        heat_flow = fit.calc_uncoupled_heat_flow(
+            np.array([300.0, 60.0, 40.0, 20.0, 8.0, 4.0]),
+            (np.array([800.0]), np.array([40.0, 15.0])),
+            (np.array([7.163822e-3]), np.array([0.1480389, 0.9654703])),
+            np.array([5.503374e-3, 4.416387e-3, 4.106599e-3, 3.106279e-3, 1.748532e-3]),
+            (30.0, 1.5),
+            (0.8, 1.3),
+            effectiveness,
+            1.4e6,
+            1.2,
+        )
+        np.testing.assert_allclose(heat_flow, [-295.4320, 308.6979, -565.9027, 350.9011, 171.4323, 30.30343], rtol=1e-6)
+        assert heat_flow.sum() == pytest.approx(0.0, abs=1e-9)

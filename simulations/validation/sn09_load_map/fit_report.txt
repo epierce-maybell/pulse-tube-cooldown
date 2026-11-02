@@ -1,34 +1,34 @@
-SN09 May load-map fit: existing ADR equations
+SN09 May load-map fit: finite capacity and cold-exchanger coupling
 
 A converged fit on a stable cooling branch; a global minimum has not been established.
 Residual = head heat into a stage + wall heat into it + its measured heater power.
 Warm flange: 294.247137 K; helium charge: 0.0890839972 kg.
-Fit time: 52.960 s.
-Packing constants: (0.12888316631743713, 0.0969125397148603)
-Valve conductances: (1.0220023112306364e-10, 4.2937801494589376e-11) W/Pa^2; frequency: 1.0 Hz.
-Sum of squared residuals: 10.6721219 W^2.
-RMS stage residuals: [1.16912609206186, 0.6417407332666899] W.
+Fit time: 55.559 s.
+Packing constants: (0.13831959425075266, 0.12308773307178514)
+Exchanger effectiveness eta: 0.19320644.
+Valve conductances: (0.0, 1.7499763758359869e-10) W/Pa^2; frequency: 1.0 Hz.
+Sum of squared residuals: 8.03630152 W^2.
+RMS stage residuals: [1.119120343170053, 0.2948783558293958] W.
 
  Q1/W Q2/W   T1/K   T2/K   residual1/W residual2/W  clamp/K TPR/K growth/(1/s)
- 20.0  1.0  55.070  3.983    -0.18771    -1.10721   27.693 35.840   -0.0022414
- 20.0  0.5  54.087  3.312     0.14121    -0.34018   25.661 34.866   -0.0023125
- 20.0  0.0  53.028  2.406     0.72268     0.25935   23.927 34.172   -0.0023869
-  0.0  1.0  40.468  3.947    -2.15828    -0.97113   18.425 33.197   -0.0028158
-  0.0  0.5  39.203  3.214    -0.19710    -0.15085   17.221 33.165   -0.0028794
-  0.0  0.0  38.047  2.312     1.71075     0.31024   16.342 33.147   -0.0029373
+ 20.0  1.0  55.070  3.983    -0.71455    -0.53920   17.670 35.840    -0.002819
+ 20.0  0.5  54.087  3.312     0.07956    -0.21749   17.338 34.866   -0.0028469
+ 20.0  0.0  53.028  2.406     1.10717     0.05201   17.038 34.172   -0.0028777
+  0.0  1.0  40.468  3.947    -1.84489    -0.40464   15.039 33.197   -0.0032143
+  0.0  0.5  39.203  3.214    -0.16189    -0.06903   14.673 33.165   -0.0032624
+  0.0  0.0  38.047  2.312     1.53037     0.11170   14.379 33.147   -0.0033072
 
 All matrix nodes balance with pressures independently recomputed by the library drive solver.
 All largest real thermal eigenvalues are negative. The warm flange and stages are held fixed.
 These checks establish local stability, rather than reachability from room temperature.
 
-Human review considers this fit quite good. Assessment and diagnostic findings are in findings.txt.
+Baseline and contribution comparison: comparison.txt.
 The candidate remains in this experiment directory; production parameters have not been written.
-Exploration records: scan.json (warm branch), scan_cold_down.json and scan_cold.json (cooling branch),
-scan_low.json (a colder branch), mixed_branches.json (hot/cold combinations).
+Historical branch scans in this directory predate tasks 6.2 and 6.4; baseline/ preserves that fit.
 Zero-a_2 fits are degenerate: their stage-2 matrix has no thermal restoring rate.
 
 Reproduce from the repository root:
   .venv/Scripts/python simulations/validation/sn09_load_map/fit.py
   .venv/Scripts/python simulations/validation/sn09_load_map/verify.py
   .venv/Scripts/python -m pytest simulations/validation/sn09_load_map/test_fit.py -q -p no:cacheprovider
-Run explore.py with warm, cooling-up, cooling-down, low, roots, low-roots, or mixed to repeat branch searches.
+Run explore.py with seed, scan, or mesh for the current equations.

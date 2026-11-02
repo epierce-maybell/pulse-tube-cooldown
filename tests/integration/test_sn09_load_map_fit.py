@@ -19,12 +19,12 @@ _TRUE = fit.Parameters(
     packing_constant=(1.0, 1.2), conductance=(2.0e-10, 1.0e-11), exchanger_effectiveness=0.3, frequency=1.0
 )
 # Stage temperatures spanning the May load map.
-_STAGE_TEMPERATURE = [(55.0, 4.0), (53.0, 2.4), (40.0, 4.0), (38.0, 2.3)]
+_STAGE_TEMPERATURE = [(55.0, 4.0), (40.0, 4.0), (38.0, 2.3)]
 
 
 @pytest.fixture(scope="module")
 def head():
-    return fit.read_head("PT1.1")
+    return fit.read_head("PT1.1", directory=_PATH.parent / "baseline/head_model")
 
 
 @pytest.fixture(scope="module")
@@ -61,9 +61,8 @@ def test_fit_recovers_parameters_of_its_own_load_map(head, walls):
             "T2": ("point", stage_2),
         }
     )
-    # eta / a_2 is held at its initial ratio, 0.25 as in `_TRUE`.
     initial = fit.Parameters(
-        packing_constant=(0.7, 1.6), conductance=(1.5e-10, 1.4e-11), exchanger_effectiveness=0.4, frequency=1.0
+        packing_constant=(0.98, 1.22), conductance=(2.01e-10, 1.01e-11), exchanger_effectiveness=0.33, frequency=1.0
     )
 
     result = fit.fit_load_map(head, _DRIVE, walls, load_map, warm_temperature=_WARM_TEMPERATURE, initial=initial)

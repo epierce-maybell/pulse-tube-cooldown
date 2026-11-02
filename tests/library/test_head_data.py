@@ -34,22 +34,21 @@ def test_stage_2_pore_volumes_sum_to_geometry_record(pt1_1):
 
 # Hand-computed from geometry.csv and the library's densities; stage 1 is DESIGN "Cooler configuration"'s example.
 @pytest.mark.parametrize(
-    ("column", "index", "material", "mass", "pore_volume"),
+    ("column", "material", "mass", "pore_volume"),
     [
-        ("stage_1_column", 0, "304 SS", 0.9764, 284.8e-6),
-        ("stage_1_column", 1, "Pb", 1.1123, 60.12e-6),
-        ("stage_2_column", 0, "Pb", 0.2213, 11.96e-6),
-        ("stage_2_column", 1, "Er3Ni", 0.3532, 23.92e-6),
-        ("stage_2_column", 2, "HoCu2", 0.3599, 23.92e-6),
-        ("stage_2_column", 3, "Gd2O2S", 0.1792, 14.95e-6),
+        ("stage_1_column", "304 SS", 0.9764, 284.8e-6),
+        ("stage_1_column", "Pb", 1.1123, 60.12e-6),
+        ("stage_2_column", "Pb", 0.2213, 11.96e-6),
+        ("stage_2_column", "Er3Ni", 0.3532, 23.92e-6),
+        ("stage_2_column", "HoCu2", 0.3599, 23.92e-6),
+        ("stage_2_column", "Gd2O2S", 0.1792, 14.95e-6),
     ],
 )
-def test_layers_match_hand_computed_values(pt1_1, column, index, material, mass, pore_volume):
-    (layer,) = (layer for layer in pt1_1[column] if layer["index"] == index)
+def test_layers_match_hand_computed_values(pt1_1, column, material, mass, pore_volume):
+    layers = [layer for layer in pt1_1[column] if layer["material"] == material]
 
-    assert layer["material"] == material
-    assert layer["mass"] == pytest.approx(mass, rel=1e-3)
-    assert layer["pore_volume"] == pytest.approx(pore_volume, rel=1e-3)
+    assert sum(layer["mass"] for layer in layers) == pytest.approx(mass, rel=1e-3)
+    assert sum(layer["pore_volume"] for layer in layers) == pytest.approx(pore_volume, rel=1e-3)
 
 
 @pytest.mark.parametrize("column", ["stage_1_column", "stage_2_column"])

@@ -1,21 +1,22 @@
-"""Fits SN09's head parameters a_1, a_2, C_1, and C_2 to its May 2026 test-stand load map, from TASKS 2.3.
+"""Fits SN09's five head parameters to its May 2026 test-stand load map.
 
 At each load-map point the warm flange and both stages sit at their measured temperatures and each regenerator column
 is solved to steady state with no load on the clamp. The residual at each stage is the heat flow into it from the head
 and the stand's tube walls plus its heater power, zero where the parameters reproduce the point. Running this file
 writes a candidate parameter file, diagnostics, and a figure beside this module.
-The fit searches C_2 / a_2 on a selected equilibrium branch, with a nonnegative
-linear fit for a_1, a_2, and C_1 at each ratio and eta / a_2 held at its initial value.
+The fit searches C_2 / a_2 and eta / a_2 on a selected equilibrium branch, with a nonnegative
+linear fit for a_1, a_2, and C_1 at each pair of ratios.
 Heat-flow residuals are in W.
 """
 
+import argparse
 import hashlib
 import itertools
 import json
 import time
 import tomllib
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 import numpy as np
@@ -27,6 +28,7 @@ import pulse_tube_cooldown
 from pulse_tube_cooldown.core.types import Link, Material
 from pulse_tube_cooldown.library.gases import helium
 from pulse_tube_cooldown.library.links.conduction import Conduction
+from pulse_tube_cooldown.library.links.cooler.columns import load_column
 from pulse_tube_cooldown.library.links.cooler.drive import calc_mean_pressure, calc_pressure_swing
 from pulse_tube_cooldown.library.links.cooler.head import (
     calc_capacity_ratio,
@@ -55,6 +57,7 @@ class Head:
         pore_volume: Pore gas volume in m^3 of each node in the two columns.
         pulse_tube_volume: Gas volumes in m^3 of the stage-1 and stage-2 pulse tubes.
         clamp: Index along the head's chain of the stage-2 column node containing the clamp.
+        cold_exchanger_coupling: Whether the matrix cold end couples to the plate through its gas stream.
     """
 
     material: tuple[tuple[Material, ...], tuple[Material, ...]]
@@ -62,6 +65,7 @@ class Head:
     pore_volume: tuple[NDArray[np.float64], NDArray[np.float64]]
     pulse_tube_volume: tuple[float, float]
     clamp: int
+    cold_exchanger_coupling: bool = True
 
     @property
     def stage_1(self) -> int:
@@ -154,25 +158,27 @@ class LoadMapFit:
     columns: tuple[ColumnSolution, ...]
 
 
-def read_head(name: str) -> Head:
+def read_head(name: str, *, directory: Path | None = None) -> Head:
     """Reads a head model file from `library/heads/data/`.
 
     Args:
         name: The model's `name`, such as "PT1.1".
+        directory: Folder holding head model files; defaults to the library's models.
     """
     model = read_named_toml(
-        name, directory=Path(pulse_tube_cooldown.__file__).parent / "library/heads/data", kind="heads"
+        name, directory=directory or Path(pulse_tube_cooldown.__file__).parent / "library/heads/data", kind="heads"
     )
     columns = [
-        sorted(model[column], key=lambda layer: layer["index"]) for column in ("stage_1_column", "stage_2_column")
+        load_column(model[column], head_name=name, stage=stage)
+        for stage, column in enumerate(("stage_1_column", "stage_2_column"), start=1)
     ]
-    ends = itertools.accumulate(layer["length_fraction"] for layer in columns[1])
+    ends = itertools.accumulate(layer.length_fraction for layer in columns[1])
     clamp_layer = next(index for index, end in enumerate(ends) if model["clamp_fraction"] < end)
     first, second = model["pulse_tube_volumes"]
     return Head(
-        material=tuple(tuple(load_material(layer["material"]) for layer in column) for column in columns),
-        mass=tuple(np.array([layer["mass"] for layer in column]) for column in columns),
-        pore_volume=tuple(np.array([layer["pore_volume"] for layer in column]) for column in columns),
+        material=tuple(tuple(layer.node.composition[0][0] for layer in column) for column in columns),
+        mass=tuple(np.array([layer.node.composition[0][1] for layer in column]) for column in columns),
+        pore_volume=tuple(np.array([layer.pore_volume for layer in column]) for column in columns),
         pulse_tube_volume=(first, second),
         clamp=len(columns[0]) + 2 + clamp_layer,
     )
@@ -250,7 +256,7 @@ def evaluate_head(
     enthalpy = tuple(calc_enthalpy_flow(c, swing, drive.waveform_factor) for c in parameters.conductance)
     return ColumnSolution(
         temperature=temperature.copy(),
-        heat_flow=calc_heat_flow(
+        heat_flow=(calc_heat_flow if head.cold_exchanger_coupling else calc_uncoupled_heat_flow)(
             temperature,
             heat_capacity,
             capacity_ratio,
@@ -266,6 +272,41 @@ def evaluate_head(
         utilization=calc_utilization(temperature, heat_capacity, mass_flow, mean, parameters.frequency),
         capacity_ratio=capacity_ratio,
     )
+
+
+def calc_uncoupled_heat_flow(
+    temperature,
+    heat_capacity,
+    capacity_ratio,
+    mass_flow,
+    enthalpy_flow,
+    packing_constant,
+    exchanger_effectiveness,
+    mean_pressure,
+    frequency,
+):
+    """Task 6.2 control: the column ends on the plate, with finite-capacity terms."""
+    stage_1 = len(heat_capacity[0]) + 1
+    capacity = np.r_[0, heat_capacity[0], 0, heat_capacity[1], 0]
+    midpoint = (temperature[:-1] + temperature[1:]) / 2
+    cp = helium.isobaric_specific_heat(midpoint, mean_pressure)
+    packing = np.repeat(packing_constant, [stage_1, len(mass_flow) - stage_1])
+    flow = 2 * packing * (mass_flow * cp) ** 2 / (frequency * (capacity[:-1] + capacity[1:]))
+    flow *= temperature[:-1] - temperature[1:]
+    boundary = midpoint[stage_1:].copy()
+    boundary[[0, -1]] = temperature[[stage_1, -1]]
+    density = helium.density(boundary, mean_pressure)
+    eps = capacity_ratio[1]
+    attenuation = np.log(density[1:] / density[:-1]) / (1 + eps)
+    acoustic = enthalpy_flow[1] * np.exp(np.r_[np.cumsum(attenuation[::-1])[::-1], 0])
+    boundary_eps = np.r_[eps[0], (eps[:-1] + eps[1:]) / 2, eps[-1]]
+    expansion = helium.isobaric_expansion_coefficient(boundary, mean_pressure) * boundary
+    flow[stage_1:] += (1 - expansion / (1 + boundary_eps)) * acoustic
+    result = -np.diff(flow, prepend=0.0, append=0.0)
+    result[stage_1] -= enthalpy_flow[0]
+    result[-1] -= enthalpy_flow[1]
+    result[0] += sum(enthalpy_flow)
+    return result
 
 
 def solve_columns(
@@ -544,12 +585,13 @@ def fit_load_map(
     initial: Parameters,
     ratio_bounds: tuple[float, float] | None = None,
     guesses: Sequence[NDArray[np.float64] | None] | None = None,
+    verbose: bool = False,
 ) -> LoadMapFit:
-    """Searches one nonlinear ratio and solves three remaining coefficients linearly.
+    """Searches the two nonlinear ratios and solves three coefficients linearly.
 
-    The ratio is C_2 / a_2, and eta / a_2 holds its initial value. The branch is seeded
-    by the profiles at the initial ratio. Each objective evaluation starts from those
-    same profiles. Failed column solves are explicit.
+    C_2 / a_2 and eta / a_2 determine the equilibrium profiles. Each evaluation starts
+    from the nearest solved profiles in log-ratio coordinates. The uncoupled control
+    searches C_2 / a_2 alone. Verbose output reports the ratios, eta, and stage RMS.
     """
     reference = initial.conductance[1] / initial.packing_constant[1]
     effectiveness_ratio = initial.exchanger_effectiveness / initial.packing_constant[1]
@@ -564,31 +606,68 @@ def fit_load_map(
         frequency=initial.frequency,
         guesses=guesses,
     )
-    guesses = [column.temperature for column in seed.columns]
     bounds = ratio_bounds if ratio_bounds is not None else (reference / 10, reference * 10)
-    evaluated = {}
+    evaluated = {(0.0, 0.0): seed}
 
-    def objective(log_ratio: float) -> float:
+    def objective(log_ratios):
+        ratio = reference * np.exp(log_ratios[0])
+        nearest = min(evaluated, key=lambda key: np.linalg.norm(np.array(key) - log_ratios))
+        starting_profiles = [c.temperature for c in evaluated[nearest].columns]
         result = fit_at_ratio(
             head,
             drive,
             links,
             load_map,
             warm_temperature=warm_temperature,
-            ratio=reference * np.exp(log_ratio),
-            effectiveness_ratio=effectiveness_ratio,
+            ratio=ratio,
+            effectiveness_ratio=effectiveness_ratio * np.exp(log_ratios[1]) if head.cold_exchanger_coupling else 0.0,
             frequency=initial.frequency,
-            guesses=guesses,
+            guesses=starting_profiles,
         )
-        evaluated[log_ratio] = result
-        return float(np.sum(result.residual**2))
+        evaluated[tuple(log_ratios)] = result
+        if verbose:
+            print(
+                "FIT",
+                ratio,
+                result.parameters.exchanger_effectiveness,
+                np.sqrt(np.mean(result.residual**2, axis=0)),
+                flush=True,
+            )
+        return result.residual.ravel()
 
-    solution = minimize_scalar(
-        objective, bounds=tuple(np.log(np.array(bounds) / reference)), method="bounded", options={"xatol": 1e-9}
-    )
+    if head.cold_exchanger_coupling:
+
+        def jacobian(log_ratios):
+            step = 1e-3
+            return np.column_stack(
+                [
+                    (objective(log_ratios + np.eye(2)[j] * step) - objective(log_ratios - np.eye(2)[j] * step))
+                    / (2 * step)
+                    for j in range(2)
+                ]
+            )
+
+        solution = least_squares(
+            objective,
+            np.zeros(2),
+            bounds=([np.log(bounds[0] / reference), -8.0], [np.log(bounds[1] / reference), 8.0]),
+            jac=jacobian,
+            xtol=1e-7,
+            ftol=1e-7,
+            gtol=1e-7,
+            max_nfev=60,
+        )
+    else:
+        solution = minimize_scalar(
+            lambda x: np.sum(objective([x, 0.0]) ** 2),
+            bounds=tuple(np.log(np.array(bounds) / reference)),
+            method="bounded",
+            options={"xatol": 1e-7},
+        )
+        solution.x = np.array([solution.x, 0.0])
     if not solution.success:
         raise RuntimeError(f"Ratio search failed: {solution.message}")
-    return evaluated[solution.x]
+    return evaluated[tuple(solution.x)]
 
 
 def _write_parameters(path: Path, parameters: Parameters, sources: Mapping[str, str]) -> None:
@@ -607,7 +686,15 @@ def _write_parameters(path: Path, parameters: Parameters, sources: Mapping[str, 
 
 
 def write_results(
-    head: Head, drive: Drive, load_map: xr.Dataset, result: LoadMapFit, inputs: Mapping, warm: float, elapsed: float
+    head: Head,
+    drive: Drive,
+    load_map: xr.Dataset,
+    result: LoadMapFit,
+    inputs: Mapping,
+    warm: float,
+    elapsed: float,
+    *,
+    folder: Path = HERE,
 ) -> None:
     """Writes the fitted branch, physical checks, and power residuals beside the experiment."""
     rows = []
@@ -648,7 +735,7 @@ def write_results(
     source_paths = [
         Path(__file__),
         HERE / "inputs.toml",
-        HERE / inputs["search"]["profile_seed"],
+        HERE / inputs["search" if head.cold_exchanger_coupling else "uncoupled_search"]["profile_seed"],
         SN09 / inputs["load_map"],
         SN09 / inputs["cooldown"],
         SN09 / "geometry.csv",
@@ -657,9 +744,11 @@ def write_results(
     source_paths += [
         package / "library/links/cooler/head.py",
         package / "library/links/cooler/drive.py",
+        package / "library/links/cooler/columns.py",
         package / "library/gases/helium.py",
         package / "library/property_fits.py",
         package / "library/heads/data/pt1_1.toml",
+        SN09 / "derive_head_model.py",
     ]
     source_paths += [
         package / "library/materials/data" / name
@@ -672,6 +761,7 @@ def write_results(
     summary = dict(
         status="converged_stable_branch_fit",
         global_minimum_established=False,
+        cold_exchanger_coupling=head.cold_exchanger_coupling,
         warm_temperature_K=warm,
         helium_charge_kg=drive.charge,
         elapsed_s=elapsed,
@@ -686,20 +776,27 @@ def write_results(
         points=rows,
         sha256=provenance,
     )
-    (HERE / "results.json").write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
+    folder.mkdir(exist_ok=True)
+    (folder / "results.json").write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
     sources = dict(inputs["sources"])
     sources["packing_constants"] = "May map; least squares in W on the cooling branch, see results.json"
     sources["conductances"] = sources["packing_constants"]
-    sources["exchanger_effectiveness"] = "eta / a_2 held at inputs.toml's initial ratio; a_2 fitted"
-    _write_parameters(HERE / "candidate_parameters.toml", parameters, sources)
+    sources["exchanger_effectiveness"] = (
+        "May map; eta / a_2 and C_2 / a_2 jointly fitted"
+        if head.cold_exchanger_coupling
+        else "Uncoupled task 6.2 control"
+    )
+    _write_parameters(folder / "candidate_parameters.toml", parameters, sources)
     lines = [
-        "SN09 May load-map fit: existing ADR equations",
+        "SN09 May load-map fit: finite capacity"
+        + (" and cold-exchanger coupling" if head.cold_exchanger_coupling else " only"),
         "",
         "A converged fit on a stable cooling branch; a global minimum has not been established.",
         "Residual = head heat into a stage + wall heat into it + its measured heater power.",
         f"Warm flange: {warm:.6f} K; helium charge: {drive.charge:.9g} kg.",
         f"Fit time: {elapsed:.3f} s.",
         f"Packing constants: {parameters.packing_constant}",
+        f"Exchanger effectiveness eta: {parameters.exchanger_effectiveness:.9g}.",
         f"Valve conductances: {parameters.conductance} W/Pa^2; frequency: {parameters.frequency} Hz.",
         f"Sum of squared residuals: {summary['sum_squared_residual_W2']:.9g} W^2.",
         f"RMS stage residuals: {summary['rms_residual_W']} W.",
@@ -719,26 +816,24 @@ def write_results(
         "All largest real thermal eigenvalues are negative. The warm flange and stages are held fixed.",
         "These checks establish local stability, rather than reachability from room temperature.",
         "",
-        "The residuals show that this fit does not reproduce the measured load map closely.",
+        "Baseline and contribution comparison: comparison.txt.",
         "The candidate remains in this experiment directory; production parameters have not been written.",
-        "Exploration records: scan.json (warm branch), scan_cold_down.json and scan_cold.json (cooling branch),",
-        "scan_low.json (a colder branch), mixed_branches.json (hot/cold combinations).",
+        "Historical branch scans in this directory predate tasks 6.2 and 6.4; baseline/ preserves that fit.",
         "Zero-a_2 fits are degenerate: their stage-2 matrix has no thermal restoring rate.",
         "",
         "Reproduce from the repository root:",
         "  .venv/Scripts/python simulations/validation/sn09_load_map/fit.py",
         "  .venv/Scripts/python simulations/validation/sn09_load_map/verify.py",
         "  .venv/Scripts/python -m pytest simulations/validation/sn09_load_map/test_fit.py -q -p no:cacheprovider",
-        "Run explore.py with warm, cooling-up, cooling-down, low, roots, low-roots, or mixed "
-        "to repeat branch searches.",
+        "Run explore.py with seed, scan, or mesh for the current equations.",
     ]
     report = "\n".join(lines) + "\n"
-    (HERE / "fit_report.txt").write_text(report, encoding="utf-8")
+    (folder / "fit_report.txt").write_text(report, encoding="utf-8")
     print(report, flush=True)
-    plot_results(load_map, result)
+    plot_results(load_map, result, folder=folder)
 
 
-def plot_results(load_map: xr.Dataset, result: LoadMapFit) -> None:
+def plot_results(load_map: xr.Dataset, result: LoadMapFit, *, folder: Path = HERE) -> None:
     """Plots heater power, predicted available cooling, and stage residuals."""
     import matplotlib
 
@@ -758,21 +853,28 @@ def plot_results(load_map: xr.Dataset, result: LoadMapFit) -> None:
         axes[1, stage].scatter(temperature, result.residual[:, stage])
         axes[1, stage].set(xlabel="Measured temperature (K)", ylabel="Net stage imbalance (W)")
     fig.suptitle("SN09 May map: fit on a stable cooling branch")
-    fig.savefig(HERE / "load_map_fit.png", dpi=180)
+    fig.savefig(folder / "load_map_fit.png", dpi=180)
     plt.close(fig)
 
 
 def main() -> None:
     """Fits the selected branch and writes all results inside this experiment directory."""
     inputs, load_map, warm, drive = read_experiment()
-    head = read_head(inputs["head"])
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--uncoupled", action="store_true", help="Fit the task 6.2 control with the column ending on the plate."
+    )
+    args = parser.parse_args()
+    head = replace(read_head(inputs["head"]), cold_exchanger_coupling=not args.uncoupled)
+    search = inputs["uncoupled_search"] if args.uncoupled else inputs["search"]
+    initial_data = search.get("initial", inputs["initial"])
     initial = Parameters(
-        packing_constant=tuple(inputs["initial"]["packing_constant"]),
-        conductance=tuple(inputs["initial"]["conductance"]),
-        exchanger_effectiveness=inputs["initial"]["exchanger_effectiveness"],
+        packing_constant=tuple(initial_data["packing_constant"]),
+        conductance=tuple(initial_data["conductance"]),
+        exchanger_effectiveness=initial_data["exchanger_effectiveness"],
         frequency=inputs["frequency"],
     )
-    seeds = json.loads((HERE / inputs["search"]["profile_seed"]).read_text(encoding="utf-8"))
+    seeds = json.loads((HERE / search["profile_seed"]).read_text(encoding="utf-8"))
     start = time.perf_counter()
     result = fit_load_map(
         head,
@@ -781,10 +883,20 @@ def main() -> None:
         load_map,
         warm_temperature=warm,
         initial=initial,
-        ratio_bounds=tuple(inputs["search"]["ratio_bounds"]),
+        ratio_bounds=tuple(search["ratio_bounds"]),
         guesses=[np.array(t) for t in seeds["temperatures"]],
+        verbose=True,
     )
-    write_results(head, drive, load_map, result, inputs, warm, time.perf_counter() - start)
+    write_results(
+        head,
+        drive,
+        load_map,
+        result,
+        inputs,
+        warm,
+        time.perf_counter() - start,
+        folder=HERE / "uncoupled" if args.uncoupled else HERE,
+    )
 
 
 if __name__ == "__main__":

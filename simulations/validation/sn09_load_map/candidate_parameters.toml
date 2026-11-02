@@ -1,6 +1,7 @@
 # Written by simulations/validation/sn09_load_map/fit.py.
-packing_constants = [0.128883166317, 0.0969125397149]
-conductances = [1.022002311231e-10, 4.293780149459e-11]  # W/Pa^2
+packing_constants = [0.138319594251, 0.123087733072]
+conductances = [0.000000000000e+00, 1.749976375836e-10]  # W/Pa^2
+exchanger_effectiveness = 0.193206439872
 frequency = 1.0  # Hz
 
 [sources]
@@ -13,3 +14,4 @@ waveform_factor = "TASKS 5.4: fixed at 1 and absorbed into the conductances"
 warm_temperature = "first TPR reading of the paired cooldown"
 packing_constants = "May map; least squares in W on the cooling branch, see results.json"
 conductances = "May map; least squares in W on the cooling branch, see results.json"
+exchanger_effectiveness = "May map; eta / a_2 and C_2 / a_2 jointly fitted"

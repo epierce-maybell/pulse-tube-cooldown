@@ -43,7 +43,7 @@ def test_model_builds_matrix_nodes_and_clamp_from_one_description(parameters):
         "PT stage 2 Pb",
         "PT stage 2 Er3Ni",
         "PT stage 2 HoCu2",
-        "PT stage 2 Gd2O2S",
+        *(f"PT stage 2 Gd2O2S {index}" for index in range(1, 9)),
     ]
     assert head.clamp_node == "PT stage 2 HoCu2"
     assert head.pulse_tube_volumes == (5.967e-5, 2.009e-4)
@@ -54,10 +54,10 @@ def test_model_builds_matrix_nodes_and_clamp_from_one_description(parameters):
     assert head.matrix_nodes[0] is head.columns[0][0].node
     assert head.matrix_nodes[0].composition[0][1] == 0.9764
     np.testing.assert_allclose(head.pore_volume[0], [2.848e-4, 6.012e-5])
-    temperature = np.array([300.0, 250.0, 100.0, 50.0, 35.0, 20.0, 10.0, 5.0, 4.0])
+    temperature = np.r_[300.0, 250.0, 100.0, 50.0, 35.0, 20.0, 10.0, np.linspace(5.0, 4.1, 8), 4.0]
     capacities = head.calc_heat_capacity(temperature)
     np.testing.assert_allclose(
-        np.concatenate(capacities), calc_heat_capacity(head.matrix_nodes, temperature[[1, 2, 4, 5, 6, 7]])
+        np.concatenate(capacities), calc_heat_capacity(head.matrix_nodes, np.r_[temperature[1:3], temperature[4:-1]])
     )
 
 
@@ -114,15 +114,45 @@ def test_repeated_layer_materials_are_numbered_from_warm_end(tmp_path, parameter
     ]
 
 
-@pytest.mark.parametrize("field, value", [("index", "2"), ("length_fraction", "0.5")])
+@pytest.mark.parametrize("layer_name", [None, "Cold matrix"])
+def test_layer_node_count_conserves_totals_and_locates_clamp(tmp_path, parameters, layer_name):
+    directory = tmp_path / "heads"
+    directory.mkdir()
+    naming = f'name = "{layer_name}"\n' if layer_name else ""
+    (directory / "split.toml").write_text(
+        'name = "Split"\nclamp_fraction = 0.7\npulse_tube_volumes = [1e-4, 2e-4]\n'
+        '[[stage_1_column]]\nindex = 0\nmaterial = "304 SS"\nmass = 1.0\n'
+        "pore_volume = 1e-5\nlength_fraction = 1.0\n"
+        '[[stage_2_column]]\nindex = 0\nmaterial = "Pb"\nmass = 1.0\n'
+        "pore_volume = 1e-5\nlength_fraction = 0.4\n"
+        '[[stage_2_column]]\nindex = 1\nmaterial = "Gd2O2S"\nmass = 6.0\n'
+        "pore_volume = 6e-5\nlength_fraction = 0.6\nnode_count = 3\n" + naming,
+        encoding="utf-8",
+    )
+    head = load_pulse_tube_head(
+        name="PT", stages=("S1", "S2"), model="Split", parameters=parameters, directory=directory
+    )
+    prefix = layer_name or "PT stage 2 Gd2O2S"
+    assert [layer.node.name for layer in head.columns[1]] == ["PT stage 2 Pb", *[f"{prefix} {i}" for i in (1, 2, 3)]]
+    assert head.clamp_node == f"{prefix} 2"
+    np.testing.assert_allclose([layer.node.composition[0][1] for layer in head.columns[1]], [1.0, 2.0, 2.0, 2.0])
+    np.testing.assert_allclose(head.pore_volume[1], [1e-5, 2e-5, 2e-5, 2e-5])
+    np.testing.assert_allclose([layer.length_fraction for layer in head.columns[1]], [0.4, 0.2, 0.2, 0.2])
+
+
+@pytest.mark.parametrize(
+    "field, value", [("index", "2"), ("length_fraction", "0.5"), ("node_count", "0"), ("node_count", "1.5")]
+)
 def test_invalid_column_description_is_rejected(tmp_path, parameters, field, value):
     directory = tmp_path / "heads"
     directory.mkdir()
-    layer = 'index = 0\nmaterial = "Pb"\nmass = 1.0\npore_volume = 1e-5\nlength_fraction = 1.0\n'
+    layer = 'index = 0\nmaterial = "Pb"\nmass = 1.0\npore_volume = 1e-5\nlength_fraction = 1.0\nnode_count = 1\n'
     (directory / "bad.toml").write_text(
         'name = "Bad"\nclamp_fraction = 0.5\npulse_tube_volumes = [1e-4, 2e-4]\n'
         + "[[stage_1_column]]\n"
-        + layer.replace(f"{field} = " + ("0" if field == "index" else "1.0"), f"{field} = {value}")
+        + layer.replace(
+            f"{field} = " + {"index": "0", "length_fraction": "1.0", "node_count": "1"}[field], f"{field} = {value}"
+        )
         + "[[stage_2_column]]\n"
         + layer,
         encoding="utf-8",
