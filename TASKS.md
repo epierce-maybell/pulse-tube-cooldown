@@ -176,7 +176,7 @@ Snodgrass, Swift, Ullom, and Backhaus, Cryogenics 132 (2023), `docs/papers/Snodg
 - [ ] **6.1 Pore-gas to matrix heat-capacity ratio** · Auto
   For each column node, `eps_r = V_pore * rho(T, P_mean) * c_p(T, P_mean) / (M * c_m(T))`, reported beside utilization as a diagnostic. Finished when the May-fit profiles show the values the coupling findings estimated, about 0.04 to 0.58 along the stage-2 column.
 
-- [ ] **6.2 Finite-capacity terms in the stage-2 column** · Discuss
+- [o] **6.2 Finite-capacity terms in the stage-2 column** · Discuss
   Two changes to the stage-2 boundary flow, both reducing to today's flow at `eps_r = 0`. The acoustic power at a boundary scales from stage 2 as `H_2 * exp(integral from T_2 to T_b of beta / (1 + eps_r) dT)` (their Eq. C.5) in place of `rho(T_2) / rho(T_b)`, with `eps_r` from 6.1 along the chain. Each boundary also carries `eps_r / (1 + eps_r) * beta * T_b * E2(T_b)` toward stage 2 (their `H_eps`), so stage 2 nets `beta T_2 / (1 + eps_r,2) * H_2`. Ends in an ADR update; then build it, with the hand-computed head and ideal-gas checks extended.
 
 - [ ] **6.3 Refit the May map** · Auto, after 6.2
