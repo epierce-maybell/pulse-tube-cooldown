@@ -11,10 +11,10 @@ Each boundary carries the regenerator loss toward the stage end as a conductance
 
 for the column's packing constant a, the mass flow m across the boundary, helium's isobaric specific heat c_p at the
 mean pressure and the boundary's mean temperature, the valve frequency f, and the heat capacities C of the matrix on
-either side, zero at a plate. Each stage-2 boundary also carries the real-gas enthalpy flow (1 - beta * T) * H_2 toward
-stage 2, for helium's isobaric expansion coefficient beta at the mean pressure and the boundary temperature T: the
-plate's temperature at a plate, otherwise the mean of its two nodes. Each stage sinks its enthalpy flow H, which
-lands on the warm flange.
+either side, zero at a plate. Each stage-2 boundary also carries the real-gas enthalpy flow
+(1 - beta * T) * rho(T_2) / rho(T) * H_2 toward stage 2, for helium's isobaric expansion coefficient beta and density
+rho at the mean pressure. T_2 is the stage-2 temperature, and the boundary temperature T is the plate's temperature
+at a plate, otherwise the mean of its two nodes. Each stage sinks its enthalpy flow H, which lands on the warm flange.
 """
 
 from dataclasses import dataclass
@@ -216,7 +216,10 @@ def calc_heat_flow(
     boundary_temperature = mean_temperature[stage_1:].copy()
     boundary_temperature[[0, -1]] = temperature[[stage_1, -1]]
     expansion = helium.isobaric_expansion_coefficient(boundary_temperature, mean_pressure)
-    flow_toward_stage[stage_1:] += (1 - expansion * boundary_temperature) * enthalpy_flow[1]
+    boundary_density = helium.density(boundary_temperature, mean_pressure)
+    flow_toward_stage[stage_1:] += (
+        (1 - expansion * boundary_temperature) * boundary_density[-1] / boundary_density * enthalpy_flow[1]
+    )
 
     heat_flow = -np.diff(flow_toward_stage, prepend=0.0, append=0.0)
     heat_flow[stage_1] -= enthalpy_flow[0]

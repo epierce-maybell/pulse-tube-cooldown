@@ -33,9 +33,10 @@ _ENTHALPY_FLOW = (30.0, 1.5)
 # swing beyond each boundary.
 _MASS_FLOW = np.array([5.503374e-3, 4.416387e-3, 4.106599e-3, 3.106279e-3, 1.748532e-3])
 # Boundary conduction 2 a (m c_p)^2 (T_w - T_c) / (f (C_w + C_c)), c_p at 1.4 MPa and the boundary's mean temperature:
-# 326.9320, 18.23414, 553.1576, 202.8832, 30.42731 W. Real-gas flow (1 - beta T) H_2 at 1.4 MPa toward stage 2 at
-# 40 K, 14 K, and 4 K: 0.01004304, -0.5241515, 1.256511 W. Stage sinks H_1 and H_2 land on the warm flange.
-_HEAT_FLOW = [-295.4320, 308.6979, -564.9335, 350.8086, 170.6753, 30.18382]
+# 326.9320, 18.23414, 553.1576, 202.8832, 30.42731 W. Real-gas flow (1 - beta T) rho(4 K) / rho(T) H_2 at 1.4 MPa
+# toward stage 2 at 40 K, 14 K, and 4 K: 0.09775656, -1.600929, 1.256511 W. Densities at those boundaries:
+# 16.24194, 51.76106, 158.0951 kg/m^3. Stage sinks H_1 and H_2 land on the warm flange.
+_HEAT_FLOW = [-295.4320, 308.6979, -565.0212, 351.9731, 169.5984, 30.18382]
 
 
 def test_mass_flow_matches_hand_calculation():
