@@ -4,7 +4,7 @@ clamp_to_cfp,77.8,mm,CAD 910-000018,3.062 in along the stage-2 regenerator
 clamp_fraction_x_R,0.658,,CAD 910-000018,prp_to_clamp / (prp_to_clamp + clamp_to_cfp); Falter 2024 puts the PTD 420RX intermediate stage at 0.73 by the same convention
 stage1_regenerator_outer_radius,32.11,mm,CAD 910-000018,1.264 in; the widest tube; warm flange to PRP
 stage1_regenerator_length,180.0,mm,CAD 910-000018,7.087 in
-stage1_pulse_tube_outer_radius,10.74,mm,CAD 910-000018,0.846 in diameter; warm flange to PRP
+stage1_pulse_tube_outer_radius,10.744,mm,CAD 910-000018,0.846 in diameter; warm flange to PRP
 stage1_pulse_tube_length,181.0,mm,CAD 910-000018,7.126 in
 stage2_regenerator_outer_radius,16.51,mm,CAD 910-000018,0.65 in; the shorter tube; carries the RGP clamp
 stage2_regenerator_length,244.3,mm,CAD 910-000018,cylindrical face area 39.289 in^2 / (2 pi r)
