@@ -9,7 +9,7 @@
 4. One task per session. When it lands, hand off: the next session starts from the repository, not from this chat.
 
 ## Design authority
-5. Only the human edits `docs/DESIGN.md`. Linting it is allowed.
+5. In general, only the human edits `docs/DESIGN.md` and ADRs. Linting is allowed. Editing is allowed when given explicit permission.
 6. Recorded decisions can be challenged, not bypassed. If logic, elegance, or pragmatism contradict DESIGN.md or an ADR, say so and propose the replacement wording; until the human records the change, build to the decision as written.
 7. A decision made in chat is not recorded until it is in DESIGN.md, an ADR, or the task entry. Before a handoff, say what is still unrecorded and supply the proposed text. ADRs are for significant or controversial decisions only.
 
@@ -29,3 +29,4 @@
 ## Working with the human
 17. Accept ambiguity where a human interacts with the repository; reserve rigor for agent-only surfaces.
 18. Work with what you have. If a problem can be worked without a missing fact, do so and say what you assumed. If a missing fact blocks a foundational assumption, name the blocker.
+19. Don't waste time and tokens verifying results from other sessions, unless you have a specific reason to question their validity.
