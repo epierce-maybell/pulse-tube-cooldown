@@ -94,8 +94,9 @@ The model is `docs/adrs/coupled-capacity-maps.md`. The milestone is reproducing 
 - [ ] **3.2 Measured-temperature overlay** · Auto
   Measured thermometer traces drawn over their simulated nodes, once 4.1 settles the mapping.
 
-- [ ] **3.3 Graph plot** · Auto
+- [x] **3.3 Graph plot** · Auto
   Draw a Graph in `plot/graph.py`: nodes and links labelled by name and type, multi-node links included.
+  Done: `plot_graph(graph, ax=None, lane_gap=12.0, edge_spacing=6.0)`. Nodes form a column in graph order; links run in lanes with right-angled edges, labelled by name and class name and colored by class. `plot_temperature` dropped its `/` and `*` markers to match.
 
 ## 4. Validation
 

@@ -8,7 +8,7 @@ from matplotlib.axes import Axes
 __all__ = ["plot_temperature"]
 
 
-def plot_temperature(data: xr.Dataset, /, *, ax: Axes | None = None, log: bool = True) -> Axes:
+def plot_temperature(data: xr.Dataset, ax: Axes | None = None, log: bool = True) -> Axes:
     """Plots each node's temperature over time, marking phase switches.
 
     Args:
