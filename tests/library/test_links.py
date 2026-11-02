@@ -8,6 +8,7 @@ import pytest
 from pulse_tube_cooldown.core.errors import ConfigurationError
 from pulse_tube_cooldown.library.links import radiation
 from pulse_tube_cooldown.library.links.conduction import Conduction, load_conduction
+from pulse_tube_cooldown.library.links.joint_contact import JointContact, load_joint_contact
 from pulse_tube_cooldown.library.links.load import LINK_TYPES, load_link
 from pulse_tube_cooldown.library.links.multi_layer_insulation import (
     MultiLayerInsulation,
@@ -174,6 +175,47 @@ def test_loads_multi_layer_insulation():
 )
 def test_missing_multi_layer_insulation_parameter_is_named(missing):
     config = {key: value for key, value in _BLANKET.items() if key != missing}
+
+    with pytest.raises(ConfigurationError, match=missing):
+        load_link(config)
+
+
+_JOINT = {
+    "name": "Stage 2 flange",
+    "type": "joint_contact",
+    "nodes": ["PT stage 2", "CFP"],
+    "force": 1.0e4,
+    "conductance_per_force": 1.9e-3,
+    "reference_temperature": 4.2,
+    "temperature_exponent": 1.1,
+    "source": "Dhuley 2019, Tables 2 and 5, Au-plated Cu",
+}
+
+
+def test_registers_joint_contact():
+    assert LINK_TYPES["joint_contact"] is load_joint_contact
+
+
+def test_loads_joint_contact():
+    link = load_link(_JOINT)
+
+    assert isinstance(link, JointContact)
+    assert (link.name, link.nodes) == ("Stage 2 flange", ("PT stage 2", "CFP"))
+    assert (
+        link.force,
+        link.conductance_per_force,
+        link.reference_temperature,
+        link.temperature_exponent,
+        link.source,
+    ) == (1.0e4, 1.9e-3, 4.2, 1.1, "Dhuley 2019, Tables 2 and 5, Au-plated Cu")
+
+
+@pytest.mark.parametrize(
+    "missing",
+    ["nodes", "force", "conductance_per_force", "reference_temperature", "temperature_exponent", "source"],
+)
+def test_missing_joint_contact_parameter_is_named(missing):
+    config = {key: value for key, value in _JOINT.items() if key != missing}
 
     with pytest.raises(ConfigurationError, match=missing):
         load_link(config)

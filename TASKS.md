@@ -41,8 +41,9 @@ Where DESIGN is silent, the code and its tests are the record.
 - [x] **1.4 Multi-layer insulation** · Discuss
   How MLI modifies radiative transfer, what it's parameterized by, and whether it's a separate link or an option on radiation. Legacy has MLI functions to start from. Then build it. Built as `multi_layer_insulation`: the Lockheed correlation with the blanket's coefficients and source in the link's table.
 
-- [ ] **1.5 Joint contact** · Discuss
+- [x] **1.5 Joint contact** · Discuss
   Contact conductance at bolted joints and the parameters or measurements it needs. Legacy has `thermal_conductance_calc.py` and `conductance_systems.json`. Then build it.
+  Done: settled 2026-11-02 from Dhuley, Cryogenics 101 (2019), `docs/papers/Dhuley2019.pdf`. Conductance scales with clamping force rather than apparent area: `G(T) = g * F * (T / T_r)^n`, and `Q = G(T_mean) * (T_h - T_c)`, as joints are measured. `JointContact` in `library/links/joint_contact.py`, registered as `joint_contact`, takes `force` in N, `conductance_per_force` in W/(K N) at `reference_temperature`, `temperature_exponent`, and `source` in the link's table; torque converts to force with Dhuley's Eq. A1. Legacy's Dhuley Eq. 17 floor is not ported: measured joints run up to 432 times its resistance. Dhuley's Tables 2 and 5 give about 1.9e-3 W/(K N) at 4.2 K, within a factor of 5, with n near 1.1 for gold-plated Cu assembled warm; bare Cu spans two orders of magnitude with n from 1 to 2. The survey stops near 25 K, and the regenerator clamp, Cu on the stainless tube, is outside it. DESIGN has no joint-contact section yet; the proposed wording is for the human to record.
 
 ## 2. Cooler
 
