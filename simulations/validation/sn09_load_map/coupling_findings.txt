@@ -1,0 +1,107 @@
+SN09 coupling and curvature investigation (2026-11-02)
+
+Scope
+
+The human identifies coupling as the next investigation and observes that the
+modeled stage-2 map curves upward more strongly than the measured map. The ability
+to fit either stage independently is established by the preceding session and was
+not rechecked here. No library equations, existing fit outputs, or recorded physics
+decisions were changed. Task 2.3 remains in progress.
+
+Reproduce the diagnostic with:
+  .venv/Scripts/python simulations/validation/sn09_load_map/diagnose.py
+
+diagnose.py reads results.json and writes decomposition.json and decomposition.png.
+It reconstructs boundary flows from the library's current expressions and checks
+both reconstructed stage powers against every saved power to 1e-8 W absolute
+tolerance (NumPy also applies its default relative tolerance). Formatting and lint
+checks pass. The displayed lines connect the three measured operating points per
+stage-1 heater setting; they are not dense temperature sweeps at fixed T1.
+
+Observed decomposition
+
+Let B = beta(T2, P_mean)*T2, where beta is helium's isobaric expansion coefficient
+in 1/K, T2 is stage-2 temperature in K, and P_mean is mean pressure in Pa. Let H2
+be the model's gross stage-2 enthalpy cooling power in W. Let D_c be its passive
+regenerator boundary loss into stage 2, and W2 its tube-wall heat load, both in W.
+The current model's available stage-2 cooling is
+
+  Q2_available = B*H2 - D_c - W2.
+
+For the 20 W stage-1 heater group, in increasing T2 order:
+
+  T2/K       2.40568    3.31155    3.98343
+  H2/W      19.99238   19.99238   19.99238
+  B          0.03970    0.08785    0.14155
+  B*H2/W     0.79372    1.75625    2.82994
+  D_c/W      0.76496    0.62666    0.43210
+  W2/W       0.28811    0.28941    0.29063
+  Q2/W      -0.25935    0.84018    2.10721
+  Heater/W   0.00000    0.50000    1.00000
+
+Most of the upward curvature is in B*H2. Falling D_c reinforces it. Wall
+conduction is almost constant. There is no explicit exponential in the cooling
+formula; this diagnosis does not establish a particular analytic dependence on T2.
+
+With no external matrix/clamp load, the total stage-2 column flow F is uniform
+along the column. It is approximately 17.59 to 19.96 W in this group. The
+stage-1 cooling balance receives +F, while stage 2 receives a loss -F:
+
+  Q1_available = H1 - L1 + F - W1
+  Q2_available = H2 - F - W2.
+
+Here H1 is gross stage-1 enthalpy cooling, L1 is stage-1 regenerator loss, and W1
+is net wall heat into stage 1, all in W. Thus the same modeled transport links the
+stage-2 cooling curve and the stage-1 fit. This identity follows from the present
+equations; it does not identify which constitutive approximation is inadequate.
+
+Interpretation of the warm valve
+
+The human recalls that helium nonideality was treated as important only at cold
+temperatures. This is consistent with the real-fluid regenerator discussion below
+about 30 K in Snodgrass et al. Constant H2 is not disproved by the valve being warm:
+a lossless adiabatic pulse tube transmits constant cycle-averaged enthalpy power,
+as Radebaugh's review explains in section 5.1. A new density conversion from warm
+valve power to cold cooling should therefore not be introduced without deriving
+the pulse-tube energy balance. Temperature-dependent losses or phase relations
+remain possible, but were not quantified here.
+
+Concrete candidate for further derivation
+
+Snodgrass et al., Eq. (2), separates pressure-driven finite-matrix-capacity power
+from temperature-gradient-driven transport. In their approximation the former is
+
+  H_epsilon = epsilon/(1 + epsilon) * beta*T * E,
+
+where epsilon is pore-gas heat capacity divided by solid-matrix heat capacity
+for the same regenerator element, and E is local acoustic power, both powers in W.
+Their Appendix C gives
+
+  d(log(E))/dT = beta/(1 + epsilon).
+
+The density-ratio acoustic scaling in the current ADR is the epsilon = 0 limit.
+The current model has gradient-driven finite-capacity loss but no separate
+H_epsilon term. Whether its empirical packing loss absorbs any of the omitted
+effect requires a consistent derivation before changing the equations.
+
+At the saved matrix-node states, epsilon is about 0.04 to 0.58 in the two
+middle-load profiles. Evaluating the cold layer's pore-volume/matrix-mass ratio
+and material properties at T2 gives a hypothetical cold-boundary H_epsilon scale
+of 0.30, 0.63, and 1.02 W in the 20 W group, from low to high T2; the zero-W group
+gives 0.24, 0.53, and 0.95 W. These are order-of-magnitude estimates using the
+unchanged saved profiles and H2 as cold acoustic power, not a revised equilibrium
+or a refit. Near-constant cold-end epsilon means this correction alone can largely
+rescale B*H2; it does not guarantee a more linear map. Acoustic-power propagation
+and the gradient loss must be treated consistently when testing this hypothesis.
+
+Next proposed investigation: derive these two finite-capacity effects together
+with the existing packing-loss approximation and pulse-tube boundary power, then
+agree on any ADR change before implementing a replacement physical model. No
+replacement has been agreed in chat; the current ADR remains authoritative.
+
+Primary sources
+
+Snodgrass, Swift, Ullom, Backhaus (2023), sections 1.2 and 1.3 and Appendix C:
+https://tsapps.nist.gov/publication/get_pdf.cfm?pub_id=935876
+Radebaugh (2003), section 5.1:
+https://trc.nist.gov/cryogenics/Papers/Review/2003-Pulse_Tube_Cryocoolers.pdf
