@@ -101,8 +101,11 @@ The model is `docs/adrs/coupled-capacity-maps.md`. The milestone is reproducing 
 
 ## 3. Plots
 
-- [ ] **3.1 Heat-flow plot** · Auto
+- [x] **3.1 Heat-flow plot** · Auto
   Companion to `plot_temperature`: flows by link and node, with the sign convention, units, and phase-switch markers.
+  Mark zero heat flow with a dashed reference line.
+  Review includes a rendered mock-up before approval.
+  Done: `plot_heat_flow(data, ax=None)` draws each connected link-node pair, with inactive gaps, signed flows, units, a dashed zero line, and shared phase markers. Review approved; all 31 plot tests and scoped lint/format checks pass. The broader run passed 441 tests with 5 expected failures; 3 bare-head failures and a load-map collection error came from the in-progress cooler parameter change.
 
 - [ ] **3.2 Measured-temperature overlay** · Auto
   Measured thermometer traces drawn over their simulated nodes, once 4.1 settles the mapping.
