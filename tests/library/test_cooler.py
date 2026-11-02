@@ -179,7 +179,17 @@ def test_manifold_flows_match_analytic_ideal_gas(ideal_head, head_count, displac
         capacities = np.array([2 * t[1], 2 * t[1], 3 * t[3], 3 * t[3]])
         loss = 2 * np.array([0.8, 0.8, 1.3, 1.3]) * (flows * 10) ** 2 * (-np.diff(t)) / (head.frequency * capacities)
         h1, h2 = np.array(head.conductances) * (0.8 * swing / 2) ** 2 / 2
-        values = [h1 + h2 - loss[0], loss[0] - loss[1], loss[1] - loss[2] - h1, loss[2] - loss[3], loss[3] - h2]
+        # With beta T = 1 the stage-2 boundaries carry only the finite-capacity flow eps / (1 + eps) E_2, for the
+        # stage-2 node's eps = V rho c_p / C and E_2 = h2 (T_1 / T_2)^(1 / (1 + eps)) at stage 1 and h2 at stage 2.
+        ratio = 2e-4 * (mean / t[3]) * 10 / (3 * t[3])
+        pressure_driven = ratio / (1 + ratio) * h2 * np.array([(t[2] / t[4]) ** (1 / (1 + ratio)), 1.0])
+        values = [
+            h1 + h2 - loss[0],
+            loss[0] - loss[1],
+            loss[1] - loss[2] - h1 - pressure_driven[0],
+            loss[2] - loss[3] + pressure_driven[0] - pressure_driven[1],
+            loss[3] - h2 + pressure_driven[1],
+        ]
         for name, value in zip(
             ("Warm", head.matrix_nodes[0].name, "S1", head.matrix_nodes[1].name, "S2"), values, strict=True
         ):
@@ -208,7 +218,13 @@ def test_cooler_flows_follow_graph_node_order(ideal_head):
     )
 
     # At uniform temperature the ideal gas carries no column loss. At the 1 MPa relief swing,
-    # H = C * (dP / 2)^2 / 2 gives 12.5 W and 0.25 W of stage cooling, rejected to the warm flange.
+    # H = C * (dP / 2)^2 / 2 gives 12.5 W and 0.25 W of stage cooling, rejected to the warm flange. The stage-2
+    # column's pore gas, with eps = V rho c_p / C at 1.7 MPa and 300 K, still moves eps / (1 + eps) H_2 from stage 1
+    # to stage 2.
+    ratio = 2e-4 * (1.7e6 / 300) * 10 / (3 * 300)
+    moved = ratio / (1 + ratio) * 0.25
     np.testing.assert_allclose(
-        calc_net_heat_flow(graph, np.full(6, 300.0)), [-0.25, 0.0, 0.0, 12.75, -12.5, 0.0], atol=1e-12
+        calc_net_heat_flow(graph, np.full(6, 300.0)),
+        [-0.25 + moved, 0.0, 0.0, 12.75, -12.5 - moved, 0.0],
+        atol=1e-12,
     )

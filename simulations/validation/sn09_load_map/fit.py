@@ -243,16 +243,24 @@ def evaluate_head(
         temperature, head.pore_volume, head.pulse_tube_volume, mean + swing / 2, mean - swing / 2, parameters.frequency
     )
     heat_capacity = head.calc_heat_capacity(temperature)
+    capacity_ratio = calc_capacity_ratio(temperature, heat_capacity, head.pore_volume, mean)
     enthalpy = tuple(calc_enthalpy_flow(c, swing, drive.waveform_factor) for c in parameters.conductance)
     return ColumnSolution(
         temperature=temperature.copy(),
         heat_flow=calc_heat_flow(
-            temperature, heat_capacity, mass_flow, enthalpy, parameters.packing_constant, mean, parameters.frequency
+            temperature,
+            heat_capacity,
+            capacity_ratio,
+            mass_flow,
+            enthalpy,
+            parameters.packing_constant,
+            mean,
+            parameters.frequency,
         ),
         supply_pressure=mean + swing / 2,
         return_pressure=mean - swing / 2,
         utilization=calc_utilization(temperature, heat_capacity, mass_flow, mean, parameters.frequency),
-        capacity_ratio=calc_capacity_ratio(temperature, heat_capacity, head.pore_volume, mean),
+        capacity_ratio=capacity_ratio,
     )
 
 

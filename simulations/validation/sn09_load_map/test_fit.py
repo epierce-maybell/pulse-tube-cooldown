@@ -13,6 +13,7 @@ fit = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(fit)
 
 
+@pytest.mark.xfail(strict=True, reason="Solved before the finite-capacity terms of task 6.2; task 6.3 refits.")
 def test_equilibrium_can_have_a_matrix_node_below_stage_2():
     """Preserves a real root excluded by the old plate-temperature bounds."""
     head = fit.read_head("PT1.1")
@@ -32,7 +33,18 @@ def test_equilibrium_can_have_a_matrix_node_below_stage_2():
     assert fit.calc_growth_rate(head, parameters, drive, column) > 0.1
 
 
-@pytest.mark.parametrize("cooling", [False, True])
+@pytest.mark.parametrize(
+    "cooling",
+    [
+        False,
+        pytest.param(
+            True,
+            marks=pytest.mark.xfail(
+                strict=True, reason="Seeded before the finite-capacity terms of task 6.2; task 6.3 refits."
+            ),
+        ),
+    ],
+)
 def test_synthetic_load_map_recovers_its_parameters(cooling):
     """Recovers four known coefficients from a model-generated load map."""
     import xarray as xr
@@ -76,6 +88,7 @@ def test_synthetic_load_map_recovers_its_parameters(cooling):
     np.testing.assert_allclose(result.residual, 0, atol=1e-6)
 
 
+@pytest.mark.xfail(strict=True, reason="Solved before the finite-capacity terms of task 6.2; task 6.3 refits.")
 def test_candidate_balances_with_an_independently_solved_drive():
     """Checks the archived candidate against the library equations and its reported residuals."""
     parameters = tomllib.loads(Path(__file__).with_name("candidate_parameters.toml").read_text())

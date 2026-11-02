@@ -82,12 +82,14 @@ class PulseTubeCooler:
             first, second = (
                 head.calc_enthalpy_flow(conductance, swing, self.waveform_factor) for conductance in unit.conductances
             )
+            heat_capacity = unit.calc_heat_capacity(t)
             np.add.at(
                 heat_flow,
                 index,
                 head.calc_heat_flow(
                     t,
-                    unit.calc_heat_capacity(t),
+                    heat_capacity,
+                    head.calc_capacity_ratio(t, heat_capacity, unit.pore_volume, mean_pressure),
                     flow,
                     (first, second),
                     unit.packing_constants,
