@@ -28,6 +28,7 @@ from pulse_tube_cooldown.library.gases import helium
 from pulse_tube_cooldown.library.links.conduction import Conduction
 from pulse_tube_cooldown.library.links.cooler.drive import calc_mean_pressure, calc_pressure_swing
 from pulse_tube_cooldown.library.links.cooler.head import (
+    calc_capacity_ratio,
     calc_enthalpy_flow,
     calc_gas_mass,
     calc_heat_flow,
@@ -124,6 +125,7 @@ class ColumnSolution:
         supply_pressure: Supply pressure in Pa.
         return_pressure: Return pressure in Pa.
         utilization: Utilization of the stage-1 and stage-2 columns.
+        capacity_ratio: Pore-gas to matrix heat-capacity ratio at each node of the two columns.
     """
 
     temperature: NDArray[np.float64]
@@ -131,6 +133,7 @@ class ColumnSolution:
     supply_pressure: float
     return_pressure: float
     utilization: tuple[float, float]
+    capacity_ratio: tuple[NDArray[np.float64], NDArray[np.float64]]
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -249,6 +252,7 @@ def evaluate_head(
         supply_pressure=mean + swing / 2,
         return_pressure=mean - swing / 2,
         utilization=calc_utilization(temperature, heat_capacity, mass_flow, mean, parameters.frequency),
+        capacity_ratio=calc_capacity_ratio(temperature, heat_capacity, head.pore_volume, mean),
     )
 
 
@@ -586,6 +590,7 @@ def write_results(
                 supply_pressure_Pa=column.supply_pressure,
                 return_pressure_Pa=column.return_pressure,
                 utilization=list(column.utilization),
+                capacity_ratio=[ratio.tolist() for ratio in column.capacity_ratio],
                 max_column_balance_W=float(max(abs(checked.heat_flow[column_indices(head)]))),
                 pressure_check_relative=float(
                     max(

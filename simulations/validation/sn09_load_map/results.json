@@ -3,7 +3,7 @@
   "global_minimum_established": false,
   "warm_temperature_K": 294.2471368091581,
   "helium_charge_kg": 0.08908399716428018,
-  "elapsed_s": 52.95977229997516,
+  "elapsed_s": 46.36846320005134,
   "ratio_C2_over_a2": 4.4305723099325003e-10,
   "packing_constants": [
     0.12888316631743713,
@@ -57,6 +57,18 @@
         0.042866057378851984,
         0.05743459754651952
       ],
+      "capacity_ratio": [
+        [
+          0.012231461396671924,
+          0.02057418880180014
+        ],
+        [
+          0.041083308079295756,
+          0.06326719324616911,
+          0.20076200887115783,
+          0.3338304854833475
+        ]
+      ],
       "max_column_balance_W": 9.801937039810582e-11,
       "pressure_check_relative": 2.220446049250313e-16,
       "growth_rate_per_s": -0.0022413590397085785
@@ -93,6 +105,18 @@
       "utilization": [
         0.043676251249120154,
         0.04786751162511764
+      ],
+      "capacity_ratio": [
+        [
+          0.012249437816484531,
+          0.020767213100164737
+        ],
+        [
+          0.042236251007205766,
+          0.06759881111006803,
+          0.23978022514980876,
+          0.3851347699510297
+        ]
       ],
       "max_column_balance_W": 1.5226930827338947e-11,
       "pressure_check_relative": 0.0,
@@ -131,6 +155,18 @@
         0.04450956438388041,
         0.03950918454528275
       ],
+      "capacity_ratio": [
+        [
+          0.012265264745459973,
+          0.02097306209065179
+        ],
+        [
+          0.04350086613800912,
+          0.0719445700341254,
+          0.27954919067006917,
+          0.43068975403286286
+        ]
+      ],
       "max_column_balance_W": 3.9108272176235914e-11,
       "pressure_check_relative": 1.1102230246251565e-16,
       "growth_rate_per_s": -0.0023868799584132005
@@ -167,6 +203,18 @@
       "utilization": [
         0.0494337745423777,
         0.06979113004982791
+      ],
+      "capacity_ratio": [
+        [
+          0.012629313353369814,
+          0.02413214414662449
+        ],
+        [
+          0.06518851558552421,
+          0.10826113505841724,
+          0.48198549020968817,
+          0.44422997637533407
+        ]
       ],
       "max_column_balance_W": 5.9046101341664325e-12,
       "pressure_check_relative": 0.0,
@@ -205,6 +253,18 @@
         0.05032031664317236,
         0.05461118466838277
       ],
+      "capacity_ratio": [
+        [
+          0.01266132910960507,
+          0.02451156619260874
+        ],
+        [
+          0.06900622482178319,
+          0.11943326793770628,
+          0.575123648332475,
+          0.4712490924529746
+        ]
+      ],
       "max_column_balance_W": 3.841904572254862e-11,
       "pressure_check_relative": 1.1102230246251565e-16,
       "growth_rate_per_s": -0.0028794416893418735
@@ -242,19 +302,31 @@
         0.05108823367698157,
         0.04468822293646352
       ],
+      "capacity_ratio": [
+        [
+          0.01268626073595714,
+          0.024861120243267105
+        ],
+        [
+          0.07269295976719148,
+          0.12991382995215778,
+          0.6588795868760139,
+          0.49019676300066184
+        ]
+      ],
       "max_column_balance_W": 8.984812893686467e-11,
       "pressure_check_relative": 1.1102230246251565e-16,
       "growth_rate_per_s": -0.002937265221186581
     }
   ],
   "sha256": {
-    "simulations\\validation\\sn09_load_map\\fit.py": "41407a3ccde5ea7ebbe4ed175fa621752b85e68b90dd37f193e575c0d1a53dc5",
+    "simulations\\validation\\sn09_load_map\\fit.py": "3a8145e28796bf3506274b254a53c2aa0585fdc16dff69450dd5cebabec540c3",
     "simulations\\validation\\sn09_load_map\\inputs.toml": "06e4fa49e16bcc3607a50047b4d6b3e90813dfdec17bdde974994f89d888d046",
     "simulations\\validation\\sn09_load_map\\cooling_seed.json": "c90f719b3d57d3ed0fcab5693400126fe9a9d45f3a41bfddaf14c38e4ad5323b",
     "data\\sn09\\pulse_tube\\load_map_2026-05-14.dat": "9d13179e046058cd9e1b02962d25b92346919c5d098577758ba32c78d1326d41",
     "data\\sn09\\pulse_tube\\cooldown_2026-05-14.dat": "13c40d25397b0e52b34c076c716783278856d73920285f5164b2efdb355ee96d",
-    "data\\sn09\\pulse_tube\\geometry.csv": "c148570b36f48487239f9d077bea364aee4a778fa3072c6bc007b04dc3457a15",
-    "src\\pulse_tube_cooldown\\library\\links\\cooler\\head.py": "0560b958832843c5aa414d593e430daeff4870e9a0e13873022fec6e35902098",
+    "data\\sn09\\pulse_tube\\geometry.csv": "d2f1aff96c8d0a44d0d26211d4fc9d6dde61fdd52c676c2d0a6bceeb20c5b30f",
+    "src\\pulse_tube_cooldown\\library\\links\\cooler\\head.py": "96c8f898f5c34c5e0a9a658986ee0a56dd86a4d52480e32af8b747a35ec759d4",
     "src\\pulse_tube_cooldown\\library\\links\\cooler\\drive.py": "40d3273dbfa9ab6b576b8c21017d17cc020ef931e67bfe1d12ebd46de2844255",
     "src\\pulse_tube_cooldown\\library\\gases\\helium.py": "b30080efa0df73d0a7a935e15cf8ada90b12891532e180b58dad605f9203d6e3",
     "src\\pulse_tube_cooldown\\library\\property_fits.py": "546ae6c8a9e047c985c57e69d4194fd72778c10557a103aa7775a55fae2bac0b",

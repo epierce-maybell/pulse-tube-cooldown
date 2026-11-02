@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from pulse_tube_cooldown.library.gases import helium
-from pulse_tube_cooldown.library.links.cooler.head import calc_enthalpy_flow, calc_mass_flow
+from pulse_tube_cooldown.library.links.cooler.head import calc_capacity_ratio, calc_enthalpy_flow, calc_mass_flow
 
 
 def decompose(head, parameters, drive, temperature, mean, swing):
@@ -36,12 +36,7 @@ def decompose(head, parameters, drive, temperature, mean, swing):
     density = helium.density(boundary_temperature, mean)
     real_gas = (1 - beta_t) * density[-1] / density * h2
     total = passive[head.stage_1 :] + real_gas
-    matrix_temperatures = temperature[head.stage_1 + 1 : -1]
-    pore_capacity = (
-        head.pore_volume[1]
-        * helium.density(matrix_temperatures, mean)
-        * helium.isobaric_specific_heat(matrix_temperatures, mean)
-    )
+    capacity_ratio = calc_capacity_ratio(temperature, head.calc_heat_capacity(temperature), head.pore_volume, mean)
     cold_pore_capacity = (
         head.pore_volume[1][-1] * density[-1] * float(helium.isobaric_specific_heat(temperature[-1], mean))
     )
@@ -66,7 +61,7 @@ def decompose(head, parameters, drive, temperature, mean, swing):
         stage2_passive_boundary_W=passive[head.stage_1 :].tolist(),
         stage2_real_gas_boundary_W=real_gas.tolist(),
         stage2_total_boundary_W=total.tolist(),
-        stage2_pore_to_matrix_heat_capacity=(pore_capacity / head.calc_heat_capacity(temperature)[1]).tolist(),
+        stage2_pore_to_matrix_heat_capacity=capacity_ratio[1].tolist(),
         cold_endpoint_pore_to_matrix_heat_capacity=cold_capacity_ratio,
         omitted_pressure_capacity_power_scale_W=float(
             cold_capacity_ratio / (1 + cold_capacity_ratio) * beta_t[-1] * h2

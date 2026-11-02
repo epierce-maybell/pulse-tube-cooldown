@@ -5,6 +5,7 @@ import pytest
 from scipy.constants import gas_constant
 
 from pulse_tube_cooldown.library.links.cooler.head import (
+    calc_capacity_ratio,
     calc_enthalpy_flow,
     calc_gas_mass,
     calc_heat_flow,
@@ -114,6 +115,31 @@ def test_utilization_matches_hand_calculation():
     )
 
     np.testing.assert_allclose(utilization, [0.02466503, 0.07090502], rtol=1e-6)
+
+
+def test_capacity_ratio_matches_hand_calculation():
+    # Pore volume times HEPAK density and c_p at 1.4 MPa, over the node's matrix heat capacity. At 60 K, 20 K, and
+    # 8 K: densities 10.89474, 33.43007, 114.8121 kg/m^3 and c_p 5260.389, 5904.419, 6306.848 J/(kg K).
+    first, second = calc_capacity_ratio(
+        _TEMPERATURE, heat_capacity=_HEAT_CAPACITY, pore_volume=_PORE_VOLUME, mean_pressure=_MEAN_PRESSURE
+    )
+
+    np.testing.assert_allclose(first, [7.163822e-3], rtol=1e-6)
+    np.testing.assert_allclose(second, [0.1480389, 0.9654703], rtol=1e-6)
+
+
+def test_capacity_ratio_in_ideal_gas_limit():
+    # Near 300 K helium's volumetric heat capacity rho c_p approaches the ideal monatomic 5 P / (2 T).
+    temperature = np.array([300.0, 290.0, 280.0, 270.0, 260.0, 250.0])
+    pressure = 1.0e6
+
+    first, second = calc_capacity_ratio(
+        temperature, heat_capacity=_HEAT_CAPACITY, pore_volume=_PORE_VOLUME, mean_pressure=pressure
+    )
+
+    ideal = 2.5 * pressure / temperature
+    np.testing.assert_allclose(first, _PORE_VOLUME[0] * ideal[[1]] / _HEAT_CAPACITY[0], rtol=1e-2)
+    np.testing.assert_allclose(second, _PORE_VOLUME[1] * ideal[[3, 4]] / _HEAT_CAPACITY[1], rtol=1e-2)
 
 
 def test_enthalpy_flow_from_pressure_swing():

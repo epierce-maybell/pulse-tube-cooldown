@@ -173,13 +173,14 @@ Already supplied, for the switch link and the system configurations: each system
 
 Snodgrass, Swift, Ullom, and Backhaus, Cryogenics 132 (2023), `docs/papers/Snodgrass2023.pdf`, write the stage-2 regenerator's total power as five terms (their Eq. 2). The ADR's stage-2 boundary flow is their real-fluid term with the acoustic power scaled by the density ratio, which is their infinite-matrix-heat-capacity limit. These tasks add the two finite-capacity pieces that need no new data. The thermal-contact form of the gradient loss and DC streaming need a hydraulic radius per layer and a per-unit streaming rate, and are not scheduled.
 
-- [ ] **6.1 Pore-gas to matrix heat-capacity ratio** · Auto
+- [x] **6.1 Pore-gas to matrix heat-capacity ratio** · Auto
   For each column node, `eps_r = V_pore * rho(T, P_mean) * c_p(T, P_mean) / (M * c_m(T))`, reported beside utilization as a diagnostic. Finished when the May-fit profiles show the values the coupling findings estimated, about 0.04 to 0.58 along the stage-2 column.
+  Done: `calc_capacity_ratio` in `head.py`, one value per column node; the fit's `ColumnSolution` and `results.json` carry it as `capacity_ratio` beside `utilization`, and `diagnose.py` uses it. The rerun May fit is unchanged apart from the new field; its middle-load stage-2 columns read 0.042 to 0.385 and 0.069 to 0.575.
 
 - [o] **6.2 Finite-capacity terms in the stage-2 column** · Discuss
   Two changes to the stage-2 boundary flow, both reducing to today's flow at `eps_r = 0`. The acoustic power at a boundary scales from stage 2 as `H_2 * exp(integral from T_2 to T_b of beta / (1 + eps_r) dT)` (their Eq. C.5) in place of `rho(T_2) / rho(T_b)`, with `eps_r` from 6.1 along the chain. Each boundary also carries `eps_r / (1 + eps_r) * beta * T_b * E2(T_b)` toward stage 2 (their `H_eps`), so stage 2 nets `beta T_2 / (1 + eps_r,2) * H_2`. Ends in an ADR update; then build it, with the hand-computed head and ideal-gas checks extended.
 
-- [ ] **6.3 Refit the May map** · Auto, after 6.2
+- [ ] **6.3 Refit the May map** · Auto, after 6.2 and 6.4
   Rerun `simulations/validation/sn09_load_map/` with the new terms and compare against the current fit: stage residuals, the stage-2 curvature decomposition, and the clamp temperatures. Keep the current results as the baseline. Expect the terms to move the magnitude and the stage coupling rather than flatten `Q2(T2)`, which at fixed `H_2` stays proportional to `beta T_2 / (1 + eps_r,2)` in Snodgrass's own cold-end formula.
 
 - [ ] **6.4 Cold-exchanger coupling at stage 2** · Discuss, after 6.2

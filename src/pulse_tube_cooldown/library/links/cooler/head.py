@@ -30,6 +30,7 @@ from pulse_tube_cooldown.library.gases import helium
 __all__ = [
     "PulseTubeHead",
     "RegeneratorLayer",
+    "calc_capacity_ratio",
     "calc_enthalpy_flow",
     "calc_gas_mass",
     "calc_heat_flow",
@@ -252,6 +253,32 @@ def calc_utilization(
     capacity = np.array([column.sum() for column in heat_capacity])
     first, second = mass_flow[[stage_1 - 1, -1]] * specific_heat / (frequency * capacity)
     return float(first), float(second)
+
+
+def calc_capacity_ratio(
+    temperature: NDArray[np.float64],
+    heat_capacity: tuple[NDArray[np.float64], NDArray[np.float64]],
+    pore_volume: tuple[NDArray[np.float64], NDArray[np.float64]],
+    mean_pressure: float,
+) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
+    """Calculates each column node's pore-gas to matrix heat-capacity ratio, V * rho * c_p / C.
+
+    Args:
+        temperature: Temperatures in K along the head's chain.
+        heat_capacity: Matrix heat capacity in J/K of each node in the stage-1 and stage-2 columns, at its temperature.
+        pore_volume: Pore gas volume in m^3 of each node in the stage-1 and stage-2 columns.
+        mean_pressure: Mean of supply and return pressures in Pa.
+
+    Returns:
+        Ratio at each node of the stage-1 and stage-2 columns.
+    """
+    stage_1 = _stage_1(heat_capacity[0])
+    gas_capacity = (
+        _along_chain(*pore_volume)
+        * helium.density(temperature, mean_pressure)
+        * helium.isobaric_specific_heat(temperature, mean_pressure)
+    )
+    return gas_capacity[1:stage_1] / heat_capacity[0], gas_capacity[stage_1 + 1 : -1] / heat_capacity[1]
 
 
 def _stage_1(stage_1_column: NDArray[np.float64]) -> int:

@@ -98,6 +98,9 @@ def test_candidate_balances_with_an_independently_solved_drive():
             wall[fit.STAGE_2] + float(load_map.Q2[point]),
         ]
         np.testing.assert_allclose(residual, row["residual_W"], atol=1e-7)
+        np.testing.assert_allclose(column.utilization, row["utilization"], rtol=1e-9)
+        for recomputed, archived in zip(column.capacity_ratio, row["capacity_ratio"], strict=True):
+            np.testing.assert_allclose(recomputed, archived, rtol=1e-9)
         assert fit.calc_growth_rate(head, candidate, drive, column) < 0
         changed = fit.Parameters(
             packing_constant=(candidate.packing_constant[0] * 2, candidate.packing_constant[1]),
@@ -107,3 +110,14 @@ def test_candidate_balances_with_an_independently_solved_drive():
         repeat = fit.solve_columns(head, changed, drive, warm_temperature=warm, stage_temperature=(t[3], t[8]), guess=t)
         np.testing.assert_allclose(repeat.temperature, t, atol=1e-7)
         assert repeat.heat_flow[-1] == pytest.approx(column.heat_flow[-1], abs=1e-7)
+
+
+def test_archived_capacity_ratio_matches_coupling_findings():
+    """The May-fit profiles' pore-gas to matrix heat-capacity ratio, estimated in coupling_findings.txt."""
+    report = json.loads(Path(__file__).with_name("results.json").read_text())
+    middle_load = [row for row in report["points"] if row["heater_power_W"][1] == 0.5]
+    assert len(middle_load) == 2
+    for row in middle_load:
+        stage_2_column = np.array(row["capacity_ratio"][1])
+        assert 0.04 <= stage_2_column.min() <= 0.08
+        assert 0.38 <= stage_2_column.max() <= 0.59
