@@ -9,7 +9,7 @@ density = 7345.0
 form = "measured_with_lattice"
 range = [2.0, 300.0]
 molar_mass = 0.378558
-source = "To 10 K, T. Numazawa et al., A New Ceramic Magnetic Regenerator Material for 4 K Cryocoolers, Cryocoolers 12 (2003), docs/papers/Numazawa2003.pdf, as fitted in NIST REGEN3.3, compute_mod.f90, material 33. Above, a Debye lattice at an estimated Debye temperature."
+source = "To 10 K, T. Numazawa et al., A New Ceramic Magnetic Regenerator Material for 4 K Cryocoolers, Cryocoolers 12 (2003), docs/papers/materials/Numazawa2003.pdf, as fitted in NIST REGEN3.3, compute_mod.f90, material 33. Above, a Debye lattice at an estimated Debye temperature."
 measured = [
     [2, 30.1403],
     [2.05, 30.9077],

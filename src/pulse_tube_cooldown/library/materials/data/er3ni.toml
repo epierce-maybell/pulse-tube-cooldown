@@ -8,7 +8,7 @@ density = 9049.0
 form = "measured_with_lattice"
 range = [2.0, 300.0]
 molar_mass = 0.5604704
-source = "To 30 K, T. Kuriyama (Toshiba), letter of 1990-12-21, as fitted in NIST REGEN3.3, compute_mod.f90, material 9. Above, the lattice of N. V. Tristan et al., Phys. Status Solidi A 196, 325 (2003), docs/papers/Tristan2003.pdf."
+source = "To 30 K, T. Kuriyama (Toshiba), letter of 1990-12-21, as fitted in NIST REGEN3.3, compute_mod.f90, material 9. Above, the lattice of N. V. Tristan et al., Phys. Status Solidi A 196, 325 (2003), docs/papers/materials/Tristan2003.pdf."
 measured = [
     [2, 2.29073],
     [2.05, 2.4366],

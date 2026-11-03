@@ -57,4 +57,4 @@ table = [
     [300, 127.93],
 ]
 range = [2.0, 300.0]
-source = "J. W. Arblaster, Thermodynamic properties of lead, Calphad 39, 47 (2012), Tables 11 (superconducting state), 12, and 13; docs/papers/Arblaster2012.pdf"
+source = "J. W. Arblaster, Thermodynamic properties of lead, Calphad 39, 47 (2012), Tables 11 (superconducting state), 12, and 13; docs/papers/materials/Arblaster2012.pdf"

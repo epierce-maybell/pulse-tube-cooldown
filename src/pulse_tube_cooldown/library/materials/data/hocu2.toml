@@ -9,7 +9,7 @@ density = 9221.0
 form = "measured_with_lattice"
 range = [2.0, 300.0]
 molar_mass = 0.29202233
-source = "To 20 K, NIST REGEN3.3, compute_mod.f90, material 23. Above, the lattice of isostructural LuCu2, J. Vejpravova, P. Svoboda & M. Divis, Acta Phys. Pol. B 34, 1453 (2003), docs/papers/Vejpravova2003.pdf."
+source = "To 20 K, NIST REGEN3.3, compute_mod.f90, material 23. Above, the lattice of isostructural LuCu2, J. Vejpravova, P. Svoboda & M. Divis, Acta Phys. Pol. B 34, 1453 (2003), docs/papers/materials/Vejpravova2003.pdf."
 measured = [
     [2, 9.8444],
     [2.05, 10.1928],
