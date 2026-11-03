@@ -399,6 +399,27 @@ charcoal_mass = 1.8e-4     # kg
 brackets = [{ material = "OFHC Cu RRR100", area = 1.0e-4, length = 0.02 }]
 ```
 
+#### Exchange gas
+
+Exchange gas is one link over every node with a surface facing the gas. Each facing pair of surfaces, including the vacuum can and the PRP, has an area $A$ and gap $d$ and carries $Q = hA(T_b - T_a)$, where $h$ is the gas-gap switch's gap conductance per unit area at the pair's mean temperature, and $T_b$ and $T_a$ are the node temperatures. The pressure is the same throughout the can, a cubic in the CFP temperature clamped at zero:
+
+$$
+P = \max(0,\ a T^3 + b T^2 + c T + d).
+$$
+
+Its coefficients are the pumping threshold from the `monitor_ovc` routine, converted from mbar to Pa. Using them assumes outgassing and residual air keep P1 pressed against that threshold; if P1 sits below it, the link overstates the coupling in proportion. N2 stands in for air. The cubic reaches zero near 68 K, which ends the coupling without a phase change.
+
+```toml
+[[fridge.links]]
+name = "Exchange gas"
+type = "exchange_gas"
+nodes = ["Vacuum can", "PRP", "RGP", "CFP", "STP", "ICP", "MXP"]
+gas = "N2"
+pressure_node = "CFP"
+pressure_coefficients = [3.16030871e-07, -1.32989499e-04, 1.90126130e-02, -7.78545808e-01]
+surfaces = [{ nodes = ["Vacuum can", "PRP"], area = 0.5, gap = 0.02 }]
+```
+
 #### Radiation
 Radiation Links connect exactly two nodes, ordered as `[inner, outer]` corresponding to their orientation in physical space. We'll denote `inner` as $\Box_1$ and `outer` as $\Box_2$. Heat flow $Q$ between them is given by grey-body radiation:
 
