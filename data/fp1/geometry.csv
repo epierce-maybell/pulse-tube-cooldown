@@ -1,0 +1,67 @@
+quantity,value,unit,source,notes
+still_lid_to_prp,428.2,mm,CAD 910-000040,16.860 in; human 2026-11-03
+still_lid_to_top_plate,602.5,mm,CAD 910-000040,23.721 in; human 2026-11-03
+plate_thickness,9.5,mm,"STEP export of CAD 910-000040, 2026-11-03","PRP RGP CFP STP ICP MXP plates ""2.0"""
+mxp_to_icp_spacing,158.4,mm,"STEP export of CAD 910-000040, 2026-11-03","facing surfaces, lower plate top to upper plate underside"
+icp_to_stp_spacing,159.4,mm,"STEP export of CAD 910-000040, 2026-11-03","facing surfaces, lower plate top to upper plate underside"
+stp_to_cfp_spacing,139.2,mm,"STEP export of CAD 910-000040, 2026-11-03","facing surfaces, lower plate top to upper plate underside"
+cfp_to_rgp_spacing,152.8,mm,"STEP export of CAD 910-000040, 2026-11-03","facing surfaces, lower plate top to upper plate underside"
+rgp_to_prp_spacing,119.2,mm,"STEP export of CAD 910-000040, 2026-11-03","facing surfaces, lower plate top to upper plate underside"
+prp_to_top_plate_spacing,114.3,mm,"STEP export of CAD 910-000040, 2026-11-03","facing surfaces, lower plate top to upper plate underside"
+still_pumping_line_bore,19.05,mm,BoM 350-000055 and CAD 910-000040,"0.75 in ID bellows in the still assembly at z 1310-1341; the warm manifold reduces to it through TEE, WELD 2.5X1; the tube itself is not a solid in the export"
+still_pumping_line_gas_volume_stp_to_prp,107,cm^3,derived,pi/4 x bore^2 x 375.2 mm from the PLHX shell top (z 1300.9) to the PRP underside (z 1676.1); spans STP to PRP through CFP
+still_pumping_line_gas_volume_prp_to_top,50,cm^3,derived,pi/4 x bore^2 x 174.3 mm from the PRP top (z 1685.6) to the top plate top (z 1859.9); the 2.5 in manifold above is warm volume
+still_gas_volume,63.3,cm^3,"STEP export of CAD 910-000040, 2026-11-03","cavity enclosed by BASE and LID, STILL, FP with COND HX, STILL, FP inside; boolean of the fused solids within the lid footprint 118.4 x 58.4 mm"
+still_condensing_hx_gas_volume,1,cm^3,estimate,"COND HX, STILL, FP is a 118 x 21 x 3.8 mm channel plate: bounding box 9.4 cm^3 minus 8.3 cm^3 solid"
+plhx_gas_volume,24.5,cm^3,"STEP export of CAD 910-000040, 2026-11-03","gas inside the 32.5 mm bore of SHELL, PLHX (z 1254.8-1300.9) around TUBE, PLHX and HOUSING, PLHX; sits on the still lid at STP; add to still_gas_volume"
+icp_hx_gas_volume,13.4,cm^3,"STEP export of CAD 910-000040, 2026-11-03","channels between BASE and INSERT, HX ICP PLATE with FITTING; boolean within the insert footprint 122.4 x 60.0 mm; at ICP"
+lower_chx_gas_volume,24.2,cm^3,derived,"TUBE, LOWER CHX CND 1.88 mm ID, 1215 mm, bore 3.4 cm^3, inside LOWER CHX, COIL LARGE TUBE 5.84 mm ID, 933 mm, annulus 20.8 cm^3; z 1024-1095 between ICP and the upper DHX"
+upper_chx_gas_volume,27.1,cm^3,derived,"tube-in-tube coil z 1091-1175 between ICP and STP; small tube 1.88 mm ID x 2.39 mm OD, 1080 mm from its solid volume, bore 3.0 cm^3; outer tube absent from the export, taken as the 5.84 mm ID x 6.35 mm OD of the SN09 upper and both lower coils, annulus 24.1 cm^3"
+dhx_upper_gas_volume_each,22.6,cm^3,"STEP export of CAD 910-000040, 2026-11-03","shell interior 25.4 cm^3 minus two SINTER, UPPER (2.02 cm^3 each) and FOIL (0.79) plus half the sinter envelope as pores; x2 at z 979-1007"
+dhx_lower_gas_volume_each,40.0,cm^3,"STEP export of CAD 910-000040, 2026-11-03","shell interior 44.8 cm^3 minus two SINTER, LOWER (4.03 cm^3 each) and FOIL (0.79) plus half the sinter envelope as pores; x4 at z 879-968"
+dhx_sinter_envelope_each,8.06 lower; 4.04 upper,cm^3,"STEP export of CAD 910-000040, 2026-11-03",two sinter discs per unit; pores taken as half the envelope
+dhx_count,6,,BoM 910-000040,2 upper + 4 lower shell sets; legacy model also lists DHX (6X)
+mixing_chamber_gas_volume,37.2,cm^3,"STEP export of CAD 910-000040, 2026-11-03","cavity 45.4 cm^3 enclosed by BASE and CAP, MIXING CHAMBER, YURT around INTERNAL YURT, boolean within the cap footprint 137.0 x 37.3 mm, minus the sinters plus half their envelope as pores; at MXP"
+mixing_chamber_sinter_envelope,16.5,cm^3,"STEP export of CAD 910-000040, 2026-11-03","SINTER, BASE MXC 9.34 and SINTER, CAP MXC 7.16"
+prp_shield_width,519.9,mm,"STEP export of CAD 910-000040, 2026-11-03",rear 510-000463 x; side 510-000928 y; height PRP underside 1676.1 to bottom panel 275.3; 6063-T5 Al
+prp_shield_depth,423.1,mm,"STEP export of CAD 910-000040, 2026-11-03",
+prp_shield_height,1400.8,mm,"STEP export of CAD 910-000040, 2026-11-03",
+cfp_shield_width,489.5,mm,"STEP export of CAD 910-000040, 2026-11-03",rear 510-000471; side 510-000935; CFP underside 1385.1 to bottom 290.5; Cu
+cfp_shield_depth,393.8,mm,"STEP export of CAD 910-000040, 2026-11-03",
+cfp_shield_height,1094.6,mm,"STEP export of CAD 910-000040, 2026-11-03",
+stp_shield_width,459.0,mm,"STEP export of CAD 910-000040, 2026-11-03",rear 510-000479; sides 510-000942/-000951; STP underside 1236.4 to bottom 305.7; Cu
+stp_shield_depth,346.4,mm,"STEP export of CAD 910-000040, 2026-11-03",
+stp_shield_height,930.7,mm,"STEP export of CAD 910-000040, 2026-11-03",
+mxp_shield_width,428.5,mm,"STEP export of CAD 910-000040, 2026-11-03",rear 510-000484; side panel 510-000949; MXP underside 899.6 to bottom 320.9; Cu
+mxp_shield_depth,314.2,mm,"STEP export of CAD 910-000040, 2026-11-03",
+mxp_shield_height,578.7,mm,"STEP export of CAD 910-000040, 2026-11-03",
+switch_gap,0.5,mm,TASKS 5 (supplied),
+switch_facing_area,40,cm^2,TASKS 5 (supplied),legacy model used 46 cm^2 x 0.51 mm
+switch_sealed_gas_volume,3.0,cm^3,"STEP export of CAD 910-000040, 2026-11-03","gap between CORE and OUTER CORE, GAS GAP 2.65 cm^3 (18.4 mm bore over 78.5 mm) plus a 0.31 cm^3 port and the 1.55 mm bore fill tube; charcoal charge 0.197 cm^3 not subtracted"
+switch_core_cross_section,2.01,cm^2,"STEP export of CAD 910-000040, 2026-11-03","CORE, GAS GAP 500-000182: 16.0 mm diameter solid cylinder, 17.69 cm^3 over 89.9 mm"
+switch_core_length,89.9,mm,"STEP export of CAD 910-000040, 2026-11-03",
+switch_outer_core_cross_section,2.08,cm^2,"STEP export of CAD 910-000040, 2026-11-03","OUTER CORE, GAS GAP 500-000183: 28.2 mm OD sleeve, 18.95 cm^3 over 91.2 mm"
+switch_outer_core_length,91.2,mm,"STEP export of CAD 910-000040, 2026-11-03",
+switch_extension_lower_cross_section,3.44,cm^2,"STEP export of CAD 910-000040, 2026-11-03","EXTENSION, GAS GAP, LOWER 500-000205: 27.9 mm OD, 34.92 cm^3 over 101.6 mm; legacy Upper Adapter used 3.168 cm^2 x 140.95 mm"
+switch_extension_lower_length,101.6,mm,"STEP export of CAD 910-000040, 2026-11-03",
+switch_extension_upper_cross_section,4.97,cm^2,"STEP export of CAD 910-000040, 2026-11-03","EXTENSION, GAS GAP, UPPER 500-000206: 27.9 mm OD, 27.76 cm^3 over 55.9 mm"
+switch_extension_upper_length,55.9,mm,"STEP export of CAD 910-000040, 2026-11-03",
+switch_mxp_adapter_cross_section,19.3,cm^2,legacy ptc_systems.json,MXP Adapter series link on the STP-ICP-MXP gaps; OFHC Cu
+switch_mxp_adapter_length,29.4,mm,legacy ptc_systems.json,MXP Adapter
+support_top_to_prp_cross_section,0.62,cm^2,legacy ptc_systems.json,per member; G10; 500-001256 side x2 and 500-001257 rear x2 plus 900-000875-01 rods
+support_top_to_prp_length,129.8,mm,legacy ptc_systems.json,
+support_top_to_prp_count,5,,legacy ptc_systems.json,
+support_prp_to_cfp_cross_section,0.25,cm^2,legacy ptc_systems.json,per member; G10; 500-001252 front x2 and 500-001254 side x2 cold-foot supports
+support_prp_to_cfp_length,281.48,mm,legacy ptc_systems.json,
+support_prp_to_cfp_count,6,,legacy ptc_systems.json,
+support_below_cfp,0,,legacy ptc_systems.json,no support link below CFP in the legacy model; STP ICP and MXP hang on the switches; 500-001253/-001255/-001258 mixing supports unmodeled
+pt_regenerator2_top_to_clamp_center,151.3,mm,"STEP export of CAD 910-000040, 2026-11-03","REGEN TUBE 2 top z 1635.0 to CLAMP, RGP center z 1483.7; SN09 prp_to_clamp 149.6; CAD values pending the 2.5 convention check against SN09; both PT1.5 heads identical in CAD"
+pt_clamp_center_to_regenerator2_bottom,93.2,mm,"STEP export of CAD 910-000040, 2026-11-03",clamp center to REGEN TUBE 2 bottom z 1390.5; SN09 clamp_to_cfp 77.8 by a different end convention; CAD values pending the 2.5 convention check against SN09; both PT1.5 heads identical in CAD
+pt_stage1_regenerator_outer_radius,32.1,mm,"STEP export of CAD 910-000040, 2026-11-03",REGEN TUBE 1: 64.2 mm OD x 180.0 mm; same as SN09
+pt_stage1_regenerator_length,180.0,mm,"STEP export of CAD 910-000040, 2026-11-03",
+pt_stage1_pulse_tube_outer_radius,21.5,mm,"STEP export of CAD 910-000040, 2026-11-03","PULSE TUBE 1, PT: cylindrical faces at 21.0 and 21.5 mm radius, 181 mm long; SN09 geometry.csv records 10.744 mm from a 0.846 in diameter; one of the two is a radius-diameter slip or the PT1.5 tube is larger; resolve in 2.5"
+pt_stage1_pulse_tube_length,181.0,mm,"STEP export of CAD 910-000040, 2026-11-03",same as SN09
+pt_stage2_regenerator_outer_radius,16.5,mm,"STEP export of CAD 910-000040, 2026-11-03",REGEN TUBE 2: 33.0 mm OD x 244.5 mm; same as SN09
+pt_stage2_regenerator_length,244.5,mm,"STEP export of CAD 910-000040, 2026-11-03",
+pt_stage2_pulse_tube_outer_radius,12.5,mm,"STEP export of CAD 910-000040, 2026-11-03",PULSE TUBE 2: 25.0 mm OD x 444.0 mm; same as SN09
+pt_stage2_pulse_tube_length,444.0,mm,"STEP export of CAD 910-000040, 2026-11-03",

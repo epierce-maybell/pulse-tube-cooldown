@@ -64,8 +64,8 @@ def test_columns_take_the_design_form(pt1_1, column):
 def test_head_values_match_geometry_record(pt1_1):
     # data/sn09/pulse_tube/geometry.csv: clamp_fraction_x_R, and the stage-1 and stage-2 pulse-tube gas volumes, each
     # rounded to 0.1 cm^3.
-    assert pt1_1["clamp_fraction"] == 0.658
-    assert pt1_1["pulse_tube_volumes"] == pytest.approx([59.7e-6, 200.9e-6], abs=0.1e-6)
+    assert pt1_1["clamp_fraction"] == 0.668
+    assert pt1_1["pulse_tube_volumes"] == pytest.approx([250.8e-6, 200.9e-6], abs=0.1e-6)
 
 
 def test_clamp_lies_in_the_hocu2_layer(pt1_1):

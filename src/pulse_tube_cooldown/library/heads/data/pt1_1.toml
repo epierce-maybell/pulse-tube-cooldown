@@ -1,8 +1,8 @@
 # Written by data/sn09/pulse_tube/derive_head_model.py from geometry.csv.
 # Estimates: tube_wall_thickness, matrix_porosity_spheres, matrix_porosity_screens.
 name = "PT1.1"
-clamp_fraction = 0.658
-pulse_tube_volumes = [5.967e-05, 2.009e-04]  # m^3, stage 1 and stage 2
+clamp_fraction = 0.668
+pulse_tube_volumes = [2.508e-04, 2.009e-04]  # m^3, stage 1 and stage 2
 source = "CAD 910-000018; Falter 2024 Fig. 2; derived in data/sn09/pulse_tube/"
 
 [[stage_1_column]]

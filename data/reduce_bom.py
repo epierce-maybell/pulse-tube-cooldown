@@ -147,6 +147,9 @@ def classify(sysname):
         if sysname == "SN09" and re.search(r"^PANEL, (LEFT|RIGHT) PRP", name):
             q = 1
             flag = "listed qty 8 treated as 1 (implausible multiplier)"
+        if sysname == "SN09" and re.search(r"SHELL, (BASE|CAP) (UPPER|LOWER)|SINTER, (UPPER|LOWER)|FOIL", name):
+            q /= 2
+            flag = "CAD and BoM carry both the welded-flag and 6STK DHX stacks; halved to the six installed"
         if node == "GGHS":
             key = r["Part number"]
             if key in seen_gg:

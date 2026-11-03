@@ -46,7 +46,7 @@ def test_model_builds_matrix_nodes_and_clamp_from_one_description(parameters):
         *(f"PT stage 2 Gd2O2S {index}" for index in range(1, 9)),
     ]
     assert head.clamp_node == "PT stage 2 HoCu2"
-    assert head.pulse_tube_volumes == (5.967e-5, 2.009e-4)
+    assert head.pulse_tube_volumes == (2.508e-4, 2.009e-4)
     assert head.packing_constants == (0.8, 1.3)
     assert head.conductances == (1e-10, 2e-12)
     assert head.exchanger_effectiveness == 0.3
@@ -65,7 +65,7 @@ def test_fill_pressure_becomes_total_manifold_charge(parameters):
     first = load_pulse_tube_head(name="A", stages=("A1", "A2"), model="PT1.1", parameters=parameters)
     second = replace(first, name="B", pulse_tube_volumes=(1e-4, 3e-4))
     # HEPAK density at 293.15 K and 1.7 MPa: 2.7696416 kg/m^3.
-    total_volume = 0.03 + 2 * (344.92e-6 + 74.75e-6) + 5.967e-5 + 2.009e-4 + 4e-4
+    total_volume = 0.03 + 2 * (344.92e-6 + 74.75e-6) + 2.508e-4 + 2.009e-4 + 4e-4
     assert calc_charge((first, second), 1.7e6, 293.15, 0.03) == pytest.approx(2.7696416 * total_volume, rel=1e-6)
 
 

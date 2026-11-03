@@ -332,8 +332,8 @@ parameters = "data/sn09/pulse_tube/parameters.toml"
 A head model is a TOML file in `library/heads/data/` describing the design shared by every head of that model: its two regenerator columns, its pulse-tube gas volumes, and the clamp position $x_R$ as a fraction of the stage-2 column's length from stage 1. Each layer of a column gives its position `index`, counting from 0 at the warm end, and its matrix material, matrix mass, pore gas volume, and fraction of the column's length:
 ```toml
 name = "PT1.1"
-clamp_fraction = 0.658
-pulse_tube_volumes = [59.7e-6, 200.9e-6]  # m^3, stage 1 and stage 2
+clamp_fraction = 0.668
+pulse_tube_volumes = [250.8e-6, 200.9e-6]  # m^3, stage 1 and stage 2
 source = "CAD 910-000018; Falter 2024; derived in data/sn09/pulse_tube/"
 
 [[stage_1_column]]

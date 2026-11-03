@@ -29,7 +29,7 @@ item,part_number,name,quantity,extended_mass_kg,node,material_class,flag
 396,500-000191,"TUBE, GAS GAP, .125IN",5.0,0.01,EXCLUDED,Cu,duplicate gas-gap row (first row per part number is the total)
 397,500-000192,"PORT, SINGLE GGHS, CRUSH TUBE",3.0,0.33,GGHS,Cu,"gas-gap mass allocated to plates per 11-switch layout; material N/A, assumed Cu"
 398,500-000192,"PORT, SINGLE GGHS, CRUSH TUBE",1.0,0.11,EXCLUDED,Cu,duplicate gas-gap row (first row per part number is the total)
-399,500-000201,"FOIL, PARTIAL ETCH",8.0,0.04,DHX,SS,DHX identification inferred; sinter/foil N/A assumed silver
+399,500-000201,"FOIL, PARTIAL ETCH",4.0,0.02,DHX,SS,CAD and BoM carry both the welded-flag and 6STK DHX stacks; halved to the six installed
 400,500-000214,"SUPPORT, COLD FOOT, SIDE",2.0,0.024,CFP,G10,material N/A assumed Cu
 401,500-000215,"SUPPORT, MIXING, SIDE",2.0,0.026,MXP,G10,
 402,500-000216,"SUPPORT, PRIMARY, SIDE",6.0,0.054,PRP,G10,
@@ -44,10 +44,10 @@ item,part_number,name,quantity,extended_mass_kg,node,material_class,flag
 419,500-000295,"FITTING, HX ICP PLATE",1.0,0.05,ICP,SS,
 420,500-000296,"INSERT, HX ICP PLATE",1.0,0.427,ICP,Cu,
 437,500-000460,"COVER, COLD FOOT, EDGES",4.0,0.008,CFP,SS,material N/A assumed Cu
-455,500-000485,"SHELL, BASE UPPER",4.0,0.224,DHX,SS,DHX identification inferred; sinter/foil N/A assumed silver
-456,500-000486,"SHELL, BASE LOWER",8.0,0.544,DHX,SS,DHX identification inferred; sinter/foil N/A assumed silver
-457,500-000487,"SHELL, CAP UPPER",4.0,0.204,DHX,SS,DHX identification inferred; sinter/foil N/A assumed silver
-458,500-000488,"SHELL, CAP LOWER",8.0,0.504,DHX,SS,DHX identification inferred; sinter/foil N/A assumed silver
+455,500-000485,"SHELL, BASE UPPER",2.0,0.112,DHX,SS,CAD and BoM carry both the welded-flag and 6STK DHX stacks; halved to the six installed
+456,500-000486,"SHELL, BASE LOWER",4.0,0.272,DHX,SS,CAD and BoM carry both the welded-flag and 6STK DHX stacks; halved to the six installed
+457,500-000487,"SHELL, CAP UPPER",2.0,0.102,DHX,SS,CAD and BoM carry both the welded-flag and 6STK DHX stacks; halved to the six installed
+458,500-000488,"SHELL, CAP LOWER",4.0,0.252,DHX,SS,CAD and BoM carry both the welded-flag and 6STK DHX stacks; halved to the six installed
 459,500-000492,"ADAPTER, MXC TO DIL",1.0,0.007,MXP,Cu,material N/A assumed Cu
 460,500-000493,"TUBE, MXC CONV",1.0,0.001,MXP,SS,material N/A assumed Cu
 461,500-000494,"TUBE, MXC TO DIL",1.0,0.002,MXP,SS,material N/A assumed Cu
@@ -123,5 +123,5 @@ item,part_number,name,quantity,extended_mass_kg,node,material_class,flag
 649,510-000300-01,"PANEL, DOOR CFP",1.0,1.337,CFP,Cu,material N/A assumed Cu
 668,520-000000,"SINTER, BASE MXC",1.0,0.098,MXP,Other,silver
 669,520-000001,"SINTER, CAP MXC",1.0,0.075,MXP,Other,silver
-670,520-000005,"SINTER, LOWER",16.0,0.672,DHX,Other,DHX identification inferred; sinter/foil N/A assumed silver
-690,900-000140,"SINTERED FOIL, UPPER",4.0,0.192,DHX,Other,DHX identification inferred; sinter/foil N/A assumed silver
+670,520-000005,"SINTER, LOWER",8.0,0.336,DHX,Other,CAD and BoM carry both the welded-flag and 6STK DHX stacks; halved to the six installed
+690,900-000140,"SINTERED FOIL, UPPER",2.0,0.096,DHX,Other,CAD and BoM carry both the welded-flag and 6STK DHX stacks; halved to the six installed
