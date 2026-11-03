@@ -1,0 +1,13 @@
+name = "Gold-plated Cu"
+
+# Total hemispherical emissivity, as a fraction, of copper with 1-2 um of galvanically deposited pure gold.
+[emissivity]
+form = "table"
+table = [
+    [20.0, 0.0109], [25.0, 0.0119], [30.0, 0.0133], [35.0, 0.0142], [40.0, 0.0150], [50.0, 0.0161],
+    [60.0, 0.0171], [70.0, 0.0181], [80.0, 0.0189], [90.0, 0.0198], [100.0, 0.0207], [120.0, 0.0223],
+    [140.0, 0.0235], [160.0, 0.0246], [180.0, 0.0258], [200.0, 0.0269], [220.0, 0.0280], [240.0, 0.0291],
+    [260.0, 0.0300], [280.0, 0.0310], [300.0, 0.0320], [320.0, 0.0330],
+]
+range = [20.0, 320.0]
+source = "Frolec, Kralik, Hanzelka, Musilova, A database of emissivities and absorptivities of metallic materials at low temperatures, Mendeley Data v4 (2025), doi:10.17632/z8t423rwwd.4, sample 050_EM_Cu-Au (99.9% Cu, mechanically polished, 1-2 um galvanic pure Au), first presented in Frolec et al., Int. J. Refrig. 82 (2017), doi:10.1016/j.ijrefrig.2017.06.034; absolute uncertainty 0.0011-0.0022. Hard gold with 0.8% Co on Cu (sample 035) reads 20-30% higher."

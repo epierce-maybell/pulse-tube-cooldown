@@ -1,0 +1,14 @@
+name = "Machined Al"
+
+# Total hemispherical emissivity, as a fraction, of finely turned aluminum alloy. The points to 162.4 K are measured
+# on AW-2017A; the 300 K point is chemically polished AW-1050A at 300 K (0.0189) times the ratio of the two surfaces
+# at 162.4 K (0.0192 / 0.0113 = 1.70).
+[emissivity]
+form = "table"
+table = [
+    [20.1, 0.0059], [25.3, 0.0075], [30.1, 0.0079], [35.8, 0.0087], [40.6, 0.0091], [45.5, 0.0097],
+    [50.6, 0.0103], [55.3, 0.0108], [61.2, 0.0115], [70.4, 0.0120], [83.9, 0.0132], [90.0, 0.0137],
+    [100.1, 0.0145], [115.1, 0.0157], [129.1, 0.0168], [162.4, 0.0192], [300.0, 0.0321],
+]
+range = [20.1, 300.0]
+source = "Frolec, Kralik, Hanzelka, Musilova, A database of emissivities and absorptivities of metallic materials at low temperatures, Mendeley Data v4 (2025), doi:10.17632/z8t423rwwd.4: sample 018_EM_AlCu4Mg (AW-2017A, finely turned on a lathe), first presented in Musilova et al., Cryogenics 45, 529 (2005), doi:10.1016/j.cryogenics.2004.11.010, absolute uncertainty 0.0007-0.0013; 300 K point scaled from sample 002_EM_Al (AW-1050A, chemically polished), Kralik et al., Metrologia 53, 743 (2016), doi:10.1088/0026-1394/53/2/743."

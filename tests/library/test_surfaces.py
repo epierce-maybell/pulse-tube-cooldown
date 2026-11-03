@@ -112,6 +112,22 @@ def test_malformed_emissivity_table_is_reported(tmp_path):
         load_surface("Test Finish", directory=tmp_path)
 
 
+@pytest.mark.parametrize(
+    ("name", "temperature", "expected"),
+    [
+        # Frolec et al., Mendeley Data 10.17632/z8t423rwwd.4, sample 050_EM_Cu-Au.
+        ("Gold-plated Cu", [20.0, 100.0, 300.0], [0.0109, 0.0207, 0.0320]),
+        # Sample 018_EM_AlCu4Mg up to 162.4 K; 300 K scaled from sample 002_EM_Al by 1.92 / 1.13.
+        ("Machined Al", [20.1, 100.1, 162.4, 300.0], [0.0059, 0.0145, 0.0192, 0.0321]),
+    ],
+)
+def test_library_surfaces_give_sourced_emissivities(name, temperature, expected, recwarn):
+    emissivity = load_surface(name).emissivity(np.array(temperature))
+
+    np.testing.assert_allclose(emissivity, expected, atol=1e-4)
+    assert not recwarn.list
+
+
 def test_missing_emissivity_is_reported(tmp_path):
     _write(tmp_path, "test.toml", 'name = "Test Finish"\n')
 
