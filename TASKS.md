@@ -6,13 +6,15 @@ Build the v1 simulator in `docs/DESIGN.md`: the six-plate systems SN09 and FP1 f
 
 DESIGN.md is the specification and `docs/adrs/` holds the decisions behind it. AGENTS.md says how we work. The legacy code at `../pulse_tube_cooldown_simulation`, branch `Advanced_Feature_SIM`, is the reference for physics and data. The manufacturer's record of every shipped head, with its tuning, valve frequency, Münster load map, and test configuration, is `docs/pt_performance_overview_2026-10-30.pdf`; heads are named by serial there (S0009 is SN09's head, S0019 is `data/sn019`). Only the human edits DESIGN; when a discussion settles something, propose the wording.
 
-Pick any unchecked task whose prerequisites are done. Prerequisites are the order within a section and whatever the entry names. Mark a task `[o]` while you have it and `[x]` when it lands. Refer to tasks by number; a new task takes the next free number in its section. Each entry says what the piece is and what finished looks like. How to build and test it is up to you. If work turns up that isn't here, add it.
+Read your own entry, not the whole list. Pick any unchecked task whose prerequisites are done. Prerequisites are the order within a section and whatever the entry names. Mark a task `[o]` while you have it and `[x]` when it lands. Refer to tasks by number; a new task takes the next free number in its section. Each entry says what the piece is and what finished looks like. How to build and test it is up to you. If work turns up that isn't here, add it.
 
 Three kinds of entry:
 
 - **Auto**: enough is settled to build it and hand it back for review.
 - **Discuss**: start by talking it through with the human. A short discussion rolls straight into implementation; a longer one ends in a DESIGN update and the task becomes Auto.
 - **Human**: information only the human can get.
+
+A completed entry stays while its numbered section has unfinished work. When every task in a section is done and its decisions live in ADRs, DESIGN, or self-documenting code, delete the section. Before deleting, update any remaining task that refers to it.
 
 ## Done
 
@@ -216,4 +218,5 @@ Snodgrass, Swift, Ullom, and Backhaus, Cryogenics 132 (2023), `docs/papers/Snodg
 [ ] 7.5 De-slop the comments and documentation across the codebase. Remove "Memento" style comments that record conversations, old decisions, information recorded elsewhere, etc.
 [ ] 7.6 Audit the interfaces and seams between modules. This is cheap to change now, before a v1.0.0 release.
 [ ] 7.7 Extract scientific findings and major model upgrades compared to legacy code. Split into 3 categories: (1) new scientific findings, (2) model architecture changes that directly supported those findings, and (3) model architecture changes that will support future work.
-[ ] 7.8 Improve agent navigation and interaction economy. Make it fast and cheap for agents to edit the repository.
+[o] 7.8 Improve agent navigation and interaction economy. Make it fast and cheap for agents to edit the repository.
+  Done so far: AGENTS rule 1 asks for the task entry, the DESIGN sections it touches, and applicable ADRs; `CONTEXT.md` maps work areas to specification, code, tests, and data; the task lifecycle is in "Reading this list". Remaining: reconcile conflicting sources through 6.5, 7.2, and 7.3, then measure fresh starts (plotting, a heat-transfer link, cooler work) as total context when an agent can begin implementation, split into preloaded and repository reading. Acceptance: under 30k tokens.

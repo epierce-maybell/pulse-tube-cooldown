@@ -3,7 +3,7 @@
 *Your job is to care deeply about the code. Treat design and architecture as fundamental to correctness, not optional polish. Prioritize clarity, simplicity, and maintainability. Make thoughtful decisions, build coherent abstractions, and leave the codebase better than you found it.*
 
 ## Start here
-1. Before writing code or proposing structure, read `docs/DESIGN.md` (the specification), your task's entry in `TASKS.md`, and the relevant ADR in `docs/adrs/`, if one exists for your task. `CONTEXT.md` is orientation only; where it disagrees with those files, they are current.
+1. Before writing code or proposing structure, read your task's entry in `TASKS.md` (the entry, not the whole list), the sections of `docs/DESIGN.md` it touches, and any applicable ADRs in `docs/adrs/`. `CONTEXT.md` maps each work area to its specification, code, tests, and data. Read further when the work crosses into another area or raises a specific question. `CONTEXT.md` is navigation only; where it disagrees with those files, they are current.
 2. When sources disagree: specific ADRs, then DESIGN.md, then the task entry, then the code and its tests. Where all are silent, the code and its tests are the record.
 3. Other sessions are working this checkout at the same time. Claim your task in `TASKS.md` with `[o]` before starting; mark it `[x]` only when it lands. 
 4. One task per session. When it lands, hand off: the next session starts from the repository, not from this chat.

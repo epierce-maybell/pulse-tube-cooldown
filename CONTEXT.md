@@ -1,73 +1,64 @@
 # Pulse-Tube Cooldown Simulator
 
-An orientation to the problem, the physical system, and the repository. Specifications and decisions live in `docs/`. Where this file and those documents disagree, those documents are current.
+Navigation and vocabulary for a newcomer. Specifications and decisions live in `docs/`, and the work list is `TASKS.md`. Where this file disagrees with those, they are current.
 
 ## The problem
 
-A dilution refrigerator (DR) starts a cooldown at room temperature. A pulse-tube cooler carries it from about 300 K to the point where condensing begins and the fridge is more or less operational. How long that takes depends on the fridge: its masses, its materials, and the thermal links between its parts.
+A dilution refrigerator (DR) starts a cooldown at room temperature. A pulse-tube cooler carries it from about 300 K to the point where condensing begins and the fridge is more or less operational. This project predicts how long that takes for a fridge with given specs, along with every part's temperature and heat flows along the way. It is a design tool for R&D, aimed at a per-unit twin of individual fridges, and it should accommodate future DR architectures.
 
-This project predicts that time for a fridge with given specs, along with every part's temperature and heat flows along the way. It is a design tool for R&D, with a longer-term aim of a per-unit twin of individual fridges. It should also accommodate future DR architectures, which may differ substantially from today's.
-
-The project is a ground-up rebuild of an earlier model at `../pulse_tube_cooldown_simulation`, referred to as the brownfield. The brownfield is the reference for physics.
+The project rebuilds an earlier model, `../pulse_tube_cooldown_simulation` (branch `Advanced_Feature_SIM`), called the legacy or brownfield model. It is the reference for physics and data.
 
 ## The physical system
 
-The reference system is a 6-plate fridge: PRP, RGP, CFP, STP, ICP and MXP, plus masses linked to those plates. The room-temperature surroundings are the top flange and the vacuum can. Measured cooldowns of this system are the validation target.
+The reference system is a 6-plate fridge: PRP, RGP, CFP, STP, ICP and MXP, plus masses linked to those plates, inside a vacuum can at room temperature. Validation systems are SN09 (one PT1.1 head) and FP1 (two PT1.5 heads). The cooler removes heat at its first stage, second stage, and regenerator clamp, each with a capacity that depends on temperature. Heat also moves through gas-gap switches, exchange gas, radiation (reduced by multi-layer insulation, MLI), support struts, bolted joints, and heaters.
 
-The pulse-tube cold head removes heat at three points: its first stage, its second stage, and its regenerator clamp. Each capacity depends on the temperatures at those points. The manufacturer load map characterizes the cooler near base temperature only; most of a cooldown happens far from base.
-
-Heat moves between parts of the fridge through:
-
-- gas-gap heat switches,
-- exchange gas, which fills the can early in the cooldown and is pumped out partway through,
-- thermal radiation between plates and shields, reduced by multi-layer insulation (MLI),
-- conduction through support struts,
-- contact resistance at bolted joints, and
-- heaters.
-
-A few features of the physics shape the model:
-
-- The heat capacity of copper is concentrated above about 100 K, so cooler capacity at the warm end sets most of the cooldown time.
-- Thermal timescales vary widely across parts and temperatures, which makes the governing equations stiff.
-- Each system carries up to about six thermometers, in positions that vary between systems. They are the measurements a simulation is compared against.
+Physics lives in `docs/DESIGN.md` and the ADRs, not here.
 
 ## Language
 
-**Component**: A node or a link.
+- **Material**: a named substance with temperature-dependent specific heat and thermal conductivity.
+- **Node**: a thermal mass with a temperature, made of materials, each with a mass. A **boundary node** is held at its initial temperature.
+- **Link**: anything that transfers heat between nodes, several nodes sharing a medium, or sources and sinks at nodes. Given node temperatures, it returns the heat flow into each.
+- **Graph**: the nodes, the links, and which nodes each link touches.
+- **Model**: a graph plus the conditions of a run: initial temperatures, boundary nodes, a stop condition, and solver options.
+- **State**: the quantities the solver integrates, chiefly node temperatures.
+- **Result**: node temperatures and link heat flows over time.
+- **Engine**: the generic numerical layer. It knows components, states, and equations.
+- **DR library**: the physics layer: component types and the data that parameterizes them. It builds on the engine.
+- **Head**: one pulse-tube cold head. A **manifold** is the set of compressors and heads sharing one gas supply.
+- **Stage 1, stage 2, clamp**: the cooler's two cold stages and its regenerator clamp.
+- **Load map**: a cooler's measured stage temperatures against stage heater powers.
 
-**Material**: A named substance with temperature-dependent specific heat and thermal conductivity.
+## Where to work
 
-**Node**: A thermal mass with a temperature, such as a plate or a linked mass. It is made of materials, each with a mass.
+Paths are under `src/pulse_tube_cooldown/` and `tests/` unless noted. DESIGN names are section headings in `docs/DESIGN.md`.
 
-**Boundary node**: A node held at its initial temperature, such as the room-temperature surroundings.
+| Work area | Specification | Implementation | Tests | Data and records |
+|---|---|---|---|---|
+| Types, graph, procedure, model | DESIGN "Data model", "Phases and Procedure" | `core/`, `library/conditions.py` | `core/`, `library/test_conditions.py` | |
+| Engine and solver | DESIGN "Engine" | `engine/` | `engine/` | |
+| Configuration, CLI, output | DESIGN "Public API" | `config.py`, `__main__.py`, `output.py` | `test_config.py`, `test_cli.py`, `test_output.py` | `tests/integration/fixtures/`, `simulations/validation/toy/` |
+| Materials and fits | DESIGN "Dilution refrigerator library" | `library/materials/`, `library/property_fits.py` | `library/test_materials.py`, `test_material_data.py`, `test_property_fits.py` | `library/materials/data/` |
+| Gases, surfaces | DESIGN "Dilution refrigerator library" | `library/gases/`, `library/surfaces/` | `library/test_gases.py`, `test_gas_data.py`, `test_helium.py`, `test_surfaces.py` | `library/gases/data/`, `data/gases/` |
+| Conduction, joints, radiation, MLI | DESIGN "Radiation", "Multi-layer insulation", "Joint-contact resistance" | `library/links/` | `library/test_conduction.py`, `test_joint_contact.py`, `test_radiation.py`, `test_multi_layer_insulation.py` | |
+| Gas-gap switch, exchange gas | DESIGN "Gas-gap heat switch" | `library/links/gas_gap_switch.py` | `library/test_gas_gap_switch.py`, `integration/test_gas_gap_switch_run.py` | TASKS 5.4 to 5.6 |
+| Gas pushing | DESIGN "Gas pushing"; ADR 02 | `library/links/gas_pushing.py` | `library/test_gas_pushing.py` | |
+| Cooler (heads, drive, link) | DESIGN "Coupled capacity maps", "Cooler configuration"; ADR 01 | `library/links/cooler/`, `library/heads/` | `library/test_head.py`, `test_drive.py`, `test_cooler.py`, `test_head_data.py` | `library/heads/data/`, `data/sn09/pulse_tube/`, `data/test_stand.md`, `docs/pt_performance_overview_2026-10-30.pdf` |
+| Cooler fits and cold-head experiments | ADR 01; TASKS section 2 and 6 | `simulations/validation/sn09_load_map/`, `sn09_bare_head/` | `integration/test_sn09_load_map_fit.py`, `test_sn09_bare_head.py` | `data/sn09/pulse_tube/`, `docs/papers/pulse_tube/` |
+| Plots | DESIGN "Public API" | `plot/result.py` (temperature, heat flow), `plot/graph.py` | `plot/` | |
+| Measurements and validation | TASKS section 4; DESIGN "Validation and testing" | `measurements/` | `measurements/` | `data/test_stand.md`, `data/<system>/` (`bom_by_node.csv`, cooldown traces), `docs/papers/` |
 
-**Link**: Anything that transfers heat. A link connects two nodes (a strut, a joint, a switch, radiation), several nodes sharing one medium (exchange gas), or acts as a source or sink at nodes (a heater, the cooler). Given the temperatures of its nodes, it returns the heat flow into each of them.
+A link's physics is in its DESIGN section; its TOML registration lives in `library/links/load.py`.
 
-**Graph**: The topology: the nodes, the links, and which nodes each link touches.
+## Elsewhere in the repository
 
-**Model**: A graph plus the conditions of a run: initial temperatures, boundary nodes, a stop condition and solver options.
-
-**State**: The quantities the solver integrates, chiefly node temperatures.
-
-**Result**: The output of a run: node temperatures and link heat flows over time.
-
-**Engine**: The generic numerical layer. It knows components, states and equations.
-
-**DR library**: The physics layer. It holds the dilution-refrigerator component types, such as plates, the cooler and gas-gap switches, and the data that parameterizes them. It builds on the engine.
-
-## The repository
-
-- `AGENTS.md`: rules for contributing and interacting.
-- `docs/DESIGN.md`: the design specification.
-- `docs/proposals/`: proposals under consideration.
-- `docs/slides/`: an overview presentation of the project.
-- `data/`: measured hardware data (cooldown traces, cooler load maps) and material properties.
-- `src/pulse_tube_cooldown/`: the package.
-- `simulations/`: validation experiments and other runs.
+- `AGENTS.md`: rules for contributing.
+- `docs/adrs/`: numbered decisions. `docs/proposals/`: proposals under consideration. `docs/slides/`: project overview.
+- `simulations/`: targeted experiments and validation runs, each in its own directory.
 
 ## Related resources
 
-- `../pulse_tube_cooldown_simulation`: legacy code with similar physics. The reference version is the `Advanced_Feature_SIM` branch.
-- `../../dev/cold_control`: operational code for the refrigerators.
-- `../../dev/cold_control/python/src/cold_control/routine_framework/diagnostics.py`: diagnostics saved from each run.
+- `../../dev/cold_control`: operational code for the refrigerators. `python/src/cold_control/routine_framework/diagnostics.py` is the diagnostics saved from each run.
 - `../../dev/cc_routines`: routines for the refrigerators.
+- `../../dev/he34pak`: helium properties.
+- `../../data/test_stand/`: test-stand archive.
