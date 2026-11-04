@@ -54,22 +54,22 @@ ensures that requirement 1, above, is satisfied. In plain language: warming stag
 ## Hypothesis
 `Here, I hypothesize that stronger oscillatory flow increases the length scale of heat exchange and the exchange rate between gas and the pulse tube wall; in a particular regime, these losses can grow faster with temperature than useful cooling.`
 
-In a simplified, one-dimensional model, let $x$ increase from the cold end of the tube to the warm end. The gradient $G = \partial T \partial x > 0$. For oscillatory flow, the gas velocity $u(t) = U \, cos(\omega t)$ for velocity amplitude $U$. Let $\theta$ denote some perturbation in temperature from gradient-driven effects only (neglecting the compression-driven temperature repsonse), and then we can write:
+In a simplified, one-dimensional model, let $x$ increase from the cold end of the tube to the warm end. The gradient $G = \partial T / \partial x > 0$. For oscillatory flow, the gas velocity $u(t) = U cos(\omega t)$ for velocity amplitude $U$. Let $\theta$ denote some perturbation in temperature from gradient-driven effects only (neglecting the compression-driven temperature repsonse), and then we can write:
 
 $$
-\frac{\partial \theta}{\partial t} + a\theta = -Gu, 
+\frac{\partial \theta}{\partial t} + \alpha\theta = -Gu,
 $$
 
-for some gas-wall relaxation rate $a$. The average quantities are therefore:
+for some gas-wall relaxation rate $\alpha$. The average quantities are therefore:
 
 $$
-\bar{(u\theta)} = -\frac{aGU^2}{2(a^2 + \omega^2)},
+\bar{(u\theta)} = -\frac{\alpha G U^2}{2(\alpha^2 + \omega^2)},
 $$
 
 and the loss $L$ is:
 
 $$
-L = \frac{A\rho c_p a G U^2}{2(a^2 + \omega^2)},
+L = \frac{A\rho c_p \alpha G U^2}{2(\alpha^2 + \omega^2)},
 $$ 
 
 for cross-sectional area $A$ and helium density $\rho$ and specific heat $c_p$. 
@@ -77,16 +77,16 @@ for cross-sectional area $A$ and helium density $\rho$ and specific heat $c_p$.
 Consider then the log-change in loss:
 
 $$
-\frac{\partial ln(L_1)}{\partial ln(U)} = 2 + n\frac{\omega^2 - a^2}{\omega^2 + a^2}, 
+\frac{\partial ln(L_1)}{\partial ln(U)} = 2 + n\frac{\omega^2 - \alpha^2}{\omega^2 + \alpha^2},
 $$
 
 where we define
 
 $$
-n = \frac{\partial ln(a)}{\partial ln(U)}.
+n = \frac{\partial ln(\alpha)}{\partial ln(U)}.
 $$
 
-This leads to an interesting regime where $a << \omega$. Then:
+This leads to an interesting regime where $\alpha << \omega$. Then:
 
 $$
 \frac{\partial ln(L_1)}{\partial ln(U)} \approx 2 + n,
