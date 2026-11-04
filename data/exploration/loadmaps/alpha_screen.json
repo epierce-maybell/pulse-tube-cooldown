@@ -1,0 +1,290 @@
+﻿{
+  "assumptions": {
+    "radius_m": 0.021,
+    "length_m": 0.181,
+    "frequency_Hz": 1.0,
+    "pressure_Pa": 1600000.0,
+    "cold_K": 50.0,
+    "warm_K": 300.0,
+    "transition_Re_delta": 550.0,
+    "renewal_length_m": 0.042,
+    "reference_cooling_W": 20.0,
+    "turbulent_surrogate": "Nu = 0.023 Re_D^0.8 Pr^0.4 (steady-flow screening only)",
+    "renewal_surrogate": "alpha = 4/R * sqrt(chi*U/(pi*ell)), fixed contact length ell"
+  },
+  "sources": {
+    "geometry": "data/sn09/pulse_tube/geometry.csv; stage-1 inner radius 21 mm and length 181 mm",
+    "frequency_Hz": "data/exploration/loadmaps/valve_settings.csv; S0009 shipped frequency",
+    "pressure_Pa": "Assumed operating mean; screened over 1.2--2.0 MPa absolute",
+    "temperatures": "Assumed linear 50--300 K tube profile; local samples span 40--300 K",
+    "wall_material": "data/sn09/pulse_tube/geometry.csv; assumed stainless grade",
+    "transition_Re_delta": "Wagner and Feldmann, https://arxiv.org/abs/2001.11273; smooth-pipe screening criterion",
+    "renewal_length_diameters": "Assumed contact length of one bore diameter; fixed-length penetration model",
+    "reference_cooling_W": "Representative loaded stage-1 map point; used only for local slope inequality",
+    "velocities_m_s": "Sensitivity sweep; not measured or inferred operating velocities",
+    "pressure_amplitudes_Pa": "0.5 MPa trial; 0.965 MPa is half the assumed 1.93 MPa relief swing in data/compressors.md",
+    "properties": "HEPAK helium properties; repository 304 SS material fits",
+    "turbulent_surrogate": "Dittus-Boelter steady-flow correlation; extrapolations are screening values only, not an oscillatory-flow closure"
+  },
+  "thermal": [
+    {
+      "temperature_K": 40.0,
+      "alpha_over_omega": 0.017742079163642968,
+      "exact_laminar_loss_per_U2_W_s2_m2": 220.59297447766735,
+      "lumped_loss_per_U2_W_s2_m2": 268.4488683706228,
+      "quadrature_relative_difference": 1.709743457922741e-14,
+      "transition_U_m_s": 0.5495878736296294,
+      "transition_xi_over_length": 0.48325760636198584,
+      "gas_layer_to_wall_heat_capacity_ratio": 0.15775230249839015,
+      "wall_delta_m": 0.001779428990463506
+    },
+    {
+      "temperature_K": 50.0,
+      "alpha_over_omega": 0.02122799068796364,
+      "exact_laminar_loss_per_U2_W_s2_m2": 210.31698282304367,
+      "lumped_loss_per_U2_W_s2_m2": 254.23070196272417,
+      "quadrature_relative_difference": 9.992007221626409e-15,
+      "transition_U_m_s": 0.6526378170221917,
+      "transition_xi_over_length": 0.5738703570595897,
+      "gas_layer_to_wall_heat_capacity_ratio": 0.09163847076279104,
+      "wall_delta_m": 0.0015435871674494524
+    },
+    {
+      "temperature_K": 70.0,
+      "alpha_over_omega": 0.027840625932970278,
+      "exact_laminar_loss_per_U2_W_s2_m2": 198.22603042033126,
+      "lumped_loss_per_U2_W_s2_m2": 236.99863442884066,
+      "quadrature_relative_difference": 6.661338147750939e-15,
+      "transition_U_m_s": 0.8473810220143827,
+      "transition_xi_over_length": 0.7451098250599514,
+      "gas_layer_to_wall_heat_capacity_ratio": 0.045991150340599536,
+      "wall_delta_m": 0.00128988096167509
+    },
+    {
+      "temperature_K": 100.0,
+      "alpha_over_omega": 0.03721144797505927,
+      "exact_laminar_loss_per_U2_W_s2_m2": 188.27140790150375,
+      "lumped_loss_per_U2_W_s2_m2": 222.04187857527117,
+      "quadrature_relative_difference": 1.4210854715202004e-14,
+      "transition_U_m_s": 1.1218119486667297,
+      "transition_xi_over_length": 0.9864194301097327,
+      "gas_layer_to_wall_heat_capacity_ratio": 0.02782525240436569,
+      "wall_delta_m": 0.0011541760819439267
+    },
+    {
+      "temperature_K": 200.0,
+      "alpha_over_omega": 0.0659549892334683,
+      "exact_laminar_loss_per_U2_W_s2_m2": 174.14198371763464,
+      "lumped_loss_per_U2_W_s2_m2": 197.76064504844186,
+      "quadrature_relative_difference": 2.9976021664879227e-15,
+      "transition_U_m_s": 1.9511436430568938,
+      "transition_xi_over_length": 1.7156583175405156,
+      "gas_layer_to_wall_heat_capacity_ratio": 0.016443860790738722,
+      "wall_delta_m": 0.0010986462068066562
+    },
+    {
+      "temperature_K": 300.0,
+      "alpha_over_omega": 0.09255925469984043,
+      "exact_laminar_loss_per_U2_W_s2_m2": 167.9637509328927,
+      "lumped_loss_per_U2_W_s2_m2": 184.93934159311345,
+      "quadrature_relative_difference": 1.1102230246251565e-15,
+      "transition_U_m_s": 2.7294603051639132,
+      "transition_xi_over_length": 2.400039223977624,
+      "gas_layer_to_wall_heat_capacity_ratio": 0.013698252101235917,
+      "wall_delta_m": 0.0011390805491142137
+    }
+  ],
+  "closures_at_cold_temperature": [
+    {
+      "U_m_s": 0.05,
+      "Re_delta": 42.13669401732648,
+      "xi_over_length": 0.043965453892788775,
+      "gradient_excursion_over_T": 0.21982726946394385,
+      "exact_laminar_loss_W": 0.5257924570576092,
+      "models": {
+        "laminar_lumped": {
+          "alpha_over_omega": 0.02122799068796364,
+          "loss_W": 0.6355767549068105,
+          "loss_exponent": 2.0,
+          "slope_margin_at_reference_load_W": -40.0
+        },
+        "turbulent_surrogate": {
+          "alpha_over_omega": 0.003922300558958858,
+          "loss_W": 0.1174867705888109,
+          "loss_exponent": 2.7999753852720044,
+          "slope_margin_at_reference_load_W": -39.90601347543385
+        },
+        "fixed_length_renewal": {
+          "alpha_over_omega": 0.014745155889588397,
+          "loss_W": 0.44158034284338377,
+          "loss_exponent": 2.499782627638808,
+          "slope_margin_at_reference_load_W": -39.77930581594009
+        }
+      }
+    },
+    {
+      "U_m_s": 0.1,
+      "Re_delta": 84.27338803465295,
+      "xi_over_length": 0.08793090778557755,
+      "gradient_excursion_over_T": 0.4396545389278877,
+      "exact_laminar_loss_W": 2.103169828230437,
+      "models": {
+        "laminar_lumped": {
+          "alpha_over_omega": 0.02122799068796364,
+          "loss_W": 2.542307019627242,
+          "loss_exponent": 2.0,
+          "slope_margin_at_reference_load_W": -40.0
+        },
+        "turbulent_surrogate": {
+          "alpha_over_omega": 0.006829121922036673,
+          "loss_W": 0.81819982415984,
+          "loss_exponent": 2.7999253844298777,
+          "slope_margin_at_reference_load_W": -39.34550119111848
+        },
+        "fixed_length_renewal": {
+          "alpha_over_omega": 0.02085279943836143,
+          "loss_W": 2.497412770395127,
+          "loss_exponent": 2.499565349758566,
+          "slope_margin_at_reference_load_W": -38.75237911586605
+        }
+      }
+    },
+    {
+      "U_m_s": 0.2,
+      "Re_delta": 168.5467760693059,
+      "xi_over_length": 0.1758618155711551,
+      "gradient_excursion_over_T": 0.8793090778557754,
+      "exact_laminar_loss_W": 8.412679312921748,
+      "models": {
+        "laminar_lumped": {
+          "alpha_over_omega": 0.02122799068796364,
+          "loss_W": 10.169228078508969,
+          "loss_exponent": 2.0,
+          "slope_margin_at_reference_load_W": -40.0
+        },
+        "turbulent_surrogate": {
+          "alpha_over_omega": 0.01189019187209387,
+          "loss_W": 5.697734765658163,
+          "loss_exponent": 2.7997738293148484,
+          "slope_margin_at_reference_load_W": -35.44310084804923
+        },
+        "fixed_length_renewal": {
+          "alpha_over_omega": 0.029490311779176794,
+          "loss_W": 14.121362189461186,
+          "loss_exponent": 2.4991310771946393,
+          "slope_margin_at_reference_load_W": -32.95158927891859
+        }
+      }
+    },
+    {
+      "U_m_s": 0.4,
+      "Re_delta": 337.0935521386118,
+      "xi_over_length": 0.3517236311423102,
+      "gradient_excursion_over_T": 1.7586181557115508,
+      "exact_laminar_loss_W": 33.65071725168699,
+      "models": {
+        "laminar_lumped": {
+          "alpha_over_omega": 0.02122799068796364,
+          "loss_W": 40.676912314035874,
+          "loss_exponent": 2.0,
+          "slope_margin_at_reference_load_W": -40.0
+        },
+        "turbulent_surrogate": {
+          "alpha_over_omega": 0.02070202646390063,
+          "loss_W": 39.669938191896335,
+          "loss_exponent": 2.7993145755155053,
+          "slope_margin_at_reference_load_W": -8.291240193418048
+        },
+        "fixed_length_renewal": {
+          "alpha_over_omega": 0.04170559887672286,
+          "loss_W": 79.81313625581448,
+          "loss_exponent": 2.498263663131981,
+          "slope_margin_at_reference_load_W": -0.23201436312595547
+        }
+      }
+    },
+    {
+      "U_m_s": 0.65,
+      "Re_delta": 547.7770222252442,
+      "xi_over_length": 0.571550900606254,
+      "gradient_excursion_over_T": 2.85775450303127,
+      "exact_laminar_loss_W": 88.85892524273596,
+      "models": {
+        "laminar_lumped": {
+          "alpha_over_omega": 0.02122799068796364,
+          "loss_W": 107.41247157925098,
+          "loss_exponent": 2.0,
+          "slope_margin_at_reference_load_W": -40.0
+        },
+        "turbulent_surrogate": {
+          "alpha_over_omega": 0.030527803084228852,
+          "loss_W": 154.39473387425548,
+          "loss_exponent": 2.7985102735279215,
+          "slope_margin_at_reference_load_W": 83.28578117720238
+        },
+        "fixed_length_renewal": {
+          "alpha_over_omega": 0.0531644156246208,
+          "loss_W": 268.37171692720904,
+          "loss_exponent": 2.497181511243182,
+          "slope_margin_at_reference_load_W": 93.42945579679721
+        }
+      }
+    },
+    {
+      "U_m_s": 1.0,
+      "Re_delta": 842.7338803465295,
+      "xi_over_length": 0.8793090778557755,
+      "gradient_excursion_over_T": 4.396545389278877,
+      "exact_laminar_loss_W": 210.31698282304367,
+      "models": {
+        "laminar_lumped": {
+          "alpha_over_omega": 0.02122799068796364,
+          "loss_W": 254.23070196272417,
+          "loss_exponent": 2.0,
+          "slope_margin_at_reference_load_W": -40.0
+        },
+        "turbulent_surrogate": {
+          "alpha_over_omega": 0.04308884633059733,
+          "loss_W": 515.3165028671857,
+          "loss_exponent": 2.797034867324699,
+          "slope_margin_at_reference_load_W": 370.7252204929753
+        },
+        "fixed_length_renewal": {
+          "alpha_over_omega": 0.06594234181590207,
+          "loss_W": 786.6739091630454,
+          "loss_exponent": 2.4956704342070157,
+          "slope_margin_at_reference_load_W": 349.9309981341772
+        }
+      }
+    }
+  ],
+  "tube_compliance": [
+    {
+      "pressure_amplitude_Pa": 500000.0,
+      "cold_mass_amplitude_kg_s": 0.001564636817514479,
+      "cold_U_m_s": 0.07620683797500145
+    },
+    {
+      "pressure_amplitude_Pa": 965000.0,
+      "cold_mass_amplitude_kg_s": 0.0030197490578029447,
+      "cold_U_m_s": 0.1470791972917528
+    }
+  ],
+  "pressure_sensitivity_at_cold_temperature": [
+    {
+      "pressure_Pa": 1200000.0,
+      "alpha_over_omega": 0.024268218929879848,
+      "transition_U_m_s": 0.7458018442390015
+    },
+    {
+      "pressure_Pa": 1600000.0,
+      "alpha_over_omega": 0.02122799068796364,
+      "transition_U_m_s": 0.6526378170221917
+    },
+    {
+      "pressure_Pa": 2000000.0,
+      "alpha_over_omega": 0.019182307974300806,
+      "transition_U_m_s": 0.5897585301418394
+    }
+  ]
+}
