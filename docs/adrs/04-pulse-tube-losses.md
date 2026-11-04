@@ -25,3 +25,14 @@ a & b \\
 c & d
 \end{bmatrix}.
 $$
+
+If we invert this and look at the determinant, we see that:
+
+$$
+\frac{\partial T_1}{\partial Q_2} \approx -b / (ad).
+$$
+
+To satisfy our observations, we then have the following three conditions:
+1. The partial derivative of $Q_1$ with respect to $T_2$ must be negative: $b < 0$. 
+2. The second partial of $b$ with respect to $T_1$ must be positive: $\frac{\partial b}{\partial T_1} > 0$. 
+3. The partial derivative of $Q_2$ with respect to $T_1$ must be approximately zero: $c \approx 0$.
