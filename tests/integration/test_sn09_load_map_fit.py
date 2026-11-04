@@ -13,7 +13,7 @@ fit = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(fit)
 
 _WARM_TEMPERATURE = 294.2
-# One F-70H, from TASKS 5.4, with 80 g of helium over the head and the stand's 29.6 L of lines and buffers.
+# One F-70H, from data/compressors.md, with 80 g of helium over the head and the stand's 29.6 L of lines and buffers.
 _DRIVE = fit.Drive(charge=0.08, warm_volume=29.6e-3, displacement_rate=(5.72e-3,), relief_swing=(1.93e6,))
 _TRUE = fit.Parameters(
     packing_constant=(1.0, 1.2), conductance=(2.0e-10, 1.0e-11), exchanger_effectiveness=0.3, frequency=1.0

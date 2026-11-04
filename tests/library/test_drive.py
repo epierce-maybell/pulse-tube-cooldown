@@ -13,7 +13,7 @@ _PORE_VOLUME = (np.array([1.0e-4]), np.array([3.0e-5, 2.0e-5]))
 _PULSE_TUBE_VOLUME = (6.0e-5, 2.0e-4)
 _FREQUENCY = 1.2
 
-# One F-70H, from TASKS 5.4: the swept displacement rate and the middle of the relief swing's range.
+# One F-70H, from data/compressors.md: the swept displacement rate and the middle of the relief swing's range.
 _DISPLACEMENT_RATE = 5.72e-3
 _RELIEF_SWING = 1.93e6
 _WARM_TEMPERATURE = 300.0

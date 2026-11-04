@@ -35,8 +35,8 @@ stp_shield_height,930.7,mm,"STEP export of CAD 910-000040, 2026-11-03",
 mxp_shield_width,428.5,mm,"STEP export of CAD 910-000040, 2026-11-03",rear 510-000484; side panel 510-000949; MXP underside 899.6 to bottom 320.9; Cu
 mxp_shield_depth,314.2,mm,"STEP export of CAD 910-000040, 2026-11-03",
 mxp_shield_height,578.7,mm,"STEP export of CAD 910-000040, 2026-11-03",
-switch_gap,0.5,mm,TASKS 5 (supplied),
-switch_facing_area,40,cm^2,TASKS 5 (supplied),legacy model used 46 cm^2 x 0.51 mm
+switch_gap,0.5,mm,data/systems.md (supplied),
+switch_facing_area,40,cm^2,data/systems.md (supplied),legacy model used 46 cm^2 x 0.51 mm
 switch_sealed_gas_volume,3.0,cm^3,"STEP export of CAD 910-000040, 2026-11-03","gap between CORE and OUTER CORE, GAS GAP 2.65 cm^3 (18.4 mm bore over 78.5 mm) plus a 0.31 cm^3 port and the 1.55 mm bore fill tube; charcoal charge 0.197 cm^3 not subtracted"
 switch_core_cross_section,2.01,cm^2,"STEP export of CAD 910-000040, 2026-11-03","CORE, GAS GAP 500-000182: 16.0 mm diameter solid cylinder, 17.69 cm^3 over 89.9 mm"
 switch_core_length,89.9,mm,"STEP export of CAD 910-000040, 2026-11-03",

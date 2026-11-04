@@ -1,6 +1,6 @@
 [meta]
 experiment = "Gas-gap switch integration test"
-source = "Two-node test fixture; switch gap, area, fill, and charcoal from TASKS.md section 5"
+source = "Two-node test fixture; switch gap, area, fill, and charcoal from data/systems.md"
 
 [[fridge.nodes]]
 name = "Plate"

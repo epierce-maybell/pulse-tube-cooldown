@@ -32,10 +32,10 @@ stp_shield_height,539.2,mm,"STEP export of CAD 910-000018, 2026-11-03",
 mxp_shield_width,329.2,mm,"STEP export of CAD 910-000018, 2026-11-03","PANEL, BOTTOM MXP; MXP underside 946.4 to bottom 658.0"
 mxp_shield_depth,385.3,mm,"STEP export of CAD 910-000018, 2026-11-03",
 mxp_shield_height,288.4,mm,"STEP export of CAD 910-000018, 2026-11-03",
-switch_gap,0.5,mm,TASKS 5 (supplied),
-switch_facing_area,40,cm^2,TASKS 5 (supplied),
+switch_gap,0.5,mm,data/systems.md (supplied),
+switch_facing_area,40,cm^2,data/systems.md (supplied),
 switch_sealed_gas_volume,3.0,cm^3,"STEP export of CAD 910-000018, 2026-11-03","same parts as FP1: gap between CORE and OUTER CORE, GAS GAP 2.65 cm^3 plus a 0.31 cm^3 port and the fill tube; charcoal charge 0.197 cm^3 not subtracted"
-switch_count,11,,TASKS 5; BoM 910-000018,"the export superimposes the welded-flag and 6STK/slab builds of the dilution unit, each with its own DHX stack, so CAD and BoM counts of DHX shells and switches are doubled; the welded-flag build is the one installed; the BoM lists the cores as 11 + 1 + 10"
+switch_count,11,,data/systems.md; BoM 910-000018,"the export superimposes the welded-flag and 6STK/slab builds of the dilution unit, each with its own DHX stack, so CAD and BoM counts of DHX shells and switches are doubled; the welded-flag build is the one installed; the BoM lists the cores as 11 + 1 + 10"
 switch_core_cross_section,2.01,cm^2,"STEP export of CAD 910-000018, 2026-11-03","CORE, GAS GAP 500-000182: 16.0 mm diameter solid cylinder over 89.9 mm"
 switch_core_length,89.9,mm,"STEP export of CAD 910-000018, 2026-11-03",
 switch_outer_core_cross_section,2.08,cm^2,"STEP export of CAD 910-000018, 2026-11-03","OUTER CORE, GAS GAP 500-000183: 28.2 mm OD sleeve, 18.95 cm^3 over 91.2 mm"
