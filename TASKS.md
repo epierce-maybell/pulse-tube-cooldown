@@ -23,7 +23,10 @@ A completed entry stays while its numbered section has unfinished work. When eve
   Break the settled ADR into section 2's tasks with the human, using the `discretize` skill.
 
 - [ ] **2.3 Canonical pulse-tube head** · Build, after 2.2
-  SN09's and FP1's head model: the canonical head of DESIGN "Coupled capacity maps", fitted to the test-stand records that `data/systems.md` lists. For SN09 it replaces the S0009-fitted `pt1_1.toml`.
+  SN09's and FP1's head model: the canonical head of DESIGN "Coupled capacity maps", fitted to the load maps that `data/systems.md` lists. For SN09 it replaces the S0009-fitted `pt1_1.toml`.
+
+- [ ] **2.4 Test the canonical pulse-tube head** Build, after 2.3
+  Use the test stand cooldown data to validate the pulse tube model in a controlled setting. 
 
 ## 3. Plots
 

@@ -312,7 +312,7 @@ Conditions and their arguments should be named for the physical event they mark,
 Some decisions are not obvious, but have leverage over the rest of the design.
 
 #### Coupled capacity maps
-We do not have extended load map data during cooldown for our pulse tubes. What we do have is one run per unit, post-tuning, on a test stand for exactly one cooldown curve. The regenerator matrix is a chain of nodes along each column, and the cooler is one link per manifold over the warm flange, those nodes, and the stage nodes. The decision for how to model coupled capacity maps is recorded in `docs/adrs/coupled-capacity-maps.md`. In cases where we do not have test stand data, e.g., for older pulse tube units that pre-date the test stand, we can use a canonical cooler fit to the broader population of load maps. 
+We do not have extended load map data during cooldown for our pulse tubes. What we do have is one run per unit, post-tuning, on a test stand for exactly one cooldown curve. The regenerator matrix is a chain of nodes along each column, and the cooler is one link per manifold over the warm flange, those nodes, and the stage nodes. The decision for how to model coupled capacity maps is recorded in `docs/adrs/03-coupled-capacity-maps.md`. In cases where we do not have test stand data, e.g., for older pulse tube units that pre-date the test stand, we can use a canonical cooler fit to the broader population of load maps. 
 
 #### Cooler configuration
 A cooler link covers one gas manifold: its warm flange, its compressors, and the heads on it. Each head names its two stage nodes, its model, and its per-unit parameter file:
