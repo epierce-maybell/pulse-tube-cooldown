@@ -38,10 +38,17 @@ A completed entry stays while its numbered section has unfinished work. When eve
 
 Each system's records, procedure, and inventory are in `data/systems.md`.
 
-- [ ] **4.1 Measurement comparison conventions** · Discuss
-  For each system: which thermometer maps to which node, the cooldown's time origin, the comparison window, how to treat invalid readings, and how to sample and aggregate the log-temperature residual so the new and legacy models are scored identically.
+- [x] **4.1 Measurement comparison conventions** · Discuss
+  Times are in `data/systems.md`.
+  - Mapping: each plate thermometer maps to the node of the same name, and FP1's top DHX maps to DHX. Scored: SN09's PRP, RGP, CFP, STP, ICP, and DHX; FP1's PRP, RGP, CFP, STP, and DHX. MXP is overlaid, not scored. FP1's CMN is unused.
+  - Time origin: compressor start. Each node starts at its measured temperature there.
+  - Window: from compressor start to the last sample before condensing begins. Validation runs end at the window's length (`max_time`), not at a condensing condition.
+  - Invalid readings: NaN, zero or negative, or within a run of 10 or more identical consecutive samples. They are excluded from the residual and the overlays.
 
-- [ ] **4.2 Measurements and residual** · Build, after 4.1
+- [ ] **4.7 Residual scoring** · Discuss, after 4.1
+  How to sample and aggregate the log-temperature residual over 4.1's window and thermometers, so the new and legacy models are scored identically.
+
+- [ ] **4.2 Measurements and residual** · Build, after 4.7
   Each system's mapped, aligned measurements, and the log-temperature residual over the chosen thermometers.
 
 - [ ] **4.3 Legacy baseline** · Build, after 4.2
