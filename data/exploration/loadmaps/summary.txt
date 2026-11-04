@@ -1,0 +1,85 @@
+Differences between datasets: median |dT| in K (count of pairs)
+  T1 at 0 W, 0 W: 0.057 (4) | 0.031 (2) | 1.629 (11) | 4.213 (12) | 1.459 (35) | 2.511 (45)
+  T2 at 0 W, 0 W: 0.032 (4) | 0.013 (2) | 0.019 (11) | 0.100 (12) | 0.137 (35) | 0.139 (45)
+  T1 at 0 W, 0.5 W: 0.057 (4) | 0.034 (1) | 1.849 (8) | 4.470 (11) | 2.144 (30) | 1.753 (45)
+  T2 at 0 W, 0.5 W: 0.032 (4) | 0.014 (1) | 0.225 (8) | 0.169 (11) | 0.222 (30) | 0.130 (45)
+  T1 at 20 W, 0 W: 0.057 (4) | 0.306 (2) | 2.900 (10) | 7.653 (12) | 2.724 (35) | 3.497 (28)
+  T2 at 20 W, 0 W: 0.032 (4) | 0.007 (2) | 0.050 (10) | 0.117 (12) | 0.178 (35) | 0.119 (28)
+  T1 at 20 W, 0.5 W: 0.057 (4) | 0.098 (1) | 3.171 (7) | 5.798 (11) | 3.033 (30) | 3.108 (28)
+  T2 at 20 W, 0.5 W: 0.032 (4) | 0.001 (1) | 0.219 (7) | 0.152 (11) | 0.175 (30) | 0.090 (28)
+  tiers: repeat within a run | same head and stand, 1 day apart | same head and stand, 8 to 103 days apart | same head, other stand | different heads, Denver | different heads, Münster
+
+Local partials of heater power by cell, median [25th, 75th percentile] in W/K; dq1_dq2 is the change in Q1 at fixed T1 per W on stage 2, in W/W
+  one compressor, dq1_dt1 by T1: 40-45 K: +1.552 [+1.518, +1.591] n=15; 45-50 K: +1.394 [+1.238, +1.523] n=31; 50-55 K: +1.315 [+1.179, +1.379] n=43; 55-60 K: +1.243 [+1.013, +1.303] n=22
+  one compressor, dq1_dt2 by T2: 2.5-3 K: -1.025 [-1.570, -0.552] n=34; 3-3.5 K: -1.177 [-1.539, -0.761] n=36; 3.5-4 K: -1.323 [-1.750, -1.107] n=22; 4-4.5 K: -1.408 [-1.830, -1.219] n=14; 4.5-5 K: -1.447 [-1.895, -1.287] n=9
+  one compressor, dq2_dt1 by T1: 40-45 K: +0.000 [-0.001, +0.002] n=15; 45-50 K: +0.000 [-0.001, +0.003] n=31; 50-55 K: -0.000 [-0.001, +0.002] n=43; 55-60 K: -0.001 [-0.002, +0.001] n=22
+  one compressor, dq2_dt2 by T2: 2.5-3 K: +0.411 [+0.371, +0.454] n=34; 3-3.5 K: +0.460 [+0.417, +0.525] n=36; 3.5-4 K: +0.656 [+0.628, +0.674] n=22; 4-4.5 K: +0.712 [+0.585, +0.902] n=14; 4.5-5 K: +0.958 [+0.935, +0.977] n=9
+  one compressor, dq1_dq2 by T2: 2.5-3 K: -2.329 [-2.946, -1.659] n=34; 3-3.5 K: -2.646 [-3.009, -1.760] n=36; 3.5-4 K: -2.042 [-2.901, -1.779] n=22; 4-4.5 K: -2.037 [-2.362, -1.783] n=14; 4.5-5 K: -1.731 [-1.964, -1.336] n=9
+  two compressors, dq1_dt1 by T1: 40-45 K: +1.745 [+1.622, +1.961] n=10; 45-50 K: +1.544 [+1.436, +1.657] n=12; 50-55 K: +1.570 [+1.341, +1.721] n=7; 55-60 K: +1.118 [+1.112, +1.426] n=5
+  two compressors, dq1_dt2 by T2: 2.5-3 K: -2.124 [-2.873, -1.807] n=9; 3-3.5 K: -3.239 [-3.613, -2.902] n=6; 3.5-4 K: -2.432 [-2.915, -2.074] n=11; 4-4.5 K: -3.046 [-3.556, -2.877] n=9
+  two compressors, dq2_dt1 by T1: 40-45 K: -0.008 [-0.009, -0.005] n=10; 45-50 K: -0.005 [-0.010, -0.002] n=12; 50-55 K: -0.000 [-0.002, +0.002] n=7; 55-60 K: -0.004 [-0.006, -0.003] n=5
+  two compressors, dq2_dt2 by T2: 2.5-3 K: +0.857 [+0.762, +0.938] n=9; 3-3.5 K: +1.036 [+0.974, +1.086] n=6; 3.5-4 K: +1.199 [+1.028, +1.236] n=11; 4-4.5 K: +1.444 [+1.392, +1.449] n=9
+  two compressors, dq1_dq2 by T2: 2.5-3 K: -2.466 [-2.933, -2.278] n=9; 3-3.5 K: -3.144 [-3.690, -2.893] n=6; 3.5-4 K: -2.293 [-2.609, -1.819] n=11; 4-4.5 K: -2.278 [-2.453, -1.993] n=9
+
+Collapse tests: rms and largest residual in W (points, runs)
+  regular 1.5 and HX1, one compressor
+    stage 2: shared quadratic in T2, constant per run: rms 0.059, max 0.182 (206, 22)
+    stage 2: as above, slope per run: rms 0.038, max 0.189 (206, 22)
+    stage 1: shared quadratic in T1, constant per run: rms 1.584, max 5.028 (206, 22)
+    stage 1: as above, slope per run: rms 1.211, max 3.769 (206, 22)
+    stage 1: shared quadratic in T1, shared quadratic in T2, constant per run: rms 1.239, max 3.886 (206, 22)
+    stage 1: as above, slope per run: rms 0.710, max 2.790 (206, 22)
+    stage-2 shared curve: Q2 = 0.240 (T2 - 2 K) + 0.100 (T2 - 2 K)^2 - constant; constants -0.027 to 0.249 W
+  every variant, one compressor
+    stage 2: shared quadratic in T2, constant per run: rms 0.066, max 0.225 (258, 28)
+    stage 2: as above, slope per run: rms 0.041, max 0.187 (258, 28)
+    stage 1: shared quadratic in T1, constant per run: rms 1.717, max 5.495 (258, 28)
+    stage 1: as above, slope per run: rms 1.241, max 3.801 (258, 28)
+    stage 1: shared quadratic in T1, shared quadratic in T2, constant per run: rms 1.373, max 4.695 (258, 28)
+    stage 1: as above, slope per run: rms 0.713, max 2.667 (258, 28)
+    stage-2 shared curve: Q2 = 0.233 (T2 - 2 K) + 0.108 (T2 - 2 K)^2 - constant; constants -0.026 to 0.275 W
+  every variant, two compressors
+    stage 2: shared quadratic in T2, constant per run: rms 0.096, max 0.261 (70, 6)
+    stage 2: as above, slope per run: rms 0.060, max 0.177 (70, 6)
+    stage 1: shared quadratic in T1, constant per run: rms 2.447, max 5.353 (70, 6)
+    stage 1: as above, slope per run: rms 2.121, max 6.018 (70, 6)
+    stage 1: shared quadratic in T1, shared quadratic in T2, constant per run: rms 1.583, max 3.426 (70, 6)
+    stage 1: as above, slope per run: rms 0.874, max 3.712 (70, 6)
+    stage-2 shared curve: Q2 = 0.369 (T2 - 2 K) + 0.211 (T2 - 2 K)^2 - constant; constants 0.161 to 0.361 W
+
+Per-run responses: T1 rise from Q2 = 0 to 0.5 W at Q1 = 0; T1 rise from Q1 = 0 to 20 W at Q2 = 0; T2 rise from Q2 = 0 to 0.5 W at Q1 = 0 (K)
+  S0006 Münster 2025-12-18         IBM                        compressors 2:    nan   10.60     nan
+  S0007 Münster 2026-02-03         regular 1.5                compressors 1:   0.95   18.44    1.41
+  S0008 Münster 2026-01-08         regular 1.5                compressors 1:   1.72   18.54    0.96
+  S0009 Münster 2026-04-22         regular 1.5                compressors 1:   1.62   14.19    1.07
+  S0010 Münster 2026-07-22         regular 1.5                compressors 2:   4.01     nan    0.88
+  S0016 Münster 2026-03-30         IBM                        compressors 1:   1.80   16.82    1.11
+  S0017 Münster 2026-03-24         IBM                        compressors 2:   0.66     nan    0.67
+  S0017 Münster 2026-03-26         IBM                        compressors 2:   0.65     nan    0.69
+  S0018 Münster 2026-03-31         IBM                        compressors 1:   0.97   13.07    1.05
+  S0019 Münster 2026-06-24         regular 1.5                compressors 1:   1.05   16.43    1.11
+  S0022 Münster 2026-06-24         regular 1.5                compressors 1:   4.12   18.11    1.21
+  S0023 Münster 2026-05-21         regular 1.5                compressors 1:   3.14   17.42    1.08
+  S0028 Münster 2026-06-19         regular 1.5                compressors 2:   0.83   11.66    0.65
+  S0034 Münster 2026-07-27         regular 1.5                compressors 1:   3.25   19.46    1.36
+  S0035 Münster 2026-09-03         regular 1.5                compressors 1:   1.06     nan    1.50
+  S0037 Münster 2026-09-25         regular 1.5                compressors 1:   0.63   15.04    1.52
+  S0038 Münster 2026-08-31         regular 1.5                compressors 1:   1.10     nan    1.31
+  S0048 Münster 2026-10-02         regular 1.5 HX1 prototype  compressors 1:   1.58   14.98    1.33
+  S0049 Münster 2026-10-09         regular 1.5 HX1 prototype  compressors 1:   0.79   11.88    1.41
+  S0007 Denver 2026-03-26          regular 1.5                compressors 1:    nan   14.24     nan
+  S0007 Denver 2026-03-27          regular 1.5                compressors 1:   1.22   14.73    1.10
+  S0007 Denver 2026-04-13          regular 1.5                compressors 1:   1.10   13.47    1.33
+  S0007 Denver 2026-04-14          regular 1.5                compressors 1:   1.15   13.56    1.35
+  S0007 Denver 2026-05-27          regular 1.5                compressors 1:   1.07   13.22    1.13
+  S0008 Denver 2026-05-08          regular 1.5                compressors 1:   0.86   13.54    0.84
+  S0009 Denver 2026-05-14          regular 1.5                compressors 1:   1.16   14.98    0.90
+  S0009 Denver 2026-08-25          regular 1.5                compressors None:   1.71   13.27    1.00
+  S0019 Denver 2026-08-07          regular 1.5                compressors 1:   1.04   15.39    1.02
+  S0023 Denver 2026-06-20          regular 1.5                compressors 1:   3.37   17.19    1.03
+  S0028 Denver 2026-07-02          regular 1.5                compressors 2:   0.54   10.10    0.56
+  S0034 Denver 2026-08-12          regular 1.5                compressors 1:   3.79   15.23    1.44
+  SN121 Denver 2026-04-03          unknown                    compressors 1:   2.96   23.29    0.82
+  SN144 Denver 2026-04-23          unknown                    compressors 1:   1.16   18.89    0.89
+  SN144 Denver 2026-05-01          unknown                    compressors 1:   0.94   21.25    0.80
+  unknown Denver 2026-09-21        unknown                    compressors 1:   1.60   13.61    1.39
