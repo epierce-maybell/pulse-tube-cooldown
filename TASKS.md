@@ -22,6 +22,9 @@ A completed entry stays while its numbered section has unfinished work. When eve
 - [ ] **2.2 Cooler tasks** · Discuss, after 2.1
   Break the settled ADR into section 2's tasks with the human, using the `discretize` skill.
 
+- [ ] **2.3 Canonical pulse-tube head** · Build, after 2.2
+  SN09's and FP1's head model: the canonical head of DESIGN "Coupled capacity maps", fitted to the test-stand records that `data/systems.md` lists. For SN09 it replaces the S0009-fitted `pt1_1.toml`.
+
 ## 3. Plots
 
 - [x] **3.1 Heat-flow plot** · Build
@@ -57,8 +60,8 @@ Each system's records, procedure, and inventory are in `data/systems.md`.
 
 - [x] **5.1 Test-stand inventory** · Human
 
-- [ ] **5.2 FP1 pulse-tube records** · Human
-  The test-stand cooldown and load map for each of FP1's two PT1.5 heads, under `data/fp1/pulse_tube/` like SN09's. The overview indexes heads by serial, so the first step is the two serials.
+- [x] **5.2 FP1 pulse-tube records** · Human
+  No per-head records exist; FP1 uses the canonical head (see `data/systems.md`).
 
 - [x] **5.3 SN09 head geometry and regenerator matrix** · Human
 

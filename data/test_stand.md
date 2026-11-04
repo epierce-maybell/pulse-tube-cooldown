@@ -16,6 +16,8 @@ A cooldown file opens with the calibration curve for each channel, T2 through Z1
 
 A load map opens with the valve settings, the valve frequency (`f:1.1`), and the applied powers, then holds one row per steady state: stage-1 and stage-2 heater power in W, elapsed minutes, T1, TPR, T2, `Taux`, and `Taux2`. The operator types in the `f:` field: S0007's header matches its shipped setting, and S0009's and S0034's do not. A head's valve frequency is its shipped setting in `docs/pt_performance_overview_2026-10-30.pdf`, tabulated in `exploration/loadmaps/valve_settings.csv`.
 
+Some load maps exist only as steady plateaus in a continuous log, about 2 h per point: S0035's on 2026-09-25, and S0038's on 2026-10-02, -06, -08, -09, and -12. A continuous log's trailing fields do not hold the heater powers; they read 0 throughout the Sep 21 log, which contains the plateaus of `dataLoadMap Mon Sep 21 16_36_05 2026.dat`. That file's powers are 25, 20, and 0 W on stage 1 against 0.5 and 0 W on stage 2, and its points match S0035's Sep 25 plateaus within 0.2 K, so it is taken as S0035's.
+
 ## Channel behavior
 
 Found across twelve cooldowns of at least six heads, all logged with the same curves.

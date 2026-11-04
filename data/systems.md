@@ -1,6 +1,10 @@
 # Validation-system records
 
-SN09 and FP1 share the six-plate architecture: PRP, RGP, CFP, STP, ICP, and MXP. SN09 has one PT1.1 head, S0009, run on two compressors. FP1 has two PT1.5 heads on the same plates, believed to run each on its own compressor. The run procedures are cold_control's `cooldown` routine for SN09 and `fp_cooldown` for FP1, in `../../dev/cc_routines` relative to the repository.
+SN09 and FP1 share the six-plate architecture: PRP, RGP, CFP, STP, ICP, and MXP. SN09 has one pulse-tube head, run on two compressors. FP1 has two PT1.5 heads on the same plates, run by two compressors as is usual for FP systems. Neither system's head serials are recorded. The run procedures are cold_control's `cooldown` routine for SN09 and `fp_cooldown` for FP1, in `../../dev/cc_routines` relative to the repository.
+
+## Pulse-tube heads
+
+Neither system's heads have test-stand records: FP1's predate the stand, and SN09's serial is unrecorded. Both systems use the canonical head of DESIGN "Coupled capacity maps", fitted to the Denver test-stand records of S0007, S0008, S0009, S0019, S0023, S0028, S0034, S0035, and S0038 (`test_stand.md`). The head-to-head spread among those records is accepted as error. SN09's head was recorded as a PT1.1, but no PT1.1 records exist. `sn09/pulse_tube/` holds S0009's test-stand records.
 
 ## Cooldown records
 
