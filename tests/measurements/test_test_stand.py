@@ -1,4 +1,4 @@
-"""Tests for the readers of pulse-tube test-stand records, against rows of SN09's files."""
+"""Tests for the readers of pulse-tube test-stand records, against rows of S0009's files."""
 
 from pathlib import Path
 
@@ -7,17 +7,17 @@ import pytest
 
 from pulse_tube_cooldown.measurements.test_stand import read_cooldown, read_load_map
 
-_SN09 = Path(__file__).parents[2] / "data" / "sn09" / "pulse_tube"
+_S0009 = Path(__file__).parents[2] / "data/test_stand/s0009"
 
 
 @pytest.fixture(scope="module")
 def cooldown():
-    return read_cooldown(_SN09 / "cooldown_2026-05-14.dat")
+    return read_cooldown(_S0009 / "cooldown_2026-05-14.dat")
 
 
 @pytest.fixture(scope="module")
 def load_map():
-    return read_load_map(_SN09 / "load_map_2026-05-14.dat")
+    return read_load_map(_S0009 / "load_map_2026-05-14.dat")
 
 
 def test_cooldown_holds_every_row(cooldown):

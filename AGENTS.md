@@ -15,18 +15,19 @@
 
 ## Code
 8. An `__init__.py` holds only a docstring and re-exports. Definitions live in named modules, such as `library/materials/load.py`, even where a task or DESIGN names an `__init__.py`.
-9. Values that could change between systems, materials, or runs live in configuration or library data files, with their sources. Values that define a formula live in the code at their point of use. Physical values are SI.
-10. Expose choices callers reasonably need to vary as arguments with useful defaults. Prefer function arguments or local values over module-level constants; introduce a module-level constant only when sharing it across functions serves a concrete purpose. Do not treat a chosen default as an invariant.
-11. Handle an error only when it could reasonably happen, would corrupt something downstream, and needs handling beyond what Python already raises. Parse at the boundary rather than validate throughout, and only where parsing solves a real problem.
-12. Comments and documentation say what is, not what isn't and not why a choice was made. Defensive comments, guards against hypothetical misuse, and explanations aimed at future agents are code smells; assume later agents are as capable as you.
-13. Define every symbol in a way a human can read. There are no standard conventions for physics notation.
-14. Follow the Google style guides for [Python](https://google.github.io/styleguide/pyguide.html) and [documentation](https://google.github.io/styleguide/docguide/best_practices.html).
+9. Keep the directories organized. Caring about the codebase extends to caring about the repository structure. That is the entry-point and logical map for both humans and agents, so it needs to stay organized.
+10. Values that could change between systems, materials, or runs live in configuration or library data files, with their sources. Values that define a formula live in the code at their point of use. Physical values are SI.
+11. Expose choices callers reasonably need to vary as arguments with useful defaults. Prefer function arguments or local values over module-level constants; introduce a module-level constant only when sharing it across functions serves a concrete purpose. Do not treat a chosen default as an invariant.
+12. Handle an error only when it could reasonably happen, would corrupt something downstream, and needs handling beyond what Python already raises. Parse at the boundary rather than validate throughout, and only where parsing solves a real problem.
+13. Comments and documentation say what is, not what isn't and not why a choice was made. Defensive comments, guards against hypothetical misuse, and explanations aimed at future agents are code smells; assume later agents are as capable as you.
+14. Define every symbol in a way a human can read. There are no standard conventions for physics notation.
+15. Follow the Google style guides for [Python](https://google.github.io/styleguide/pyguide.html) and [documentation](https://google.github.io/styleguide/docguide/best_practices.html).
 
 ## Git
-15. Commit only the files you changed in this session. Reviews and commits exclude other sessions' uncommitted work.
-16. Commit messages are short, imperative, and not co-signed.
+16. Commit only the files you changed in this session. Reviews and commits exclude other sessions' uncommitted work.
+17. Commit messages are short, imperative, and not co-signed.
 
 ## Working with the human
-17. Accept ambiguity where a human interacts with the repository; reserve rigor for agent-only surfaces.
-18. Work with what you have. If a problem can be worked without a missing fact, do so and say what you assumed. If a missing fact blocks a foundational assumption, name the blocker.
-19. Don't waste time and tokens verifying results from other sessions, unless you have a specific reason to question their validity.
+18. Accept ambiguity where a human interacts with the repository; reserve rigor for agent-only surfaces.
+19. Work with what you have. If a problem can be worked without a missing fact, do so and say what you assumed. If a missing fact blocks a foundational assumption, name the blocker.
+20. Don't waste time and tokens verifying results from other sessions, unless you have a specific reason to question their validity.

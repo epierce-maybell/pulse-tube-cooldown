@@ -91,6 +91,9 @@ Each system's records, procedure, and inventory are in `data/systems.md`.
 
 - [x] **5.9 FP1 geometry from CAD** · Human
 
+- [x] **5.10 Import the test-stand load-map index** · Build
+  Copy the November 5, 2026 draft index from Downloads to `data/test_stand/load_map_index_2026-11-05.csv`.
+
 ## 7. Repository health (once all other tasks completed)
 
 - [ ] **7.1 Test suite** · Build
@@ -116,3 +119,6 @@ Each system's records, procedure, and inventory are in `data/systems.md`.
 
 - [ ] **7.8 Agent navigation** · Discuss, after 7.2 and 7.3
   Improve agent navigation and interaction economy. Make it fast and cheap for agents to edit the repository. AGENTS rule 1 and `CONTEXT.md` are in place. Remaining: measure the context a fresh agent reads before it can start implementing (plotting, a heat-transfer link, cooler work), split into preloaded and repository reading; target under 30k tokens.
+
+- [x] **7.9 Data directory cleanup** · Build
+  Keep source measurements, reference data, and system inputs in `data/`; put processing tools and exploratory work in their owning directories. Update path consumers and document the layout.

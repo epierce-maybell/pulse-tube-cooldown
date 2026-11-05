@@ -12,7 +12,8 @@ from pathlib import Path
 import numpy as np
 from numpy.typing import NDArray
 
-HERE = Path(__file__).parent
+HERE = Path(__file__).resolve().parent
+DATA = HERE.parents[2] / "data/test_stand"
 
 
 @dataclass(frozen=True, slots=True)
@@ -63,7 +64,7 @@ def read_archive_map(path: Path) -> NDArray[np.float64]:
 
 
 def load_runs(
-    directory: Path = HERE, archive: Path = HERE.parents[4] / "data" / "test_stand" / "loadmap_data"
+    directory: Path = DATA, archive: Path = HERE.parents[4] / "data" / "test_stand" / "loadmap_data"
 ) -> list[Run]:
     """Loads every run in `runs.csv`, plus the S0028 sweep, from the stand archive and `muenster_maps.csv`.
 

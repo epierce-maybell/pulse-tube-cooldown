@@ -4,7 +4,7 @@ What the existing load maps say about how stage heater powers and stage temperat
 
 ## Data
 
-There are 36 datasets from 21 heads, catalogued with provenance in `runs.csv`:
+There are 36 datasets from 21 heads, catalogued with provenance in `data/test_stand/runs.csv` relative to the repository:
 
 - 16 Denver maps, from the stand archive in `../../data/test_stand/loadmap_data/` relative to the repository.
 - 19 Münster maps: S0007's numeric file, plus 18 maps digitized from the figures in `docs/pt_performance_overview_2026-10-30.pdf`.

@@ -15,7 +15,7 @@ import numpy as np
 from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
 from numpy.typing import NDArray
-from runs import Run, load_runs
+from runs import DATA, Run, load_runs
 
 HERE = Path(__file__).parent
 STAND_COLOR = {"Münster": "#eb6834", "Denver": "#2a78d6"}
@@ -636,7 +636,7 @@ def plot_pulse_tube(runs: list[Run]) -> None:
 
 def plot_valve_settings(runs: list[Run]) -> None:
     """Münster map features of regular 1.5 heads against each shipped valve setting."""
-    with open(HERE / "valve_settings.csv", encoding="utf-8") as file:
+    with open(DATA / "valve_settings.csv", encoding="utf-8") as file:
         settings = {row["head"]: row for row in csv.DictReader(file)}
     muenster = [r for r in grids_of(runs) if r.stand == "Münster" and r.variant == "regular 1.5"]
     features: list[tuple[str, Callable[[Run], float]]] = [
@@ -676,9 +676,9 @@ def plot_valve_settings(runs: list[Run]) -> None:
 
 def plot_digitizing_check(runs: list[Run]) -> None:
     """Digitized Münster values against S0007's numeric Münster file and against the overview's key points."""
-    with open(HERE / "muenster_maps.csv", encoding="utf-8") as file:
+    with open(DATA / "muenster_maps.csv", encoding="utf-8") as file:
         digitized = [r for r in csv.DictReader(file) if r["kind"] == "grid"]
-    with open(HERE / "muenster_key_points.csv", encoding="utf-8") as file:
+    with open(DATA / "muenster_key_points.csv", encoding="utf-8") as file:
         keys = {(k["head"], float(k["Q1"]), float(k["Q2"])): k for k in csv.DictReader(file)}
     numeric = next(r for r in runs if r.head == "S0007" and r.stand == "Münster")
     fig, axes = plt.subplots(1, 2, figsize=(13, 4.5))

@@ -5,7 +5,7 @@ import csv
 import re
 from pathlib import Path
 
-DATA = Path(__file__).parent
+DATA = Path(__file__).resolve().parents[2] / "data"
 FILES = {"SN09": DATA / "sn09/bom_910-000018.csv", "FP1": DATA / "fp1/bom_910-000040.csv"}
 OUTDIR = {"SN09": DATA / "sn09", "FP1": DATA / "fp1"}
 GG_PLATE_WEIGHT = {"PRP": 1.0, "RGP": 2.0, "CFP": 2.5, "STP": 2.5, "ICP": 2.0, "MXP": 1.0}

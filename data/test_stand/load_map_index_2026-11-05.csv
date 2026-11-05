@@ -1,0 +1,55 @@
+Serial Number,PT Type,Test Date (start),Load Map Name,Test Stand,MLI,Compressor Filter,Raw Data in Folder,What Differs / Notes
+S0007,PT1.5,02-03-2026,dataLoadMap Tue Feb  3 10_34_16 2026.dat,Münster,Full,[TBD],Yes,Münster run. Serial S0007 is assumed from the rotary valve settings in the header (file names no unit). Münster overview PDF key points are the published values for this unit.
+S0007,PT1.5,03-27-2026,dataLoadMap Fri Mar 27 15_28_52 2026.dat (LoadMap-SN007-03-27-2026-4_Point.dat is a subset of the same map),Denver (Maybell),Full,[TBD],Yes,"First Denver map of S0007. Setup SETUP-01.1, rotary valve RV0005."
+S0007,PT1.5,04-13-2026,LoadMap-SN007-04-13-2026.dat,Denver (Maybell),Full,[TBD],Yes,Repeat after teardown and rebuild of the test setup (SETUP-01.2). Same rotary valve RV0005. Last row is labelled 0 / 0.5 but is the 0 / 0 point.
+S0007,PT1.5,04-14-2026,LoadMap-SN007-04-14-2026.dat,Denver (Maybell),Full,[TBD],Yes,"Repeat of the 04-13 run one day later. No change recorded. The 03-27, 04-13 and 04-14 mean is the S0007 Denver correlation value."
+S0007,PT1.5,05-27-2026,LoadMap-SN007-05-27-26-new_compressor_hoses.dat,Denver (Maybell),[TBD],[TBD],Yes,"Two hardware changes at once: rotary valve RV0005 changed to RV0008, and new compressor hoses fitted. Treated as a hardware change, not a repeat."
+S0007,PT1.5,06-23-2026,dataLoadMap Tue Jun 23 12_59_28 2026.dat,Denver (Maybell),None (removed),Fitted (Sumitomo filter),Yes,"FIRST CONFIRMED NO-MLI TEST. MLI removed and filter fitted at the same time, so the two effects are mixed. Mapped on the day of cooldown."
+S0007,PT1.5,06-24-2026,dataLoadMap Wed Jun 24 11_42_41 2026.dat,Denver (Maybell),None,None (removed),Yes,Filter removed. Only change from 06-23. Unit stayed cold between runs (log has no cooldown).
+S0008,PT1.5,01-08-2026,LoadMap-SN008-01-08-2026.dat,Münster,Full,[TBD],Yes,Münster run. Values match the Münster overview PDF exactly. Münster assignment of this file still to be confirmed.
+S0008,PT1.5,05-08-2026,LoadMap-SN008-05-08-2026.dat,Denver (Maybell),Full,[TBD],Yes,Only Denver run of S0008.
+S0009,PT1.5,[TBD],"Münster PT overview PDF, S0009 key points",Münster,Full,[TBD],No (published values only),"Münster run, 1.0 Hz. Run date not on file."
+S0009,PT1.5,05-14-2026,LoadMap-SN009-05-14-2026.dat (LoadMap-SN009-05-14-26.dat is an identical copy),Denver (Maybell),Full,[TBD],Yes,First Denver run. Ran at 1.0 Hz per Tom (file header reads 1.1 and is wrong).
+S0009,PT1.5,08-24-2026,dataLoadMap Mon Aug 24 17_09_04 2026.dat,Denver (Maybell),Reduced (shield top strip only),[TBD],No (file not in folder),"FIRST CONFIRMED REDUCED-MLI TEST. MLI reduced is the only stated change from 05-14 (same valve settings, 1.0 Hz). First stage ran 2 to 4 K colder than 05-14, cause not explained. First 25 W points on this unit."
+S0009,PT1.5,08-26-2026,dataLoadMap Wed Aug 26 17_08_45 2026.dat,Denver (Maybell),Reduced,[TBD],No (file not in folder),"Re-cooled with the rotary valve at 1.4 Hz, switched to 1.0 Hz near base. Map at 1.0 Hz. A 1.1 Hz cooldown with no load map was run on 08-25 between this and the 08-24 map. T2 0.09 to 0.15 K colder than 08-24 at every point, cause [TBD]."
+S0016,PT1.5,[TBD],"Münster PT overview PDF, S0016 key points",Münster,Full,[TBD],No (published values only),IBM unit. No Denver run.
+S0018,PT1.5,[TBD],"Münster PT overview PDF, S0018 key points",Münster,Full,[TBD],No (published values only),IBM unit. No Denver run.
+S0019,PT1.5,06-24-2026,LoadMap SN019 Munster (comparison image),Münster,Full,[TBD],No (image only),"Münster run, 1.1 Hz, medium inlet line."
+S0019,PT1.5,08-07-2026,LoadMap  SN019  08072026_LoadMap  SN019  Munster_Comparison.png,Denver (Maybell),[TBD],[TBD],No (image only),Denver run. Same rotary valve and inlet line as the Münster run (unit shipped with them). Values only digitized from the image.
+S0022,PT1.5,[TBD],"Münster PT overview PDF, S0022 key points",Münster,Full,[TBD],No (published values only),Shipped 06-30-2026. No Denver run on file.
+S0023,PT1.5,05-21-2026,"Münster PT overview PDF, S0023 key points",Münster,Full,[TBD],No (published values only),Münster run before the internal O-ring repair. Medium inlet line.
+S0023,PT1.5,06-19-2026,dataLoadMap Fri Jun 19 10_52_14 2026.dat,Denver (Maybell),Full,[TBD],Yes,Denver run after the internal O-ring repair.
+S0028,PT1.5,[TBD],"Münster PT overview PDF, S0028 2-compressor key points",Münster,Full,[TBD],No (published values only),2x F-70 compressors. Münster also characterized this unit on 1x F-70.
+S0028,PT1.5,06-19-2026,LoadMap-SN0028-2-Comp-06-19-2026 (comparison PDF only),Denver (Maybell),[TBD],[TBD],No (PDF only),"2x F-70. Date as labelled in the comparison PDF. S0023 was also mapped on the Denver stand 06-19, so confirm this date. Difference from the 07-02 run [TBD]."
+S0028,PT1.5,07-02-2026,LoadMap-SN0028-2-Comp-07-02-2026.dat,Denver (Maybell),Full,[TBD],Yes,2x F-70. Follows the 06-30 cooldown. This is the S0028 correlation run.
+S0034,PT1.5,07-27-2026,"Confluence PTD page, S0034 key points",Münster,Full,[TBD],No (published values only),"Münster run, RV0018, medium inlet line. Run at 1.0 Hz per Tom (page says 0.9)."
+S0034,PT1.5,08-12-2026,Denver run PDF (no .dat on file),Denver (Maybell),None,[TBD],"No (PDF only, values digitized)","Denver run with no MLI, 1.0 Hz. Run PDF carries no serial number."
+S0035,PT1.5,09-03-2026,"Confluence PTD page, S0035 key points",Münster,Full,[TBD],No (published values only),"Münster run, 1x F-70, medium inlet, 1.1 Hz. 0 W and 25 W only."
+S0035,PT1.5,09-18-2026,"Denver 09-18 map (plot in S0035 overlay PDFs, .dat not on file)",Denver (Maybell),[TBD],[TBD],No,"First Denver run, 1.0 Hz. No 20 W column."
+S0035,PT1.5,09-21-2026,"Denver 09-21 map (plot in S0035 overlay PDFs, .dat not on file)",Denver (Maybell),[TBD],[TBD],No,Rotary valve frequency changed from 1.0 to 1.1 Hz. Any other change [TBD].
+S0035,PT1.5,09-25-2026,dataLoadMap Fri Sep 25 13_59_42 2026.dat,Denver (Maybell),[TBD],[TBD],Yes,Compressor hose from a new supplier fitted. Only change from 09-21 per Tom. 25 W column measured first and still settling.
+S0037,PT1.5,09-25-2026,S0037_LoadMap_Muenster_25-09-2026_Confluence-plot.png + Confluence key points,Münster,[TBD],[TBD],No (published values only),"Münster run, RV0022, medium inlet, 1.1 Hz."
+S0037,PT1.5,10-21-2026,dataLoadMap Wed Oct 21 16_23_28 2026.dat,Denver (Maybell),[TBD],None,Yes,"Map 1, no filter. 0 W and 20 W columns."
+S0037,PT1.5,10-22-2026,dataLoadMap Thu Oct 22 08_53_57 2026.dat,Denver (Maybell),[TBD],None,Yes,"25 W column of map 1. Same cold session, no change."
+S0037,PT1.5,10-22-2026,dataLoadMap Thu Oct 22 14_56_32 2026.dat,Denver (Maybell),[TBD],Fitted,Yes,"Map 2. Filter put back on the compressor. Only change from map 1. Compressor stopped about 23 min to fit it, no warm-up. T1 not fully back at base when the map started."
+S0038,PT1.5,08-31-2026,"Confluence PTD page, S0038 key points",Münster,Full,[TBD],No (published values only),"Münster run, 1x F-70, medium inlet, 1.0 Hz."
+S0038,PT1.5,10-02-2026,dataLoadMap Fri Oct  2 16_08_45 2026.dat,Denver (Maybell),[TBD],Fitted,Yes,"Run 1. New elbow fitting and filter both fitted. RV0007, 1.0 Hz."
+S0038,PT1.5,10-06-2026,dataLoadMap Tue Oct  6 13_58_32 2026.dat,Denver (Maybell),[TBD],Fitted,Yes,Run 2. PT cleaned (pump and purge) then retested. Only change from run 1. Ran 1.0 Hz (file reads 1.1).
+S0038,PT1.5,10-08-2026,dataLoadMap Thu Oct  8 09_00_35 2026.dat,Denver (Maybell),[TBD],Fitted,Yes,"Run 3. Elbow removed, filter still fitted."
+S0038,PT1.5,10-09-2026,dataLoadMap Fri Oct  9 16_26_58 2026.dat,Denver (Maybell),[TBD],None (removed),Yes,"Run 4. Filter removed, so standard setup (no elbow, no filter). Re-cooled after a partial warm-up."
+S0038,PT1.5,10-12-2026,dataLoadMap Mon Oct 12 16_59_46 2026.dat,Denver (Maybell),[TBD],None,Yes,"Run 5. Warmed up, cleaned (cold trap, pump and purge), then retested in the standard setup. Map started 2 h after the cooldown drop, before full base."
+SN115,TransMIT PTD-420Q,[TBD],PTD-420Q-SN115_LoadMap_after-repair_1x-F70_20m-DN25.png,German (TransMIT / Münster) [TBD],[TBD],[TBD],No (image only),"After repair. 1x F-70, 20 m DN25 flex lines."
+SN121,"TransMIT, model [TBD]",[TBD],"TransMit PT Data.xlsx, row 121",TransMIT,[TBD],[TBD],No (summary values only),2x F-70.
+SN121,"TransMIT, model [TBD]",04-03-2026,LoadMap-SN121-04-03-2026.dat (same data as dataLoadMap Fri Apr  3 15_55_42 2026.dat),Denver (Maybell),[TBD],[TBD],Yes,1x F-70 on a unit built for 2x. Comparison PDF titles it Thu Apr 2 2026.
+SN121,"TransMIT, model [TBD]",[TBD],SN121 - LoadMap - 2x F70 Compressor (comparison PDF only),Denver (Maybell),[TBD],[TBD],No (PDF only),Compressor count changed from 1x to 2x F-70.
+SN131,"TransMIT, model [TBD]",[TBD],"SN131 TransMIT load map (digitized, in 1.1 PT Load Maps workbook)",TransMIT,[TBD],[TBD],No (image only),2x. No Denver load map. The 04-19 Denver cooldown may be this unit but is not confirmed.
+SN133,TransMIT PTD-420Q,[TBD],PTD-420Q-SN133_LoadMap_after-repair_2x-F70H_20m-DN25.png,German (TransMIT / Münster) [TBD],[TBD],[TBD],No (image only),"After repair. 2x F-70H, 20 m DN25 flex lines."
+SN143,TransMIT PTD-420Q,[TBD],PTD-420Q-SN143_LoadMap_after-return-2026_2x-F70H_20m-DN25.png,German (TransMIT / Münster) [TBD],[TBD],[TBD],No (image only),"After return 2026. 2x F-70H, 20 m DN25 flex lines."
+SN144,TransMIT PTD-420Q,[TBD],"TransMit PT Data.xlsx, row 144",TransMIT,[TBD],[TBD],No (summary values only),2x F-70.
+SN144,TransMIT PTD-420Q,04-23-2026,LoadMap-SN144-04-23-2026.dat,Denver (Maybell),[TBD] see Read Me,[TBD],Yes,1x F-70 on a unit built for 2x. 20 W first-stage inversion still unexplained.
+SN144,TransMIT PTD-420Q,05-01-2026,LoadMap-SN144-05-01-2026.dat,Denver (Maybell),[TBD] see Read Me,[TBD],Yes,MLI state differs from 04-23 (the With vs Without MLI PDF compares these two runs). Records do not agree on which run had MLI.
+SN144,TransMIT PTD-420Q,[TBD],LoadMap - SN144 - 2x Compessor (comparison PDF only),Denver (Maybell),[TBD],[TBD],No (PDF only),Compressor count changed from 1x to 2x F-70.
+SN149,TransMIT PTD-420Q,[TBD],PTD-420Q-SN149_LoadMap_1x-F70H_20m-DN25_Maybell-main-inlet.png,German (TransMIT / Münster) [TBD],[TBD],[TBD],No (image only),"1x F-70H, 20 m DN25 flex lines, Maybell main inlet line."
+SN150,TransMIT PTD-420Q,[TBD],PTD-420Q-SN150_LoadMap_flexline-comparison_DN25-DN20A-DN16.png,German (TransMIT / Münster) [TBD],[TBD],[TBD],No (image only),"Six runs in one image. Flex line DN25 vs DN20A vs DN16, each on 1x and 2x F-70H."
+[TBD],PT1.5,[TBD],DIV1B-Plugged_serial-TBD_LoadMap_Muenster_received-2026-10-22.png,Münster,[TBD],[TBD],No (image only),DIV1B valve fully plugged. Unit to ship to Maybell. Received 10-22-2026.
+[TBD],[TBD],03-26-2026,dataLoadMap3-26-2026.dat,Denver (Maybell),[TBD],[TBD],Yes,Unit not identified. Valve settings in the header match S0007. Partial map only (0 / 0 and 20 / 1.0).

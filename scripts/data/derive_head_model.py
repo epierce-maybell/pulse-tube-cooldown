@@ -6,8 +6,9 @@ from pathlib import Path
 
 from pulse_tube_cooldown.library.materials.load import load_material
 
-GEOMETRY = Path(__file__).with_name("geometry.csv")
-OUTPUT = Path(__file__).parents[3] / "src/pulse_tube_cooldown/library/heads/data/pt1_1.toml"
+ROOT = Path(__file__).resolve().parents[2]
+GEOMETRY = ROOT / "data/sn09/pulse_tube/geometry.csv"
+OUTPUT = ROOT / "src/pulse_tube_cooldown/library/heads/data/pt1_1.toml"
 
 # Each column's tube, and its layers from the warm end as (length fraction, material, porosity, node count).
 COLUMNS = {
@@ -54,7 +55,7 @@ def render(rows, columns=COLUMNS):
     pulse_tube_volumes = ", ".join(f"{bore_volume(rows, tube):.3e}" for tube in PULSE_TUBES)
 
     lines = [
-        "# Written by data/sn09/pulse_tube/derive_head_model.py from geometry.csv.",
+        "# Written by scripts/data/derive_head_model.py from data/sn09/pulse_tube/geometry.csv.",
         f"# Estimates: {', '.join(estimates)}.",
         'name = "PT1.1"',
         f"clamp_fraction = {rows['clamp_fraction_x_R']['value']}",

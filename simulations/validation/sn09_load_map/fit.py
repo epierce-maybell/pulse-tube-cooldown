@@ -44,6 +44,7 @@ from pulse_tube_cooldown.measurements.test_stand import read_cooldown, read_load
 
 HERE = Path(__file__).parent
 SN09 = HERE.parents[2] / "data" / "sn09" / "pulse_tube"
+STAND = HERE.parents[2] / "data/test_stand/s0009"
 WARM_FLANGE, STAGE_1, STAGE_2 = "Warm flange", "Stage 1", "Stage 2"
 
 
@@ -420,8 +421,8 @@ def read_experiment() -> tuple[dict, xr.Dataset, float, Drive]:
     """Reads the May measurements and converts the recorded fill to helium mass."""
     inputs = tomllib.loads((HERE / "inputs.toml").read_text(encoding="utf-8"))
     head = read_head(inputs["head"])
-    load_map = read_load_map(SN09 / inputs["load_map"])
-    warm = float(read_cooldown(SN09 / inputs["cooldown"]).TPR[0])
+    load_map = read_load_map(STAND / inputs["load_map"])
+    warm = float(read_cooldown(STAND / inputs["cooldown"]).TPR[0])
     charge = calc_gas_mass(
         np.full(head.stage_2 + 1, warm), head.pore_volume, head.pulse_tube_volume, inputs["fill_pressure"]
     )
@@ -736,8 +737,8 @@ def write_results(
         Path(__file__),
         HERE / "inputs.toml",
         HERE / inputs["search" if head.cold_exchanger_coupling else "uncoupled_search"]["profile_seed"],
-        SN09 / inputs["load_map"],
-        SN09 / inputs["cooldown"],
+        STAND / inputs["load_map"],
+        STAND / inputs["cooldown"],
         SN09 / "geometry.csv",
     ]
     package = Path(pulse_tube_cooldown.__file__).parent
@@ -748,7 +749,7 @@ def write_results(
         package / "library/gases/helium.py",
         package / "library/property_fits.py",
         package / "library/heads/data/pt1_1.toml",
-        SN09 / "derive_head_model.py",
+        HERE.parents[2] / "scripts/data/derive_head_model.py",
     ]
     source_paths += [
         package / "library/materials/data" / name

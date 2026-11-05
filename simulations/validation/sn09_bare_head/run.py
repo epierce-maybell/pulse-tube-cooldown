@@ -30,7 +30,7 @@ from pulse_tube_cooldown.measurements.test_stand import read_cooldown, read_load
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[2]
-DATA = ROOT / "data/sn09/pulse_tube"
+DATA = ROOT / "data/test_stand/s0009"
 
 
 def read_inputs() -> dict:

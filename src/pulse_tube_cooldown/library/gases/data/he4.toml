@@ -6,7 +6,7 @@ molar_mass = 4.002602e-3
 # Ideal monatomic gas; NIST WebBook gives Cp/Cv = 1.6667-1.6673 at 0.001 MPa from 10 to 300 K.
 heat_capacity_ratio = 1.6666666666666667
 
-# Langmuir fit by data/gases/derive_he4_adsorption.py to Martins et al., Sensors and Actuators A 171, 324 (2011),
+# Langmuir fit by scripts/data/derive_he4_adsorption.py to Martins et al., Sensors and Actuators A 171, 324 (2011),
 # carbon B (granular coconut shell), with capacity at their highest measured amount.
 adsorption_energy = 2188.0
 adsorption_constant = 8.11e-9

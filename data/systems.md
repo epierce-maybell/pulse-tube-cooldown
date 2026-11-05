@@ -4,12 +4,12 @@ SN09 and FP1 share the six-plate architecture: PRP, RGP, CFP, STP, ICP, and MXP.
 
 ## Pulse-tube heads
 
-Neither system's heads have test-stand records: FP1's predate the stand, and SN09's serial is unrecorded. Both systems use the canonical head of DESIGN "Coupled capacity maps", fitted to the Denver test-stand records of S0007, S0008, S0009, S0019, S0023, S0028, S0034, S0035, and S0038 (`test_stand.md`). The head-to-head spread among those records is accepted as error. SN09's head was recorded as a PT1.1, but no PT1.1 records exist. `sn09/pulse_tube/` holds S0009's test-stand records.
+Neither system's heads have test-stand records: FP1's predate the stand, and SN09's serial is unrecorded. Both systems use the canonical head of DESIGN "Coupled capacity maps", fitted to the Denver test-stand records of S0007, S0008, S0009, S0019, S0023, S0028, S0034, S0035, and S0038 (`test_stand.md`). The head-to-head spread among those records is accepted as error. SN09's head was recorded as a PT1.1, but no PT1.1 records exist. `test_stand/s0009/` holds S0009's test-stand records; `sn09/pulse_tube/geometry.csv` holds SN09's CAD-derived head geometry.
 
 ## Cooldown records
 
 - **SN09**: `sn09/cooldown_2026-06-04.dat`, 2026-06-04 00:01 to 2026-06-06 23:00 UTC at 60 s. Channels PRP, RGP, CFP, STP, ICP, MXP, and DHX. The compressors start at 00:21 UTC, the last sample before CFP and PRP begin to fall. Condensing begins at 2026-06-06 14:15 UTC, 61.9 h after compressor start, when STP steps down by about 2 K and ICP and DHX follow; MXP reads 14.5 K. RGP reads a constant 294.94 K until 00:29 UTC.
-- **FP1**: `fp1/cooldown_2026-10-29.dat`, 2026-10-29 16:15 to 2026-11-01 06:00 UTC at 60 s, derived by `fp1/derive_cooldown.py` as 60 s means of the InfluxDB export `FP1-10-29.csv` (the `thermometer` measurement's `temperature` field at 1 s). Channels PRP, RGP, CFP, STP, MXP, top DHX, and CMN. FP1 has no ICP thermometer. The compressors start at 16:31 UTC, the last sample before PRP and CFP begin to fall. Condensing begins at 2026-10-31 10:42 UTC, 42.2 h after compressor start, when STP steps down by about 2 K; the MXP channel reads 16.1 K. For this run the MXP channel reads a sensor on the DHX. It logs only from 2026-10-31 04:39 UTC (44.9 K). CMN is a sub-kelvin thermometer, below 0.1 K throughout, with occasional -2.0 sentinels.
+- **FP1**: `fp1/cooldown_2026-10-29.dat`, 2026-10-29 16:15 to 2026-11-01 06:00 UTC at 60 s, derived by `scripts/data/derive_fp1_cooldown.py` (from the repository root) as 60 s means of the InfluxDB export `FP1-10-29.csv` (the `thermometer` measurement's `temperature` field at 1 s). Channels PRP, RGP, CFP, STP, MXP, top DHX, and CMN. FP1 has no ICP thermometer. The compressors start at 16:31 UTC, the last sample before PRP and CFP begin to fall. Condensing begins at 2026-10-31 10:42 UTC, 42.2 h after compressor start, when STP steps down by about 2 K; the MXP channel reads 16.1 K. For this run the MXP channel reads a sensor on the DHX. It logs only from 2026-10-31 04:39 UTC (44.9 K). CMN is a sub-kelvin thermometer, below 0.1 K throughout, with occasional -2.0 sentinels.
 
 Both routines begin condensing once their MXP channel falls below 14 K (`exit_temperature` in the `gas_pushing` subroutine). Compressor start and the onset of condensing are read from the traces above.
 
@@ -17,7 +17,7 @@ The routine logs, `monitor_ovc` P1 diagnostics, and P2 and P3 pressure traces fo
 
 ## Inventories and geometry
 
-`<system>/bom_by_node.csv` gives node masses by material. `<system>/geometry.csv` is read from STEP exports of the CAD assemblies by `step_geometry.py` (`uv run --with cadquery`), one row per value with its source. Supports are the legacy model's values.
+`<system>/bom_by_node.csv` gives node masses by material. `<system>/geometry.csv` is read from STEP exports of the CAD assemblies by `scripts/data/step_geometry.py` (`uv run --with cadquery`, from the repository root), one row per value with its source. Supports are the legacy model's values.
 
 ## Gas-gap switches
 

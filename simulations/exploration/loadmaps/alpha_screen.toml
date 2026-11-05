@@ -13,7 +13,7 @@ mean_pressures_Pa = [1.2e6, 1.6e6, 2.0e6]
 
 [sources]
 geometry = "data/sn09/pulse_tube/geometry.csv; stage-1 inner radius 21 mm and length 181 mm"
-frequency_Hz = "data/exploration/loadmaps/valve_settings.csv; S0009 shipped frequency"
+frequency_Hz = "data/test_stand/valve_settings.csv; S0009 shipped frequency"
 pressure_Pa = "Assumed operating mean; screened over 1.2--2.0 MPa absolute"
 temperatures = "Assumed linear 50--300 K tube profile; local samples span 40--300 K"
 wall_material = "data/sn09/pulse_tube/geometry.csv; assumed stainless grade"

@@ -43,8 +43,8 @@ Paths are under `src/pulse_tube_cooldown/` and `tests/` unless noted. DESIGN nam
 | Conduction, joints, radiation, MLI | DESIGN "Radiation", "Multi-layer insulation", "Joint-contact resistance" | `library/links/` | `library/test_conduction.py`, `test_joint_contact.py`, `test_radiation.py`, `test_multi_layer_insulation.py` | |
 | Gas-gap switch, exchange gas | DESIGN "Gas-gap heat switch", "Exchange gas" | `library/links/gas_gap_switch.py`, `exchange_gas.py` | `library/test_gas_gap_switch.py`, `test_exchange_gas.py`, `integration/test_gas_gap_switch_run.py` | `data/systems.md`, `data/gases/` |
 | Gas pushing | DESIGN "Gas pushing"; ADR 02 | `library/links/gas_pushing.py` | `library/test_gas_pushing.py` | |
-| Cooler (heads, drive, link) | DESIGN "Coupled capacity maps", "Cooler configuration"; ADR 03 | `library/links/cooler/`, `library/heads/` | `library/test_head.py`, `test_drive.py`, `test_cooler.py`, `test_head_data.py` | `library/heads/data/`, `data/sn09/pulse_tube/`, `data/test_stand.md`, `data/compressors.md`, `docs/pt_performance_overview_2026-10-30.pdf` |
-| Cooler fits and cold-head experiments | ADR 03; TASKS section 2 | `simulations/validation/sn09_load_map/`, `sn09_bare_head/` | `integration/test_sn09_load_map_fit.py`, `test_sn09_bare_head.py` | `data/sn09/pulse_tube/`, `docs/papers/pulse_tube/` |
+| Cooler (heads, drive, link) | DESIGN "Coupled capacity maps", "Cooler configuration"; ADR 03 | `library/links/cooler/`, `library/heads/` | `library/test_head.py`, `test_drive.py`, `test_cooler.py`, `test_head_data.py` | `library/heads/data/`, `data/sn09/pulse_tube/geometry.csv`, `data/test_stand/`, `data/test_stand.md`, `data/compressors.md`, `docs/pt_performance_overview_2026-10-30.pdf` |
+| Cooler fits and cold-head experiments | ADR 03; TASKS section 2 | `simulations/validation/sn09_load_map/`, `sn09_bare_head/`, `simulations/exploration/loadmaps/` | `integration/test_sn09_load_map_fit.py`, `test_sn09_bare_head.py` | `data/test_stand/`, `data/sn09/pulse_tube/geometry.csv`, `docs/papers/pulse_tube/` |
 | Plots | DESIGN "Public API" | `plot/result.py` (temperature, heat flow), `plot/graph.py` | `plot/` | |
 | Measurements and validation | TASKS section 4; DESIGN "Configuration files" | `measurements/` (test-stand records), `simulations/validation/measurements.py` (cooldowns and residual) | `measurements/`, `simulations/validation/test_measurements.py` | `data/systems.md`, `data/test_stand.md`, `data/<system>/` (`fridge.toml` template, `bom_by_node.csv`, cooldown trace and its `cooldown.toml`), `docs/papers/` |
 
@@ -55,6 +55,7 @@ A link's physics is in its DESIGN section; its TOML registration lives in `libra
 - `AGENTS.md`: rules for contributing.
 - `docs/adrs/`: numbered decisions. `docs/proposals/`: proposals under consideration. `docs/slides/`: project overview.
 - `simulations/`: targeted experiments and validation runs, each in its own directory.
+- `data/README.md`: measurement and reference-data layout. `scripts/data/`: preparation tools. `docs/diagrams/`: supplied system diagrams.
 
 ## Related resources
 

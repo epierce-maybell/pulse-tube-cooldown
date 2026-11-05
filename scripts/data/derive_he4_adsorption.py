@@ -14,7 +14,8 @@ from scipy.constants import R
 
 def main() -> None:
     """Prints adsorption_energy in J/mol, adsorption_constant in 1/Pa, and adsorption_capacity in mol/kg."""
-    data = tomllib.loads(Path(__file__).with_name("martins2011.toml").read_text(encoding="utf-8"))
+    source = Path(__file__).resolve().parents[2] / "data/gases/martins2011.toml"
+    data = tomllib.loads(source.read_text(encoding="utf-8"))
     mmol_per_cm3 = data["amount_pressure"] / (R * data["amount_temperature"]) * 1e-3
 
     volume_per_gram, log_pressure = np.meshgrid(

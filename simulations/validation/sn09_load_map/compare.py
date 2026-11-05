@@ -119,7 +119,7 @@ def main():
         "remain more mesh-sensitive; finer-grid branch selection remains a limitation.",
         "",
         "Reproduce from the repository root:",
-        "  .venv/Scripts/python data/sn09/pulse_tube/derive_head_model.py",
+        "  .venv/Scripts/python scripts/data/derive_head_model.py",
         "  .venv/Scripts/python simulations/validation/sn09_load_map/fit.py",
         "  .venv/Scripts/python simulations/validation/sn09_load_map/fit.py --uncoupled",
         "  .venv/Scripts/python simulations/validation/sn09_load_map/diagnose.py",

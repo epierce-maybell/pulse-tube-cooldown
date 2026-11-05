@@ -5,8 +5,8 @@ query window. The record is in the form of `data/sn09/cooldown_2026-06-04.dat`: 
 rows of `_time` in POSIX seconds on each whole minute of the window, followed by one `<device>_temperature`
 column per logged device holding that minute's mean reading in K. A minute without samples for a device is NaN.
 
-Usage: `python derive_cooldown.py <export.csv> [<output.dat>]`. The output defaults to `cooldown_<date>.dat`
-beside this script, dated by the first sample's UTC day.
+Usage: `uv run --with pandas python scripts/data/derive_fp1_cooldown.py <export.csv> [<output.dat>]`.
+The output defaults to `data/fp1/cooldown_<date>.dat`, dated by the first sample's UTC day.
 """
 
 import sys
@@ -53,7 +53,9 @@ def main(argv):
     export = Path(argv[1])
     means = bin_means(read_export(export))
     date = means.index[0].strftime("%Y-%m-%d")
-    output = Path(argv[2]) if len(argv) > 2 else Path(__file__).with_name(f"cooldown_{date}.dat")
+    output = (
+        Path(argv[2]) if len(argv) > 2 else Path(__file__).resolve().parents[2] / "data/fp1" / f"cooldown_{date}.dat"
+    )
     write_record(means, output)
     print(f"{output}: {len(means)} minutes, {means.index[0]} to {means.index[-1]}, columns {list(means.columns)}")
 

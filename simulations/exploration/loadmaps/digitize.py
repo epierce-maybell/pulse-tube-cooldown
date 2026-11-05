@@ -19,6 +19,7 @@ from numpy.typing import NDArray
 from scipy import ndimage
 
 HERE = Path(__file__).parent
+DATA = HERE.resolve().parents[2] / "data/test_stand"
 
 
 @dataclass(frozen=True, slots=True)
@@ -219,7 +220,7 @@ def main() -> None:
                     "inferred_levels": bool(figure.get("inferred")),
                 }
             )
-    with open(HERE / "muenster_maps.csv", "w", newline="", encoding="utf-8") as file:
+    with open(DATA / "muenster_maps.csv", "w", newline="", encoding="utf-8") as file:
         writer = csv.DictWriter(file, fieldnames=list(rows[0]))
         writer.writeheader()
         writer.writerows(rows)
