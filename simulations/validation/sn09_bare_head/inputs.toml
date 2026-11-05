@@ -1,6 +1,6 @@
 head = "PT1.1"
 parameters = "parameters.toml"
-geometry = "data/sn09/pulse_tube/geometry.csv"
+geometry = "data/heads/pt1_1/geometry.csv"
 fill_pressure = 1.811325e6  # Pa absolute; 17.1 bar gauge plus atmosphere
 warm_volume = 2.9635e-2     # m^3; two 20 m DN25 lines and two 5 L buffers
 displacement_rate = 5.72e-3 # m^3/s per compressor

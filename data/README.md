@@ -8,7 +8,7 @@ under `simulations/`. Published documents and diagrams live under `docs/`.
 | Location | Contents |
 |---|---|
 | `sn09/`, `fp1/` | Refrigerator cooldown records and comparison conventions, BoM exports and node assignments, geometry, and fridge configuration templates. |
-| `sn09/pulse_tube/geometry.csv` | Pulse-tube geometry from SN09's CAD assembly and its stated estimates. |
+| `heads/pt1_1/geometry.csv`, `heads/pt1_5/geometry.csv` | Pulse-tube head geometry by model, from CAD and stated estimates. PT1.5 records what its CAD shows; its other quantities, including the matrix filling, are PT1.1's. |
 | `test_stand/s0009/`, `test_stand/s0019/` | Measured cooldowns and load maps, grouped by cold-head serial. |
 | `test_stand/load_map_index_2026-11-05.csv` | Supplied November 5, 2026 draft index of load-map tests and setup changes. |
 | `test_stand/runs.csv` | Catalog of the datasets used in the load-map characterization, with provenance and assumptions. |

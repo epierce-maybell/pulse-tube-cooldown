@@ -1,13 +1,12 @@
-"""Requirements for a manifold link and its single-source head description."""
+"""Requirements for a manifold link."""
 
 from dataclasses import replace
 
 import numpy as np
 import pytest
 
-from pulse_tube_cooldown.core.errors import ConfigurationError
 from pulse_tube_cooldown.core.types import Graph, Material, Node
-from pulse_tube_cooldown.engine.equations import calc_heat_capacity, calc_net_heat_flow
+from pulse_tube_cooldown.engine.equations import calc_net_heat_flow
 from pulse_tube_cooldown.library.gases import helium
 from pulse_tube_cooldown.library.links.cooler import (
     Compressor,
@@ -15,150 +14,7 @@ from pulse_tube_cooldown.library.links.cooler import (
     PulseTubeHead,
     RegeneratorLayer,
     calc_charge,
-    load_pulse_tube_head,
 )
-
-
-@pytest.fixture
-def parameters(tmp_path):
-    path = tmp_path / "parameters.toml"
-    path.write_text(
-        "packing_constants = [0.8, 1.3]\nconductances = [1e-10, 2e-12]\n"
-        "exchanger_effectiveness = 0.3\nfrequency = 1.0\n"
-        '[sources]\npacking_constants = "synthetic"\nconductances = "synthetic"\n'
-        'exchanger_effectiveness = "synthetic"\nfrequency = "synthetic"\n',
-        encoding="utf-8",
-    )
-    return path
-
-
-def test_model_builds_matrix_nodes_and_clamp_from_one_description(parameters):
-    head = load_pulse_tube_head(name="PT", stages=("PRP", "CFP"), model="PT1.1", parameters=parameters)
-
-    assert head.name == "PT"
-    assert head.stages == ("PRP", "CFP")
-    assert [node.name for node in head.matrix_nodes] == [
-        "PT stage 1 304 SS",
-        "PT stage 1 Pb",
-        "PT stage 2 Pb",
-        "PT stage 2 Er3Ni",
-        "PT stage 2 HoCu2",
-        *(f"PT stage 2 Gd2O2S {index}" for index in range(1, 9)),
-    ]
-    assert head.clamp_node == "PT stage 2 HoCu2"
-    assert head.pulse_tube_volumes == (2.508e-4, 2.009e-4)
-    assert head.packing_constants == (0.8, 1.3)
-    assert head.conductances == (1e-10, 2e-12)
-    assert head.exchanger_effectiveness == 0.3
-    assert head.frequency == 1.0
-    assert head.matrix_nodes[0] is head.columns[0][0].node
-    assert head.matrix_nodes[0].composition[0][1] == 0.9764
-    np.testing.assert_allclose(head.pore_volume[0], [2.848e-4, 6.012e-5])
-    temperature = np.r_[300.0, 250.0, 100.0, 50.0, 35.0, 20.0, 10.0, np.linspace(5.0, 4.1, 8), 4.0]
-    capacities = head.calc_heat_capacity(temperature)
-    np.testing.assert_allclose(
-        np.concatenate(capacities), calc_heat_capacity(head.matrix_nodes, np.r_[temperature[1:3], temperature[4:-1]])
-    )
-
-
-def test_fill_pressure_becomes_total_manifold_charge(parameters):
-    first = load_pulse_tube_head(name="A", stages=("A1", "A2"), model="PT1.1", parameters=parameters)
-    second = replace(first, name="B", pulse_tube_volumes=(1e-4, 3e-4))
-    # HEPAK density at 293.15 K and 1.7 MPa: 2.7696416 kg/m^3.
-    total_volume = 0.03 + 2 * (344.92e-6 + 74.75e-6) + 2.508e-4 + 2.009e-4 + 4e-4
-    assert calc_charge((first, second), 1.7e6, 293.15, 0.03) == pytest.approx(2.7696416 * total_volume, rel=1e-6)
-
-
-def test_model_layer_indices_order_and_optional_name(tmp_path, parameters):
-    directory = tmp_path / "heads"
-    directory.mkdir()
-    (directory / "model.toml").write_text(
-        'name = "Example"\nclamp_fraction = 0.6\npulse_tube_volumes = [1e-4, 2e-4]\n'
-        '[[stage_1_column]]\nindex = 1\nmaterial = "Pb"\nmass = 2.0\npore_volume = 2e-5\nlength_fraction = 0.4\n'
-        '[[stage_1_column]]\nindex = 0\nmaterial = "304 SS"\nmass = 1.0\npore_volume = 1e-5\nlength_fraction = 0.6\n'
-        '[[stage_2_column]]\nindex = 0\nname = "Clamp"\nmaterial = "Pb"\nmass = 3.0\n'
-        "pore_volume = 3e-5\nlength_fraction = 1.0\n",
-        encoding="utf-8",
-    )
-    head = load_pulse_tube_head(
-        name="PT", stages=("S1", "S2"), model="Example", parameters=parameters, directory=directory
-    )
-    assert [node.name for node in head.matrix_nodes] == ["PT stage 1 304 SS", "PT stage 1 Pb", "Clamp"]
-    assert head.clamp_node == "Clamp"
-
-
-def test_repeated_layer_materials_are_numbered_from_warm_end(tmp_path, parameters):
-    directory = tmp_path / "heads"
-    directory.mkdir()
-    layer = 'material = "{}"\nmass = 1.0\npore_volume = 1e-5\nlength_fraction = {}\n'
-    (directory / "split.toml").write_text(
-        'name = "Split"\nclamp_fraction = 0.3\npulse_tube_volumes = [1e-4, 2e-4]\n'
-        + "[[stage_1_column]]\nindex = 0\n"
-        + layer.format("304 SS", 1.0)
-        + "[[stage_2_column]]\nindex = 2\n"
-        + layer.format("Gd2O2S", 0.25)
-        + "[[stage_2_column]]\nindex = 0\n"
-        + layer.format("Pb", 0.5)
-        + "[[stage_2_column]]\nindex = 1\n"
-        + layer.format("Gd2O2S", 0.25),
-        encoding="utf-8",
-    )
-    head = load_pulse_tube_head(
-        name="PT", stages=("S1", "S2"), model="Split", parameters=parameters, directory=directory
-    )
-    assert [node.name for node in head.matrix_nodes] == [
-        "PT stage 1 304 SS",
-        "PT stage 2 Pb",
-        "PT stage 2 Gd2O2S 1",
-        "PT stage 2 Gd2O2S 2",
-    ]
-
-
-@pytest.mark.parametrize("layer_name", [None, "Cold matrix"])
-def test_layer_node_count_conserves_totals_and_locates_clamp(tmp_path, parameters, layer_name):
-    directory = tmp_path / "heads"
-    directory.mkdir()
-    naming = f'name = "{layer_name}"\n' if layer_name else ""
-    (directory / "split.toml").write_text(
-        'name = "Split"\nclamp_fraction = 0.7\npulse_tube_volumes = [1e-4, 2e-4]\n'
-        '[[stage_1_column]]\nindex = 0\nmaterial = "304 SS"\nmass = 1.0\n'
-        "pore_volume = 1e-5\nlength_fraction = 1.0\n"
-        '[[stage_2_column]]\nindex = 0\nmaterial = "Pb"\nmass = 1.0\n'
-        "pore_volume = 1e-5\nlength_fraction = 0.4\n"
-        '[[stage_2_column]]\nindex = 1\nmaterial = "Gd2O2S"\nmass = 6.0\n'
-        "pore_volume = 6e-5\nlength_fraction = 0.6\nnode_count = 3\n" + naming,
-        encoding="utf-8",
-    )
-    head = load_pulse_tube_head(
-        name="PT", stages=("S1", "S2"), model="Split", parameters=parameters, directory=directory
-    )
-    prefix = layer_name or "PT stage 2 Gd2O2S"
-    assert [layer.node.name for layer in head.columns[1]] == ["PT stage 2 Pb", *[f"{prefix} {i}" for i in (1, 2, 3)]]
-    assert head.clamp_node == f"{prefix} 2"
-    np.testing.assert_allclose([layer.node.composition[0][1] for layer in head.columns[1]], [1.0, 2.0, 2.0, 2.0])
-    np.testing.assert_allclose(head.pore_volume[1], [1e-5, 2e-5, 2e-5, 2e-5])
-    np.testing.assert_allclose([layer.length_fraction for layer in head.columns[1]], [0.4, 0.2, 0.2, 0.2])
-
-
-@pytest.mark.parametrize(
-    "field, value", [("index", "2"), ("length_fraction", "0.5"), ("node_count", "0"), ("node_count", "1.5")]
-)
-def test_invalid_column_description_is_rejected(tmp_path, parameters, field, value):
-    directory = tmp_path / "heads"
-    directory.mkdir()
-    layer = 'index = 0\nmaterial = "Pb"\nmass = 1.0\npore_volume = 1e-5\nlength_fraction = 1.0\nnode_count = 1\n'
-    (directory / "bad.toml").write_text(
-        'name = "Bad"\nclamp_fraction = 0.5\npulse_tube_volumes = [1e-4, 2e-4]\n'
-        + "[[stage_1_column]]\n"
-        + layer.replace(
-            f"{field} = " + {"index": "0", "length_fraction": "1.0", "node_count": "1"}[field], f"{field} = {value}"
-        )
-        + "[[stage_2_column]]\n"
-        + layer,
-        encoding="utf-8",
-    )
-    with pytest.raises(ConfigurationError, match="stage_1_column"):
-        load_pulse_tube_head(name="PT", stages=("S1", "S2"), model="Bad", parameters=parameters, directory=directory)
 
 
 @pytest.fixture

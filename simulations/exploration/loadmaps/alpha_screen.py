@@ -42,7 +42,7 @@ def main():
     """Print geometry, pressure sensitivity, local closure and flow screens."""
     root = Path(__file__).resolve().parents[3]
     inputs = tomllib.loads(Path(__file__).with_suffix(".toml").read_text())
-    with (root / "data/sn09/pulse_tube/geometry.csv").open(newline="") as stream:
+    with (root / "data/heads/pt1_1/geometry.csv").open(newline="") as stream:
         geometry = {row["quantity"]: row for row in csv.DictReader(stream)}
     radius = (
         float(geometry["stage1_pulse_tube_outer_radius"]["value"]) - float(geometry["tube_wall_thickness"]["value"])

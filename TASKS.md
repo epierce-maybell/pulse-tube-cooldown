@@ -24,8 +24,8 @@ A completed entry stays while its numbered section has unfinished work. When eve
 
 Work the rest of the section in list order. The first slice runs from 2.5 through 2.3: the canonical head fitted to the test-stand load maps.
 
-- [o] **2.5 Head design data** · Build
-  The head-model schema, loader, and TOMLs for what ADR 03 reads per design: regenerator section lengths and walls, pulse-tube walls, reservoir and dead volumes, and κ, λ, and σ from Snodgrass 2024. PT1.1 comes from `data/sn09/pulse_tube/geometry.csv` and PT1.5 from `data/fp1/geometry.csv`, both with PT1.1's matrix filling.
+- [x] **2.5 Head design data** · Build
+  The head-model schema, loader, and TOMLs for what ADR 03 reads per design: regenerator section lengths and walls, pulse-tube walls, reservoir and dead volumes, and κ, λ, and σ from Snodgrass 2024. PT1.1 comes from `data/heads/pt1_1/geometry.csv` and PT1.5 from `data/heads/pt1_5/geometry.csv`, both with PT1.1's matrix filling.
   Context: ADR 03 "Parameters"; DESIGN "Cooler configuration"; `library/heads/`, `library/links/cooler/load.py`, `data/scripts/derive_head_model.py`, `docs/papers/pulse_tube/`.
   Verified by: both models load, with each value traced to its source.
 

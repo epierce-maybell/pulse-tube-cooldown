@@ -17,4 +17,4 @@ The scroll capsule is a Copeland ZCH72C3G/C4G, rated 3500 rpm on 60 Hz. Copeland
 
 On the test stand, the warm volume is two 20 m DN25 flexlines, 19.6 L at a 25 mm bore. That is the default for the fridges until measured.
 
-The two 5 L "buffer volumes" that `docs/pt_performance_overview_2026-10-30.pdf` lists for each head are that head's pulse-tube reservoirs, one per stage. They measure 5.26 L each on PT1.1 (`sn09/pulse_tube/geometry.csv`) and 5.23 L each on PT1.5 ("TUBE, BUFFER VOLUME, AQ" in the STEP export of CAD 910-000040: bore radius 76.3 mm over 286 mm, with a 49 cm^3 hose each).
+The two 5 L "buffer volumes" that `docs/pt_performance_overview_2026-10-30.pdf` lists for each head are that head's pulse-tube reservoirs, one per stage. They measure 5.26 L each on PT1.1 and 5.23 L each on PT1.5, each with its hose (`heads/pt1_1/geometry.csv`, `heads/pt1_5/geometry.csv`).

@@ -1,49 +1,85 @@
-# Written by data/scripts/derive_head_model.py from data/sn09/pulse_tube/geometry.csv.
-# Estimates: tube_wall_thickness, matrix_porosity_spheres, matrix_porosity_screens.
+# Written by data/scripts/derive_head_model.py from the geometry rows in [sources].
 name = "PT1.1"
 clamp_fraction = 0.668
-pulse_tube_volumes = [2.508e-04, 2.009e-04]  # m^3, stage 1 and stage 2
-source = "CAD 910-000018; Falter 2024 Fig. 2; derived in data/sn09/pulse_tube/"
+dead_volume = 4.5e-05  # m^3
+waveform_factor = 1.41421
+buffer_fraction = 0.5
+stroke_spread = 0.1
 
-[[stage_1_column]]
+[stage_1_regenerator]
+length = 0.18  # m
+wall_material = "304 SS"
+wall_area = 1.0009e-04  # m^2
+
+[[stage_1_regenerator.layers]]
 index = 0
 material = "304 SS"
 mass = 0.9764  # kg
-pore_volume = 2.848e-04  # m^3
+pore_volume = 2.8478e-04  # m^3
 length_fraction = 0.72
 
-[[stage_1_column]]
+[[stage_1_regenerator.layers]]
 index = 1
 material = "Pb"
 mass = 1.112  # kg
-pore_volume = 6.012e-05  # m^3
+pore_volume = 6.0119e-05  # m^3
 length_fraction = 0.28
 
-[[stage_2_column]]
+[stage_2_regenerator]
+length = 0.2443  # m
+wall_material = "304 SS"
+wall_area = 5.1082e-05  # m^2
+
+[[stage_2_regenerator.layers]]
 index = 0
 material = "Pb"
 mass = 0.2213  # kg
-pore_volume = 1.196e-05  # m^3
+pore_volume = 1.1961e-05  # m^3
 length_fraction = 0.16
 
-[[stage_2_column]]
+[[stage_2_regenerator.layers]]
 index = 1
 material = "Er3Ni"
 mass = 0.3532  # kg
-pore_volume = 2.392e-05  # m^3
+pore_volume = 2.3922e-05  # m^3
 length_fraction = 0.32
 
-[[stage_2_column]]
+[[stage_2_regenerator.layers]]
 index = 2
 material = "HoCu2"
 mass = 0.3599  # kg
-pore_volume = 2.392e-05  # m^3
+pore_volume = 2.3922e-05  # m^3
 length_fraction = 0.32
 
-[[stage_2_column]]
+[[stage_2_regenerator.layers]]
 index = 3
 material = "Gd2O2S"
 mass = 0.1792  # kg
-pore_volume = 1.495e-05  # m^3
+pore_volume = 1.4951e-05  # m^3
 length_fraction = 0.2
 node_count = 8
+
+[stage_1_pulse_tube]
+length = 0.181  # m
+volume = 2.5077e-04  # m^3
+wall_material = "304 SS"
+wall_area = 6.6759e-05  # m^2
+reservoir_volume = 5.2920e-03  # m^3, tank and hose
+
+[stage_2_pulse_tube]
+length = 0.4441  # m
+volume = 2.0091e-04  # m^3
+wall_material = "304 SS"
+wall_area = 3.8485e-05  # m^2
+reservoir_volume = 5.2920e-03  # m^3, tank and hose
+
+[sources]
+clamp_fraction = "data/heads/pt1_1/geometry.csv: prp_to_clamp, clamp_to_cfp"
+dead_volume = "data/heads/pt1_1/geometry.csv: valve_to_head_dead_volume"
+waveform_factor = "Snodgrass 2024 Supp. Methods A, eq. S2: a square-wave pressure source with large omega R C carries twice a sine's acoustic power"
+buffer_fraction = "Snodgrass 2024 Fig. 8: large-stroke loss sets in near a stroke 2|xi|/L of 0.45 at cold impedance and 0.6 more open, read from the figure"
+stroke_spread = "Snodgrass 2024 Fig. 8: spread of the large-stroke onset across both needle settings, read from the figure"
+stage_1_regenerator = "data/heads/pt1_1/geometry.csv: stage1_regenerator_outer_radius, stage1_regenerator_length, tube_wall_thickness (estimate), tube_wall_material, stage1_regenerator_layer_SS, matrix_porosity_screens (estimate), stage1_regenerator_layer_Pb, matrix_porosity_spheres (estimate)"
+stage_2_regenerator = "data/heads/pt1_1/geometry.csv: stage2_regenerator_outer_radius, stage2_regenerator_length, tube_wall_thickness (estimate), tube_wall_material, stage2_regenerator_layer_Pb, matrix_porosity_spheres (estimate), stage2_regenerator_layer_Er3Ni, stage2_regenerator_layer_HoCu2, stage2_regenerator_layer_GOS"
+stage_1_pulse_tube = "data/heads/pt1_1/geometry.csv: stage1_pulse_tube_outer_radius, stage1_pulse_tube_length, tube_wall_thickness (estimate), tube_wall_material, reservoir_volume, reservoir_hose_volume"
+stage_2_pulse_tube = "data/heads/pt1_1/geometry.csv: stage2_pulse_tube_outer_radius, stage2_pulse_tube_length, tube_wall_thickness (estimate), tube_wall_material, reservoir_volume, reservoir_hose_volume"

@@ -4,7 +4,7 @@ The test stand runs one pulse-tube head at a time and logs three Lake Shore Cern
 
 The supplied draft test index is `test_stand/load_map_index_2026-11-05.csv`. The characterization's dataset catalog and manufacturer reference tables are alongside it; its code and reports are in `simulations/exploration/loadmaps/` relative to the repository.
 
-The human confirmed T3's mounting on 2026-11-02: on the main pulse tube reaching stage 2, approximately 2 inches (0.0508 m) below stage 1. This approximate position is recorded in `sn09/pulse_tube/geometry.csv`. Its attachment details and sensor serial remain unspecified. The model's regenerator clamp temperature is a separate quantity, tested by the SN09 system's RGP trace.
+The human confirmed T3's mounting on 2026-11-02: on the main pulse tube reaching stage 2, approximately 2 inches (0.0508 m) below stage 1. This approximate position is recorded in `heads/pt1_1/geometry.csv`. Its attachment details and sensor serial remain unspecified. The model's regenerator clamp temperature is a separate quantity, tested by the SN09 system's RGP trace.
 
 ## Inventory
 

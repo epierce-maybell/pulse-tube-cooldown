@@ -43,7 +43,7 @@ from pulse_tube_cooldown.library.toml_files import read_named_toml
 from pulse_tube_cooldown.measurements.test_stand import read_cooldown, read_load_map
 
 HERE = Path(__file__).parent
-SN09 = HERE.parents[2] / "data" / "sn09" / "pulse_tube"
+SN09 = HERE.parents[2] / "data" / "heads" / "pt1_1"
 STAND = HERE.parents[2] / "data/test_stand/s0009"
 WARM_FLANGE, STAGE_1, STAGE_2 = "Warm flange", "Stage 1", "Stage 2"
 
@@ -159,16 +159,14 @@ class LoadMapFit:
     columns: tuple[ColumnSolution, ...]
 
 
-def read_head(name: str, *, directory: Path | None = None) -> Head:
-    """Reads a head model file from `library/heads/data/`.
+def read_head(name: str, *, directory: Path = HERE / "head_model") -> Head:
+    """Reads a head model file in the column format this experiment was fitted with.
 
     Args:
         name: The model's `name`, such as "PT1.1".
-        directory: Folder holding head model files; defaults to the library's models.
+        directory: Folder holding head model files; defaults to this experiment's snapshot.
     """
-    model = read_named_toml(
-        name, directory=directory or Path(pulse_tube_cooldown.__file__).parent / "library/heads/data", kind="heads"
-    )
+    model = read_named_toml(name, directory=directory, kind="heads")
     columns = [
         load_column(model[column], head_name=name, stage=stage)
         for stage, column in enumerate(("stage_1_column", "stage_2_column"), start=1)
@@ -748,8 +746,7 @@ def write_results(
         package / "library/links/cooler/columns.py",
         package / "library/gases/helium.py",
         package / "library/property_fits.py",
-        package / "library/heads/data/pt1_1.toml",
-        HERE.parents[2] / "scripts/data/derive_head_model.py",
+        HERE / "head_model/pt1_1.toml",
     ]
     source_paths += [
         package / "library/materials/data" / name

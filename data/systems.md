@@ -4,7 +4,7 @@ SN09 and FP1 share the six-plate architecture: PRP, RGP, CFP, STP, ICP, and MXP.
 
 ## Pulse-tube heads
 
-Neither system's heads have test-stand records: FP1's predate the stand, and SN09's serial is unrecorded. Both systems use the canonical head of DESIGN "Coupled capacity maps", fitted to the Denver test-stand records of S0007, S0008, S0009, S0019, S0023, S0028, S0034, S0035, and S0038 (`test_stand.md`). The head-to-head spread among those records is accepted as error. SN09's head was recorded as a PT1.1, but no PT1.1 records exist. `test_stand/s0009/` holds S0009's test-stand records; `sn09/pulse_tube/geometry.csv` holds SN09's CAD-derived head geometry.
+Neither system's heads have test-stand records: FP1's predate the stand, and SN09's serial is unrecorded. Both systems use the canonical head of DESIGN "Coupled capacity maps", fitted to the Denver test-stand records of S0007, S0008, S0009, S0019, S0023, S0028, S0034, S0035, and S0038 (`test_stand.md`). The head-to-head spread among those records is accepted as error. SN09's head was recorded as a PT1.1, but no PT1.1 records exist. `test_stand/s0009/` holds S0009's test-stand records; `heads/pt1_1/geometry.csv` holds the CAD-derived geometry of SN09's PT1.1 head, and `heads/pt1_5/geometry.csv` that of FP1's PT1.5 heads.
 
 ## Cooldown records
 

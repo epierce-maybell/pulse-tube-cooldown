@@ -55,13 +55,3 @@ support_prp_to_cfp_cross_section,0.25,cm^2,legacy ptc_systems.json,per member; G
 support_prp_to_cfp_length,281.48,mm,legacy ptc_systems.json,
 support_prp_to_cfp_count,6,,legacy ptc_systems.json,
 support_below_cfp,0,,legacy ptc_systems.json,no support link below CFP in the legacy model; STP ICP and MXP hang on the switches; 500-001253/-001255/-001258 mixing supports unmodeled
-pt_regenerator2_top_to_clamp_center,151.3,mm,"STEP export of CAD 910-000040, 2026-11-03","REGEN TUBE 2 top z 1635.0 to CLAMP, RGP center z 1483.7; SN09 prp_to_clamp 149.6; CAD values pending the 2.5 convention check against SN09; both PT1.5 heads identical in CAD"
-pt_clamp_center_to_regenerator2_bottom,93.2,mm,"STEP export of CAD 910-000040, 2026-11-03",clamp center to REGEN TUBE 2 bottom z 1390.5; SN09 clamp_to_cfp 77.8 by a different end convention; CAD values pending the 2.5 convention check against SN09; both PT1.5 heads identical in CAD
-pt_stage1_regenerator_outer_radius,32.1,mm,"STEP export of CAD 910-000040, 2026-11-03",REGEN TUBE 1: 64.2 mm OD x 180.0 mm; same as SN09
-pt_stage1_regenerator_length,180.0,mm,"STEP export of CAD 910-000040, 2026-11-03",
-pt_stage1_pulse_tube_outer_radius,21.5,mm,"STEP export of CAD 910-000040, 2026-11-03","PULSE TUBE 1, PT: cylindrical faces at 21.0 and 21.5 mm radius, 181 mm long; SN09 geometry.csv records 10.744 mm from a 0.846 in diameter; one of the two is a radius-diameter slip or the PT1.5 tube is larger; resolve in 2.5"
-pt_stage1_pulse_tube_length,181.0,mm,"STEP export of CAD 910-000040, 2026-11-03",same as SN09
-pt_stage2_regenerator_outer_radius,16.5,mm,"STEP export of CAD 910-000040, 2026-11-03",REGEN TUBE 2: 33.0 mm OD x 244.5 mm; same as SN09
-pt_stage2_regenerator_length,244.5,mm,"STEP export of CAD 910-000040, 2026-11-03",
-pt_stage2_pulse_tube_outer_radius,12.5,mm,"STEP export of CAD 910-000040, 2026-11-03",PULSE TUBE 2: 25.0 mm OD x 444.0 mm; same as SN09
-pt_stage2_pulse_tube_length,444.0,mm,"STEP export of CAD 910-000040, 2026-11-03",

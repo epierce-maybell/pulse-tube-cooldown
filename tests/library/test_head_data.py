@@ -1,77 +1,147 @@
-"""Tests for the library's head model files against the head geometry they were derived from."""
+"""Requirements for the head-model loader and the library's PT1.1 and PT1.5 design files."""
 
-import itertools
+import math
+import tomllib
 from pathlib import Path
 
 import pytest
 
 import pulse_tube_cooldown
-from pulse_tube_cooldown.library.materials.load import load_material
-from pulse_tube_cooldown.library.toml_files import read_named_toml
+from pulse_tube_cooldown.core.errors import ConfigurationError
+from pulse_tube_cooldown.library.heads import load_head_model
 
 _HEADS = Path(pulse_tube_cooldown.__file__).parent / "library/heads/data"
 
+# Hand-computed from data/heads/pt1_1/geometry.csv and data/heads/pt1_5/geometry.csv: bores and walls
+# from each tube's outer radius, length, and the 0.5 mm wall; reservoirs as tank plus hose; clamp fractions as the
+# clamp's distance from the stage-2 regenerator's top over the tube's length.
+_DESIGNS = {
+    "PT1.1": {
+        "clamp_fraction": 163.4 / 244.5,
+        "dead_volume": 45e-6,
+        "regenerator_length": (0.1800, 0.2443),
+        "regenerator_wall_area": (1.0009e-4, 5.1082e-5),
+        "pulse_tube_length": (0.1810, 0.4441),
+        "pulse_tube_volume": (250.765e-6, 200.906e-6),
+        "pulse_tube_wall_area": (6.6759e-5, 3.8485e-5),
+        "reservoir_volume": (5292e-6, 5292e-6),
+        "layers": (
+            (("304 SS", 0.9764, 2.8478e-4, 0.72), ("Pb", 1.1123, 6.0119e-5, 0.28)),
+            (
+                ("Pb", 0.2213, 1.1961e-5, 0.16),
+                ("Er3Ni", 0.3532, 2.3922e-5, 0.32),
+                ("HoCu2", 0.3599, 2.3922e-5, 0.32),
+                ("Gd2O2S", 0.1792, 1.4951e-5, 0.20),
+            ),
+        ),
+    },
+    "PT1.5": {
+        "clamp_fraction": 151.3 / 244.5,
+        "dead_volume": 45e-6,
+        "regenerator_length": (0.1800, 0.2445),
+        "regenerator_wall_area": (1.0006e-4, 5.1051e-5),
+        "pulse_tube_length": (0.1810, 0.4440),
+        "pulse_tube_volume": (250.765e-6, 200.861e-6),
+        "pulse_tube_wall_area": (6.6759e-5, 3.8485e-5),
+        "reservoir_volume": (5280e-6, 5280e-6),
+        "layers": (
+            (("304 SS", 0.9758, 2.8459e-4, 0.72), ("Pb", 1.1116, 6.0081e-5, 0.28)),
+            (
+                ("Pb", 0.2212, 1.1956e-5, 0.16),
+                ("Er3Ni", 0.3530, 2.3911e-5, 0.32),
+                ("HoCu2", 0.3597, 2.3911e-5, 0.32),
+                ("Gd2O2S", 0.1791, 1.4945e-5, 0.20),
+            ),
+        ),
+    },
+}
 
-@pytest.fixture(scope="module")
-def pt1_1():
-    return read_named_toml("PT1.1", directory=_HEADS, kind="heads")
+
+@pytest.mark.parametrize("name", _DESIGNS)
+def test_design_geometry_matches_hand_computed_values(name):
+    expected = _DESIGNS[name]
+
+    model = load_head_model(name)
+
+    assert model.name == name
+    assert model.clamp_fraction == pytest.approx(expected["clamp_fraction"], abs=5e-4)
+    assert model.dead_volume == pytest.approx(expected["dead_volume"])
+    for stage in (0, 1):
+        regenerator, tube = model.regenerators[stage], model.pulse_tubes[stage]
+        assert regenerator.length == pytest.approx(expected["regenerator_length"][stage])
+        assert regenerator.wall_area == pytest.approx(expected["regenerator_wall_area"][stage], rel=1e-3)
+        assert regenerator.wall_material.name == "304 SS"
+        assert tube.length == pytest.approx(expected["pulse_tube_length"][stage])
+        assert tube.volume == pytest.approx(expected["pulse_tube_volume"][stage], rel=1e-3)
+        assert tube.wall_area == pytest.approx(expected["pulse_tube_wall_area"][stage], rel=1e-3)
+        assert tube.wall_material.name == "304 SS"
+        assert tube.reservoir_volume == pytest.approx(expected["reservoir_volume"][stage], rel=1e-3)
 
 
-def test_stage_1_pore_volumes_sum_to_geometry_record(pt1_1):
-    # data/sn09/pulse_tube/geometry.csv, stage1_regenerator_gas_volume: 344.9 cm^3.
-    total = sum(layer["pore_volume"] for layer in pt1_1["stage_1_column"])
+@pytest.mark.parametrize("name", _DESIGNS)
+def test_matrix_filling_matches_hand_computed_values(name):
+    model = load_head_model(name)
 
-    assert total == pytest.approx(344.9e-6, abs=0.05e-6)
-
-
-def test_stage_2_pore_volumes_sum_to_geometry_record(pt1_1):
-    # data/sn09/pulse_tube/geometry.csv, the stage-2 regenerator gas volumes on either side of the clamp: 49.2 cm^3
-    # and 25.6 cm^3, each rounded to 0.1 cm^3.
-    total = sum(layer["pore_volume"] for layer in pt1_1["stage_2_column"])
-
-    assert total == pytest.approx(74.8e-6, abs=0.1e-6)
+    for regenerator, layers in zip(model.regenerators, _DESIGNS[name]["layers"], strict=True):
+        assert [layer.material.name for layer in regenerator.layers] == [layer[0] for layer in layers]
+        assert [layer.mass for layer in regenerator.layers] == pytest.approx([layer[1] for layer in layers], rel=1e-3)
+        assert [layer.pore_volume for layer in regenerator.layers] == pytest.approx(
+            [layer[2] for layer in layers], rel=1e-3
+        )
+        assert [layer.length_fraction for layer in regenerator.layers] == pytest.approx([layer[3] for layer in layers])
 
 
-# Hand-computed from geometry.csv and the library's densities; stage 1 is DESIGN "Cooler configuration"'s example.
+@pytest.mark.parametrize("name", _DESIGNS)
+def test_loss_and_waveform_values_follow_snodgrass_2024(name):
+    model = load_head_model(name)
+
+    assert model.waveform_factor == pytest.approx(math.sqrt(2), rel=1e-3)
+    assert model.buffer_fraction == 0.5
+    assert model.stroke_spread == 0.1
+
+
+@pytest.mark.parametrize("path", sorted(_HEADS.glob("*.toml")), ids=lambda path: path.name)
+def test_every_value_names_its_source(path):
+    data = tomllib.loads(path.read_text(encoding="utf-8"))
+
+    sources = data.pop("sources")
+
+    assert set(sources) == set(data) - {"name"}
+    assert all(isinstance(source, str) and source for source in sources.values())
+
+
+def _write_design(directory, layer):
+    tube = 'length = 0.2\nvolume = 1e-4\nwall_material = "304 SS"\nwall_area = 1e-5\nreservoir_volume = 5e-3\n'
+    regenerator = 'length = 0.2\nwall_material = "304 SS"\nwall_area = 1e-4\n'
+    (directory / "design.toml").write_text(
+        'name = "Test"\nclamp_fraction = 0.5\ndead_volume = 4e-5\nwaveform_factor = 1.4\n'
+        "buffer_fraction = 0.5\nstroke_spread = 0.1\n"
+        f"[stage_1_regenerator]\n{regenerator}[[stage_1_regenerator.layers]]\n{layer}"
+        f"[stage_2_regenerator]\n{regenerator}"
+        '[[stage_2_regenerator.layers]]\nindex = 0\nmaterial = "Pb"\nmass = 1.0\npore_volume = 1e-5\n'
+        "length_fraction = 1.0\n"
+        f"[stage_1_pulse_tube]\n{tube}[stage_2_pulse_tube]\n{tube}",
+        encoding="utf-8",
+    )
+
+
 @pytest.mark.parametrize(
-    ("column", "material", "mass", "pore_volume"),
-    [
-        ("stage_1_column", "304 SS", 0.9764, 284.8e-6),
-        ("stage_1_column", "Pb", 1.1123, 60.12e-6),
-        ("stage_2_column", "Pb", 0.2213, 11.96e-6),
-        ("stage_2_column", "Er3Ni", 0.3532, 23.92e-6),
-        ("stage_2_column", "HoCu2", 0.3599, 23.92e-6),
-        ("stage_2_column", "Gd2O2S", 0.1792, 14.95e-6),
-    ],
+    ("field", "value"), [("index", "2"), ("length_fraction", "0.5"), ("node_count", "0"), ("node_count", "1.5")]
 )
-def test_layers_match_hand_computed_values(pt1_1, column, material, mass, pore_volume):
-    layers = [layer for layer in pt1_1[column] if layer["material"] == material]
+def test_invalid_layer_is_rejected(tmp_path, field, value):
+    fields = {"index": "0", "material": '"Pb"', "mass": "1.0", "pore_volume": "1e-5", "length_fraction": "1.0"}
+    fields["node_count"] = "1"
+    fields[field] = value
+    _write_design(tmp_path, "".join(f"{key} = {entry}\n" for key, entry in fields.items()))
 
-    assert sum(layer["mass"] for layer in layers) == pytest.approx(mass, rel=1e-3)
-    assert sum(layer["pore_volume"] for layer in layers) == pytest.approx(pore_volume, rel=1e-3)
-
-
-@pytest.mark.parametrize("column", ["stage_1_column", "stage_2_column"])
-def test_columns_take_the_design_form(pt1_1, column):
-    layers = pt1_1[column]
-
-    assert sorted(layer["index"] for layer in layers) == list(range(len(layers)))
-    assert sum(layer["length_fraction"] for layer in layers) == pytest.approx(1.0)
-    for layer in layers:
-        load_material(layer["material"])
+    with pytest.raises(ConfigurationError, match="stage_1_regenerator"):
+        load_head_model("Test", directory=tmp_path)
 
 
-def test_head_values_match_geometry_record(pt1_1):
-    # data/sn09/pulse_tube/geometry.csv: clamp_fraction_x_R, and the stage-1 and stage-2 pulse-tube gas volumes, each
-    # rounded to 0.1 cm^3.
-    assert pt1_1["clamp_fraction"] == 0.668
-    assert pt1_1["pulse_tube_volumes"] == pytest.approx([250.8e-6, 200.9e-6], abs=0.1e-6)
+def test_layer_defaults_to_one_unnamed_node(tmp_path):
+    _write_design(tmp_path, 'index = 0\nmaterial = "Pb"\nmass = 1.0\npore_volume = 1e-5\nlength_fraction = 1.0\n')
 
+    layer = load_head_model("Test", directory=tmp_path).regenerators[0].layers[0]
 
-def test_clamp_lies_in_the_hocu2_layer(pt1_1):
-    # geometry.csv, stage2_regenerator_layer_HoCu2 notes.
-    layers = sorted(pt1_1["stage_2_column"], key=lambda layer: layer["index"])
-    ends = itertools.accumulate(layer["length_fraction"] for layer in layers)
-
-    clamp_layer = next(layer for layer, end in zip(layers, ends, strict=True) if pt1_1["clamp_fraction"] < end)
-    assert clamp_layer["material"] == "HoCu2"
+    assert layer.node_count == 1
+    assert layer.name is None

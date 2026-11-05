@@ -12,11 +12,11 @@ pressure_amplitudes_Pa = [0.5e6, 0.965e6]
 mean_pressures_Pa = [1.2e6, 1.6e6, 2.0e6]
 
 [sources]
-geometry = "data/sn09/pulse_tube/geometry.csv; stage-1 inner radius 21 mm and length 181 mm"
+geometry = "data/heads/pt1_1/geometry.csv; stage-1 inner radius 21 mm and length 181 mm"
 frequency_Hz = "data/test_stand/valve_settings.csv; S0009 shipped frequency"
 pressure_Pa = "Assumed operating mean; screened over 1.2--2.0 MPa absolute"
 temperatures = "Assumed linear 50--300 K tube profile; local samples span 40--300 K"
-wall_material = "data/sn09/pulse_tube/geometry.csv; assumed stainless grade"
+wall_material = "data/heads/pt1_1/geometry.csv; assumed stainless grade"
 transition_Re_delta = "Wagner and Feldmann, https://arxiv.org/abs/2001.11273; smooth-pipe screening criterion"
 renewal_length_diameters = "Assumed contact length of one bore diameter; fixed-length penetration model"
 reference_cooling_W = "Representative loaded stage-1 map point; used only for local slope inequality"

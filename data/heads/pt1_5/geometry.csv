@@ -1,0 +1,14 @@
+quantity,value,unit,source,notes
+prp_to_clamp,151.3,mm,"STEP export of CAD 910-000040, 2026-11-03","REGEN TUBE 2 top z 1635.0 to CLAMP, RGP center z 1483.7; same tube-end convention as PT1.1; both of FP1's PT1.5 heads identical in CAD"
+clamp_to_cfp,93.2,mm,"STEP export of CAD 910-000040, 2026-11-03",clamp center to REGEN TUBE 2 bottom z 1390.5; same tube-end convention as PT1.1
+stage1_regenerator_outer_radius,32.1,mm,"STEP export of CAD 910-000040, 2026-11-03",REGEN TUBE 1: 64.2 mm OD x 180.0 mm
+stage1_regenerator_length,180.0,mm,"STEP export of CAD 910-000040, 2026-11-03",
+stage1_pulse_tube_outer_radius,21.5,mm,"STEP export of CAD 910-000040, 2026-11-03","PULSE TUBE 1, PT: cylindrical faces at 21.0 and 21.5 mm radius, 181 mm long"
+stage1_pulse_tube_length,181.0,mm,"STEP export of CAD 910-000040, 2026-11-03",
+stage2_regenerator_outer_radius,16.5,mm,"STEP export of CAD 910-000040, 2026-11-03",REGEN TUBE 2: 33.0 mm OD x 244.5 mm
+stage2_regenerator_length,244.5,mm,"STEP export of CAD 910-000040, 2026-11-03",
+stage2_pulse_tube_outer_radius,12.5,mm,"STEP export of CAD 910-000040, 2026-11-03",PULSE TUBE 2: 25.0 mm OD x 444.0 mm
+stage2_pulse_tube_length,444.0,mm,"STEP export of CAD 910-000040, 2026-11-03",
+reservoir_volume,5231,cm^3,"STEP export of CAD 910-000040, 2026-11-03","TUBE, BUFFER VOLUME, AQ 900-000890-01, one per pulse tube; bore radius 76.3 mm over 286 mm"
+reservoir_hose_volume,49,cm^3,"STEP export of CAD 910-000040, 2026-11-03","HOSE, BUFFER, PT1.5 400-000190, one per reservoir"
+valve_to_head_dead_volume,45,cm^3,estimate,PT1.1's valve_to_head_dead_volume; not in the CAD

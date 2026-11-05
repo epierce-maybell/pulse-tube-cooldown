@@ -51,13 +51,3 @@ support_prp_to_cfp_cross_section,0.25,cm^2,legacy ptc_systems.json,per member; G
 support_prp_to_cfp_length,281.48,mm,legacy ptc_systems.json,
 support_prp_to_cfp_count,6,,legacy ptc_systems.json,
 support_below_cfp,0,,legacy ptc_systems.json,no support link below CFP in the legacy model
-pt_regenerator2_top_to_clamp_center,163.4,mm,"STEP export of CAD 910-000018, 2026-11-03","Reg2 top z 1572.3 (the PRP underside) to the center of CLAMP, REGENERATOR z 1402.5-1415.2 under BRACKET, REGENERATOR on the RGP plate; data/sn09/pulse_tube/geometry.csv records 149.6 by another end convention; resolve in 2.5"
-pt_clamp_center_to_regenerator2_bottom,81.1,mm,"STEP export of CAD 910-000018, 2026-11-03","clamp center to Reg2 bottom z 1327.8, 19.1 mm below the CFP top; pulse_tube/geometry.csv records 77.8"
-pt_stage1_regenerator_outer_radius,32.1,mm,"STEP export of CAD 910-000018, 2026-11-03",Reg1: 64.2 mm OD x 180.0 mm
-pt_stage1_regenerator_length,180.0,mm,"STEP export of CAD 910-000018, 2026-11-03",
-pt_stage1_pulse_tube_outer_radius,21.5,mm,"STEP export of CAD 910-000018, 2026-11-03","PR1: cylindrical faces at 21.0 and 21.5 mm radius over 181 mm, a 43 mm OD tube; pulse_tube/geometry.csv records 10.744 mm from a 0.846 in diameter, which is this radius"
-pt_stage1_pulse_tube_length,181.0,mm,"STEP export of CAD 910-000018, 2026-11-03",
-pt_stage2_regenerator_outer_radius,16.5,mm,"STEP export of CAD 910-000018, 2026-11-03",Reg2: 33.0 mm OD x 244.5 mm
-pt_stage2_regenerator_length,244.5,mm,"STEP export of CAD 910-000018, 2026-11-03",
-pt_stage2_pulse_tube_outer_radius,12.5,mm,"STEP export of CAD 910-000018, 2026-11-03",PR2: 25.0 mm OD x 444.0 mm
-pt_stage2_pulse_tube_length,444.0,mm,"STEP export of CAD 910-000018, 2026-11-03",
