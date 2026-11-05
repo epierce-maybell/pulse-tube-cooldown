@@ -1,0 +1,57 @@
+# The pulse-tube test stand's fridge template: copy into a run directory and edit there.
+# One PT1.5 head on one compressor, with the stand's stages and radiation shield from data/test_stand.md. The foil on
+# the head's tubes is not modeled; its geometry is unrecorded. A two-compressor run uses
+# data/test_stand/pulse_tube/drive_two_compressors.toml.
+[meta]
+experiment = "Pulse-tube test stand"
+
+# Held at room temperature; a boundary node's composition does not enter the run.
+[[fridge.nodes]]
+name = "Warm flange"
+composition = [["304 SS", 1.0]]
+
+[[fridge.nodes]]
+name = "Vacuum can"
+composition = [["304 SS", 1.0]]
+
+# Upper cold-end heat exchanger, radiation shield, flange, and fasteners.
+[[fridge.nodes]]
+name = "Stage 1"
+composition = [["OFHC Cu RRR100", 1.5838], ["Al 6061-T6", 0.4536], ["304 SS", 0.0709]]
+
+# Lower cold-end heat exchanger and copper mounting hardware.
+[[fridge.nodes]]
+name = "Stage 2"
+composition = [["304 SS", 0.4218], ["OFHC Cu RRR100", 0.0397]]
+
+[[fridge.links]]
+name = "Cooler"
+type = "cooler"
+warm_flange = "Warm flange"
+drive = "data/test_stand/pulse_tube/drive_one_compressor.toml"
+
+[[fridge.links.heads]]
+name = "PT"
+stages = ["Stage 1", "Stage 2"]
+model = "PT1.5"
+parameters = "data/test_stand/pulse_tube/parameters.toml"
+
+# The bare shield facing the can. Shield area: 1.191 kg of copper as 1/16 in (1.6 mm) sheet, an assumed gauge.
+# Can area: assumed, much larger than the shield's, where the load is insensitive to it. Surfaces: polished copper and
+# the can's unrecorded metal, represented by the library's nearest. Foil on the shield, if any, would lower the load.
+[[fridge.links]]
+name = "Shield radiation"
+type = "radiation"
+nodes = ["Stage 1", "Vacuum can"]
+area = [0.0831, 0.5]  # m^2
+surface = ["Gold-plated Cu", "Machined Al"]
+
+[[procedure.phases]]
+name = "cooldown"
+
+[simulation]
+solver = "Radau"
+max_time = 20000.0  # s
+save_every = 60.0  # s
+initial_temperature = 295.0  # K
+fixed_boundary_nodes = ["Warm flange", "Vacuum can"]

@@ -54,10 +54,10 @@ Work the rest of the section in list order. The first slice runs from 2.5 throug
   Context: DESIGN "Cooler configuration" and "Public API"; `library/links/load.py`, `library/links/cooler/load.py`.
   Verified by: a fridge TOML with a cooler builds and runs.
 
-- [ ] **2.10 Test-stand model** · Build, after 2.9
-  The test stand as a fridge: one head on one or two compressors, with the stage masses and MLI of `data/test_stand.md`, solved to steady state at a load map's heater powers.
+- [x] **2.10 Test-stand model** · Build, after 2.9
+  The test stand as a fridge template, `data/test_stand/fridge.toml`: one head on one or two compressors, with the stage masses and radiation shield of `data/test_stand.md`; foil on the tubes is omitted for lack of geometry. An engine steady-state solver, with heater powers as its input, solves it at a load map's points.
   Context: `data/test_stand.md`, `data/compressors.md`; `simulations/validation/sn09_bare_head/` for the earlier version.
-  Verified by: a load-map surface and a cooldown at placeholder parameters.
+  Verified by: the solver's analytic steady states, and the template building.
 
 - [x] **2.11 Load-map fit set** · Build
   The canonical fit's inputs from `data/test_stand/load_map_index_2026-11-05.csv`: one Denver map per PT1.5 head with raw data on file, in the standard setup, which the index notes when it uses two compressors. Among a head's repeats, the more standard run by the notes, otherwise the more recent. Each point carries its run's compressor count, valve frequency, and MLI state. The selection replaces the record list in `data/systems.md`.
