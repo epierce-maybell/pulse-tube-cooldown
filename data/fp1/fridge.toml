@@ -1,0 +1,9 @@
+# FP1's fridge template: copy into a run directory and edit there. Placeholder until TASKS 4.4.
+[meta]
+experiment = "FP1"
+
+[fridge]
+
+[procedure]
+
+[simulation]

@@ -54,14 +54,14 @@ Each system's records, procedure, and inventory are in `data/systems.md`.
   - Score: one per system, the RMS of `ln(T_simulated / T_measured)` pooled over all of the system's samples. Each thermometer's RMS is reported alongside.
   - Coverage: a simulation that ends before the window's last sample is not scored.
 
-- [ ] **4.2 Measurements and residual** · Build, after 4.7
+- [x] **4.2 Measurements and residual** · Build, after 4.7
   Each system's mapped, aligned measurements, and the log-temperature residual over the chosen thermometers.
 
 - [ ] **4.3 Legacy baseline** · Build, after 4.2
   The legacy model run on each system and scored with the same residual, archived under `simulations/validation/`.
 
 - [ ] **4.4 Validation-system configurations** · Build, after section 2
-  Each system's TOML and runner from its inventory, procedure, and cooler data, porting any materials the library lacks.
+  Each system's fridge template, `data/<system>/fridge.toml`, from its inventory, geometry, `data/systems.md`, procedure, and cooler data, porting any materials the library lacks. Its validation run directory, such as `simulations/validation/sn09_cooldown/`, holds a copy of the template as its config and a runner that sets initial temperatures and `max_time` from `simulations/validation/measurements.py`.
 
 - [ ] **4.5 Full cooldowns and comparison** · Build, after 4.3 and 4.4
   Each system run through its cooldown and scored against the measurements and the legacy baseline, with overlays.

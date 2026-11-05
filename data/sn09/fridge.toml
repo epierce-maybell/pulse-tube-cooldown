@@ -1,0 +1,9 @@
+# SN09's fridge template: copy into a run directory and edit there. Placeholder until TASKS 4.4.
+[meta]
+experiment = "SN09"
+
+[fridge]
+
+[procedure]
+
+[simulation]

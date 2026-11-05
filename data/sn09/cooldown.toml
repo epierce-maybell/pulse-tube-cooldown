@@ -1,0 +1,14 @@
+# SN09's cooldown record and how it compares with the model. Times are from `data/systems.md` "Cooldown records".
+record = "cooldown_2026-06-04.dat"
+compressor_start = 2026-06-04T00:21:00Z
+condensing_begins = 2026-06-06T14:15:00Z
+scored = ["PRP", "RGP", "CFP", "STP", "ICP", "DHX"]
+
+[channels]
+prp_temperature = "PRP"
+rgp_temperature = "RGP"
+cfp_temperature = "CFP"
+stp_temperature = "STP"
+icp_temperature = "ICP"
+mxp_temperature = "MXP"
+dhx_temperature = "DHX"
