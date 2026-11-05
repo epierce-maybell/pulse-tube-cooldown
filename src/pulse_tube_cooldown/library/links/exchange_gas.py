@@ -8,7 +8,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from pulse_tube_cooldown.core.errors import ConfigurationError
-from pulse_tube_cooldown.core.types import Gas
+from pulse_tube_cooldown.core.types import EnergyBalanceTerms, Gas
 from pulse_tube_cooldown.library.gases.load import load_gas
 from pulse_tube_cooldown.library.links.gas_gap_switch import calc_gap_conductance
 
@@ -55,12 +55,12 @@ class ExchangeGas:
         pressure_temperature = temperature[self.nodes.index(self.pressure_node)]
         return max(float(np.polyval(self.pressure_coefficients, pressure_temperature)), 0.0)
 
-    def calc_heat_flow(self, temperature: NDArray[np.float64]) -> NDArray[np.float64]:
+    def calc_energy_balance_terms(self, temperature: NDArray[np.float64]) -> EnergyBalanceTerms:
         """Calculates heat flows in W into each node at node temperatures in K, both in `nodes` order."""
         flows = np.zeros(len(self.nodes), dtype=np.float64)
         pressure = self.calc_pressure(temperature)
         if pressure == 0.0:
-            return flows
+            return EnergyBalanceTerms(heat_flow=flows)
         for surfaces in self.surfaces:
             first, second = (self.nodes.index(node) for node in surfaces.nodes)
             mean = float((temperature[first] + temperature[second]) / 2)
@@ -68,7 +68,7 @@ class ExchangeGas:
             flow = conductance * (temperature[second] - temperature[first])
             flows[first] += flow
             flows[second] -= flow
-        return flows
+        return EnergyBalanceTerms(heat_flow=flows)
 
 
 def load_exchange_gas(config: Mapping[str, Any]) -> ExchangeGas:

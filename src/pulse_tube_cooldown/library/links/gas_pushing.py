@@ -9,6 +9,7 @@ from numpy.typing import NDArray
 from scipy.constants import R
 
 from pulse_tube_cooldown.core.errors import ConfigurationError
+from pulse_tube_cooldown.core.types import EnergyBalanceTerms
 
 __all__ = ["GasPushing", "GasVolume", "load_gas_pushing"]
 
@@ -53,7 +54,7 @@ class GasPushing:
     buffer_pressure_cap: float
     depressurization_time: float
 
-    def calc_heat_flow(self, temperature: NDArray[np.float64]) -> NDArray[np.float64]:
+    def calc_energy_balance_terms(self, temperature: NDArray[np.float64]) -> EnergyBalanceTerms:
         """Returns heat flow into each node in W for node temperatures in K, both in `nodes` order."""
         indices = [tuple(self.nodes.index(node) for node in volume.nodes) for volume in self.volumes]
         gas_temperature = np.array([_log_mean(temperature[list(pair)]) for pair in indices])
@@ -72,7 +73,7 @@ class GasPushing:
         flows[0] = -boundary_heat[0]
         for pair, heat in zip(indices, element_heat, strict=True):
             np.add.at(flows, list(pair), heat / len(pair))
-        return flows
+        return EnergyBalanceTerms(heat_flow=flows)
 
     def _calc_pressure_rate(self, path_capacity: float, buffer_capacity: float, warm_temperature: float) -> float:
         """Returns cycle frequency times still-side pressure excursion, in Pa/s."""

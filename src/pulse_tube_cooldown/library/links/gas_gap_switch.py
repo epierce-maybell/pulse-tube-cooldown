@@ -8,7 +8,7 @@ import numpy as np
 from numpy.typing import NDArray
 from scipy.constants import R
 
-from pulse_tube_cooldown.core.types import Gas, Material
+from pulse_tube_cooldown.core.types import EnergyBalanceTerms, Gas, Material
 from pulse_tube_cooldown.library.gases.load import load_gas
 from pulse_tube_cooldown.library.materials.load import load_material
 
@@ -96,7 +96,7 @@ class GasGapSwitch:
         saturation = self.gas.saturation_pressure(np.array([np.min(temperature)], dtype=np.float64))[0]
         return float(min(pressure, saturation))
 
-    def calc_heat_flow(self, temperature: NDArray[np.float64]) -> NDArray[np.float64]:
+    def calc_energy_balance_terms(self, temperature: NDArray[np.float64]) -> EnergyBalanceTerms:
         """Calculates heat flows in W into the two nodes at their temperatures in K."""
         mean = float(np.mean(temperature))
         conductance = calc_gap_conductance(
@@ -109,7 +109,7 @@ class GasGapSwitch:
         )
         conductance /= 1 + conductance * bracket_resistance
         flow = conductance * (temperature[1] - temperature[0])
-        return np.array([flow, -flow], dtype=np.float64)
+        return EnergyBalanceTerms(heat_flow=np.array([flow, -flow], dtype=np.float64))
 
 
 def load_gas_gap_switch(config: Mapping[str, Any]) -> GasGapSwitch:

@@ -23,7 +23,7 @@ def _rod(material: Material, area: float = 3.0e-4, length: float = 0.1) -> Condu
 
 def test_constant_conductivity_matches_analytic_flow():
     # Q = k A / L (T_STP - T_CFP) = 2 * 3e-4 / 0.1 * (300 - 10) = 1.74 W into CFP.
-    flow = _rod(CONSTANT).calc_heat_flow(np.array([10.0, 300.0]))
+    flow = _rod(CONSTANT).calc_energy_balance_terms(np.array([10.0, 300.0])).heat_flow
 
     np.testing.assert_allclose(flow, [1.74, -1.74], rtol=1e-12)
 
@@ -35,7 +35,7 @@ def test_temperature_dependent_conductivity_matches_independent_integration(temp
     area, length = 2.0e-5, 0.15
 
     integral, _ = quad(lambda t: material.thermal_conductivity(np.array([t]))[0], cold, hot, limit=200)
-    flow = _rod(material, area=area, length=length).calc_heat_flow(np.array([cold, hot]))
+    flow = _rod(material, area=area, length=length).calc_energy_balance_terms(np.array([cold, hot])).heat_flow
 
     np.testing.assert_allclose(flow, [area / length * integral, -area / length * integral], rtol=1e-6)
 
@@ -43,8 +43,8 @@ def test_temperature_dependent_conductivity_matches_independent_integration(temp
 def test_reversed_temperatures_reverse_flow_and_conserve_energy():
     rod = _rod(load_material("OFHC Cu RRR100"))
 
-    forward = rod.calc_heat_flow(np.array([40.0, 250.0]))
-    reverse = rod.calc_heat_flow(np.array([250.0, 40.0]))
+    forward = rod.calc_energy_balance_terms(np.array([40.0, 250.0])).heat_flow
+    reverse = rod.calc_energy_balance_terms(np.array([250.0, 40.0])).heat_flow
 
     assert forward[0] > 0.0
     assert forward.sum() == pytest.approx(0.0, abs=1e-12 * abs(forward[0]))
@@ -53,6 +53,6 @@ def test_reversed_temperatures_reverse_flow_and_conserve_energy():
 
 
 def test_equal_temperatures_carry_no_heat():
-    flow = _rod(load_material("304 SS")).calc_heat_flow(np.array([77.0, 77.0]))
+    flow = _rod(load_material("304 SS")).calc_energy_balance_terms(np.array([77.0, 77.0])).heat_flow
 
     np.testing.assert_array_equal(flow, [0.0, 0.0])

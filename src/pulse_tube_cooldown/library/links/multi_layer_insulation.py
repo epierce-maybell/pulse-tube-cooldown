@@ -17,6 +17,8 @@ from typing import Any
 import numpy as np
 from numpy.typing import NDArray
 
+from pulse_tube_cooldown.core.types import EnergyBalanceTerms
+
 __all__ = ["MultiLayerInsulation", "load_multi_layer_insulation"]
 
 
@@ -48,7 +50,7 @@ class MultiLayerInsulation:
     emissivity: float
     source: str
 
-    def calc_heat_flow(self, temperature: NDArray[np.float64]) -> NDArray[np.float64]:
+    def calc_energy_balance_terms(self, temperature: NDArray[np.float64]) -> EnergyBalanceTerms:
         """Calculates the heat flow into each of the two nodes.
 
         Args:
@@ -68,7 +70,7 @@ class MultiLayerInsulation:
         )
         radiation = self.radiation_coefficient * self.emissivity * (t_outer**4.67 - t_inner**4.67) / self.layers
         flow = self.area * (spacers + radiation)
-        return np.array([flow, -flow], dtype=np.float64)
+        return EnergyBalanceTerms(heat_flow=np.array([flow, -flow], dtype=np.float64))
 
 
 def load_multi_layer_insulation(config: Mapping[str, Any]) -> MultiLayerInsulation:

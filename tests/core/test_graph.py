@@ -7,7 +7,7 @@ import pytest
 from numpy.typing import NDArray
 
 from pulse_tube_cooldown.core.errors import ConfigurationError, PTCError
-from pulse_tube_cooldown.core.types import Graph, Material, Node
+from pulse_tube_cooldown.core.types import EnergyBalanceTerms, Graph, Material, Node
 
 _TOY = Material(
     name="Toy",
@@ -25,8 +25,8 @@ class _StubLink:
     name: str
     nodes: tuple[str, ...]
 
-    def calc_heat_flow(self, temperature: NDArray[np.float64]) -> NDArray[np.float64]:
-        return np.zeros_like(temperature)
+    def calc_energy_balance_terms(self, temperature: NDArray[np.float64]) -> EnergyBalanceTerms:
+        return EnergyBalanceTerms(heat_flow=np.zeros_like(temperature))
 
 
 def _nodes(*names: str) -> tuple[Node, ...]:

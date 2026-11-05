@@ -9,7 +9,7 @@ from numpy.typing import NDArray
 from scipy.constants import Stefan_Boltzmann
 
 from pulse_tube_cooldown.core.errors import ConfigurationError
-from pulse_tube_cooldown.core.types import Surface
+from pulse_tube_cooldown.core.types import EnergyBalanceTerms, Surface
 from pulse_tube_cooldown.library.surfaces.load import load_surface
 
 __all__ = ["Radiation", "load_radiation"]
@@ -44,7 +44,7 @@ class Radiation:
                 f"Radiation link {self.name!r} has inner area {inner} larger than outer area {outer}."
             )
 
-    def calc_heat_flow(self, temperature: NDArray[np.float64]) -> NDArray[np.float64]:
+    def calc_energy_balance_terms(self, temperature: NDArray[np.float64]) -> EnergyBalanceTerms:
         """Calculates the heat flow into each of the two nodes.
 
         Args:
@@ -64,7 +64,7 @@ class Radiation:
             * (t_outer**4 - t_inner**4)
             / (1.0 / e_inner + a_inner / a_outer * (1.0 / e_outer - 1.0))
         )
-        return np.array([flow, -flow], dtype=np.float64)
+        return EnergyBalanceTerms(heat_flow=np.array([flow, -flow], dtype=np.float64))
 
 
 def load_radiation(config: Mapping[str, Any]) -> Radiation:

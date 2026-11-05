@@ -38,7 +38,7 @@ def test_wave_limited_cycle_matches_hand_calculation(pushing):
     # Heat crossing the two element boundaries is 0.015 f Delta P and
     # 0.0025 f Delta P W, respectively.
     frequency = 1.0 / (4.0 * np.log(15.0 / 13.0) + 2.0 * np.log(2.0))
-    flow = pushing.calc_heat_flow(np.array([300.0, 100.0, 50.0]))
+    flow = pushing.calc_energy_balance_terms(np.array([300.0, 100.0, 50.0])).heat_flow
 
     np.testing.assert_allclose(flow, np.array([-0.015, 0.0125, 0.0025]) * frequency * 10000.0, rtol=1e-12)
 
@@ -57,7 +57,7 @@ def test_buffer_cap_stops_pumping_before_wave_limit(pushing, refill_pressure, ex
     pushing = replace(pushing, buffer_pressure_cap=95000.0, refill_pressure=refill_pressure)
     frequency = 1.0 / (4.0 * np.log(maximum / minimum) + 2.0 * np.log(2.0))
 
-    flow = pushing.calc_heat_flow(np.array([300.0, 100.0, 50.0]))
+    flow = pushing.calc_energy_balance_terms(np.array([300.0, 100.0, 50.0])).heat_flow
 
     np.testing.assert_allclose(flow, np.array([-0.015, 0.0125, 0.0025]) * frequency * excursion, rtol=1e-12)
 
@@ -72,14 +72,14 @@ def test_volume_uses_log_mean_temperature_and_splits_heat_equally(pushing):
     temperature = np.array([300.0, 200.0 * np.log(2.0), 100.0 * np.log(2.0), 50.0])
     frequency = 1.0 / (4.0 * np.log(15.0 / 13.0) + 2.0 * np.log(2.0))
 
-    flow = pushing.calc_heat_flow(temperature)
+    flow = pushing.calc_energy_balance_terms(temperature).heat_flow
 
     np.testing.assert_allclose(flow, np.array([-0.015, 0.00625, 0.00625, 0.0025]) * frequency * 10000.0, rtol=1e-12)
 
 
 @pytest.mark.parametrize("temperature", [[300.0, 100.0, 50.0], [100.0, 300.0, 50.0], [50.0, 100.0, 300.0]])
 def test_signed_element_flows_conserve_energy(pushing, temperature):
-    flow = pushing.calc_heat_flow(np.array(temperature))
+    flow = pushing.calc_energy_balance_terms(np.array(temperature)).heat_flow
 
     assert flow.sum() == pytest.approx(0.0, abs=1e-12)
     assert np.sign(flow[0]) == np.sign(temperature[1] - temperature[0])
@@ -89,7 +89,7 @@ def test_signed_element_flows_conserve_energy(pushing, temperature):
 def test_uniform_temperatures_carry_no_heat_including_two_node_volumes(pushing):
     pushing = replace(pushing, volumes=(GasVolume(nodes=("STP", "MXP"), volume=0.002),))
 
-    flow = pushing.calc_heat_flow(np.full(3, 100.0))
+    flow = pushing.calc_energy_balance_terms(np.full(3, 100.0)).heat_flow
 
     np.testing.assert_array_equal(flow, np.zeros(3))
 
@@ -149,7 +149,7 @@ def test_toml_configuration_loads_the_registered_link(configured_model):
     assert model.fixed_boundary_nodes == (0,)
     frequency = 1.0 / (4.0 * np.log(15.0 / 13.0) + 2.0 * np.log(2.0))
     np.testing.assert_allclose(
-        link.calc_heat_flow(model.initial_temperature),
+        link.calc_energy_balance_terms(model.initial_temperature).heat_flow,
         np.array([-0.015, 0.0125, 0.0025]) * frequency * 10000.0,
         rtol=1e-12,
     )
@@ -165,13 +165,13 @@ def test_shared_node_accumulates_heat_from_both_volume_elements(pushing):
     temperature = np.array([300.0, 200.0 * np.log(2.0), 100.0 * np.log(2.0), 50.0 * np.log(2.0)])
     frequency = 1.0 / (4.0 * np.log(15.0 / 13.0) + 2.0 * np.log(2.0))
 
-    flow = pushing.calc_heat_flow(temperature)
+    flow = pushing.calc_energy_balance_terms(temperature).heat_flow
 
     np.testing.assert_allclose(flow, np.array([-0.015, 0.00625, 0.0075, 0.00125]) * frequency * 10000.0, rtol=1e-12)
 
 
 def test_zero_wave_strength_carries_no_heat(pushing):
-    flow = replace(pushing, wave_strength=0.0).calc_heat_flow(np.array([300.0, 100.0, 50.0]))
+    flow = replace(pushing, wave_strength=0.0).calc_energy_balance_terms(np.array([300.0, 100.0, 50.0])).heat_flow
 
     np.testing.assert_array_equal(flow, np.zeros(3))
 

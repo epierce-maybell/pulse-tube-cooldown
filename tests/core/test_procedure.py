@@ -8,7 +8,7 @@ import xarray as xr
 from numpy.typing import NDArray
 
 from pulse_tube_cooldown.core.errors import ConfigurationError, PTCError
-from pulse_tube_cooldown.core.types import Material, Model, Node, Phase, Procedure, Result
+from pulse_tube_cooldown.core.types import EnergyBalanceTerms, Material, Model, Node, Phase, Procedure, Result
 
 _TOY = Material(
     name="Toy",
@@ -27,8 +27,8 @@ class _StubLink:
     nodes: tuple[str, ...]
     conductance: float = 1.0
 
-    def calc_heat_flow(self, temperature: NDArray[np.float64]) -> NDArray[np.float64]:
-        return np.zeros_like(temperature)
+    def calc_energy_balance_terms(self, temperature: NDArray[np.float64]) -> EnergyBalanceTerms:
+        return EnergyBalanceTerms(heat_flow=np.zeros_like(temperature))
 
 
 _NODES = tuple(Node(name, ((_TOY, 1.0),)) for name in ("PRP", "RGP", "Can"))

@@ -7,7 +7,7 @@ import pytest
 from numpy.typing import NDArray
 
 from pulse_tube_cooldown.core.errors import ConfigurationError
-from pulse_tube_cooldown.core.types import Gas, Link, Material, Node
+from pulse_tube_cooldown.core.types import EnergyBalanceTerms, Gas, Link, Material, Node
 
 
 def _linear_material() -> Material:
@@ -42,9 +42,9 @@ class _ConstantConductance:
     nodes: tuple[str, ...]
     conductance: float
 
-    def calc_heat_flow(self, temperature: NDArray[np.float64]) -> NDArray[np.float64]:
+    def calc_energy_balance_terms(self, temperature: NDArray[np.float64]) -> EnergyBalanceTerms:
         into_first = self.conductance * (temperature[1] - temperature[0])
-        return np.array([into_first, -into_first])
+        return EnergyBalanceTerms(heat_flow=np.array([into_first, -into_first]))
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
@@ -55,8 +55,8 @@ class _ConstantSink:
     nodes: tuple[str, ...]
     power: float
 
-    def calc_heat_flow(self, temperature: NDArray[np.float64]) -> NDArray[np.float64]:
-        return np.full(temperature.shape, -self.power)
+    def calc_energy_balance_terms(self, temperature: NDArray[np.float64]) -> EnergyBalanceTerms:
+        return EnergyBalanceTerms(heat_flow=np.full(temperature.shape, -self.power))
 
 
 def test_material_evaluates_properties_over_temperature_arrays():
@@ -158,7 +158,7 @@ def test_components_are_immutable(component):
 def test_two_node_link_returns_signed_flows_in_declared_node_order():
     link: Link = _ConstantConductance(name="strut", nodes=("PRP", "RGP"), conductance=0.5)
 
-    flow = link.calc_heat_flow(np.array([300.0, 100.0]))
+    flow = link.calc_energy_balance_terms(np.array([300.0, 100.0])).heat_flow
 
     np.testing.assert_allclose(flow, [-100.0, 100.0])
     assert flow.sum() == pytest.approx(0.0)
@@ -169,12 +169,12 @@ def test_reversing_declared_node_order_reverses_flow_order():
     reverse = _ConstantConductance(name="strut", nodes=("RGP", "PRP"), conductance=0.5)
 
     np.testing.assert_allclose(
-        reverse.calc_heat_flow(np.array([100.0, 300.0])),
-        forward.calc_heat_flow(np.array([300.0, 100.0]))[::-1],
+        reverse.calc_energy_balance_terms(np.array([100.0, 300.0])).heat_flow,
+        forward.calc_energy_balance_terms(np.array([300.0, 100.0])).heat_flow[::-1],
     )
 
 
 def test_single_node_sink_returns_negative_flow():
     sink = _ConstantSink(name="cooler", nodes=("PRP",), power=40.0)
 
-    np.testing.assert_allclose(sink.calc_heat_flow(np.array([50.0])), [-40.0])
+    np.testing.assert_allclose(sink.calc_energy_balance_terms(np.array([50.0])).heat_flow, [-40.0])

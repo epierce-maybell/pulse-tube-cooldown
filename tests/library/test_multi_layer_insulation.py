@@ -25,13 +25,13 @@ def test_matches_hand_calculation():
     # Spacers in published per-cm units, 20 layers/cm: 8.95e-8 * 20^2.56 * 175 * (300 - 50) / 11 = 0.762158 W/m^2.
     # Radiation: 5.39e-10 * 0.03 * (300^4.67 - 50^4.67) / 10 = 0.598088 W/m^2.
     # Over 0.5 m^2: 0.680123 W.
-    flow = _blanket().calc_heat_flow(np.array([50.0, 300.0]))
+    flow = _blanket().calc_energy_balance_terms(np.array([50.0, 300.0])).heat_flow
 
     np.testing.assert_allclose(flow, [0.680123, -0.680123], rtol=1e-5)
 
 
 def test_equal_temperatures_carry_no_heat():
-    flow = _blanket().calc_heat_flow(np.array([77.0, 77.0]))
+    flow = _blanket().calc_energy_balance_terms(np.array([77.0, 77.0])).heat_flow
 
     np.testing.assert_array_equal(flow, [0.0, 0.0])
 
@@ -39,8 +39,8 @@ def test_equal_temperatures_carry_no_heat():
 def test_warmer_inner_node_loses_heat_to_outer_node():
     blanket = _blanket()
 
-    forward = blanket.calc_heat_flow(np.array([40.0, 250.0]))
-    reverse = blanket.calc_heat_flow(np.array([250.0, 40.0]))
+    forward = blanket.calc_energy_balance_terms(np.array([40.0, 250.0])).heat_flow
+    reverse = blanket.calc_energy_balance_terms(np.array([250.0, 40.0])).heat_flow
 
     assert reverse[0] < 0.0 < reverse[1]
     assert reverse.sum() == pytest.approx(0.0, abs=1e-12 * abs(reverse[0]))
@@ -50,7 +50,7 @@ def test_warmer_inner_node_loses_heat_to_outer_node():
 def test_heat_scales_with_area():
     temperature = np.array([4.0, 300.0])
 
-    small = _blanket(area=0.1).calc_heat_flow(temperature)
-    large = _blanket(area=0.3).calc_heat_flow(temperature)
+    small = _blanket(area=0.1).calc_energy_balance_terms(temperature).heat_flow
+    large = _blanket(area=0.3).calc_energy_balance_terms(temperature).heat_flow
 
     np.testing.assert_allclose(large, 3.0 * small, rtol=1e-12)

@@ -83,13 +83,13 @@ def test_gap_conductance_reaches_vacuum_molecular_and_viscous_limits(pressure, e
 def test_heat_flow_combines_gap_and_bracket_resistances_at_mean_temperature(temperature, expected):
     # At 10 K and 2 Pa, both gap coefficients are 2 W/(m^2 K); gap resistance = 1/3 K/W.
     # Bracket k = 5 W/(m K), resistance = 1/2 K/W. Total flow = 4 / (1/3 + 1/2) = 4.8 W.
-    flow = _switch().calc_heat_flow(np.array(temperature))
+    flow = _switch().calc_energy_balance_terms(np.array(temperature)).heat_flow
 
     np.testing.assert_allclose(flow, [expected, -expected], rtol=1e-12)
 
 
 def test_isothermal_switch_has_zero_heat_flow():
-    np.testing.assert_array_equal(_switch().calc_heat_flow(np.array([10.0, 10.0])), [0.0, 0.0])
+    np.testing.assert_array_equal(_switch().calc_energy_balance_terms(np.array([10.0, 10.0])).heat_flow, [0.0, 0.0])
 
 
 @pytest.mark.parametrize(("charcoal_mass", "expected"), [(2.0, 0.0), (0.5, 0.0015)])
@@ -100,7 +100,7 @@ def test_strong_adsorption_stays_finite_with_sufficient_or_exhausted_charcoal(ch
 
     with np.errstate(over="raise", invalid="raise", divide="raise"):
         pressure = switch.calc_pressure(np.array([0.004, 0.006]))
-        flow = switch.calc_heat_flow(np.array([0.004, 0.006]))
+        flow = switch.calc_energy_balance_terms(np.array([0.004, 0.006])).heat_flow
 
     assert pressure == pytest.approx(expected, rel=1e-12, abs=0.0)
     assert np.all(np.isfinite(flow))

@@ -7,7 +7,7 @@ from typing import Any
 import numpy as np
 from numpy.typing import NDArray
 
-from pulse_tube_cooldown.core.types import Material
+from pulse_tube_cooldown.core.types import EnergyBalanceTerms, Material
 from pulse_tube_cooldown.library.materials.load import load_material
 
 __all__ = ["Conduction", "load_conduction"]
@@ -31,7 +31,7 @@ class Conduction:
     area: float
     length: float
 
-    def calc_heat_flow(self, temperature: NDArray[np.float64]) -> NDArray[np.float64]:
+    def calc_energy_balance_terms(self, temperature: NDArray[np.float64]) -> EnergyBalanceTerms:
         """Calculates the heat flow into each of the two nodes.
 
         Args:
@@ -42,7 +42,7 @@ class Conduction:
         """
         first, second = self.material.conductivity_integral(temperature)
         flow = self.area / self.length * (second - first)
-        return np.array([flow, -flow], dtype=np.float64)
+        return EnergyBalanceTerms(heat_flow=np.array([flow, -flow], dtype=np.float64))
 
 
 def load_conduction(config: Mapping[str, Any]) -> Conduction:

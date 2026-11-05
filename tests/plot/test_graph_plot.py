@@ -11,7 +11,7 @@ import numpy as np
 import pytest
 from numpy.typing import NDArray
 
-from pulse_tube_cooldown.core.types import Graph, Material, Node
+from pulse_tube_cooldown.core.types import EnergyBalanceTerms, Graph, Material, Node
 from pulse_tube_cooldown.plot.graph import plot_graph
 
 _TOY = Material(
@@ -28,8 +28,8 @@ class Strap:
     name: str
     nodes: tuple[str, ...]
 
-    def calc_heat_flow(self, temperature: NDArray[np.float64]) -> NDArray[np.float64]:
-        return np.zeros_like(temperature)
+    def calc_energy_balance_terms(self, temperature: NDArray[np.float64]) -> EnergyBalanceTerms:
+        return EnergyBalanceTerms(heat_flow=np.zeros_like(temperature))
 
 
 @dataclasses.dataclass(frozen=True, slots=True)

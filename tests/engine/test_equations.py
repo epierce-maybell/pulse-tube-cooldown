@@ -5,7 +5,7 @@ import dataclasses
 import numpy as np
 from numpy.typing import NDArray
 
-from pulse_tube_cooldown.core.types import Graph, Material, Node
+from pulse_tube_cooldown.core.types import EnergyBalanceTerms, Graph, Material, Node
 from pulse_tube_cooldown.engine.equations import (
     calc_heat_capacity,
     calc_link_heat_flows,
@@ -63,9 +63,9 @@ class _Conductance:
     nodes: tuple[str, str]
     conductance: float
 
-    def calc_heat_flow(self, temperature: NDArray[np.float64]) -> NDArray[np.float64]:
+    def calc_energy_balance_terms(self, temperature: NDArray[np.float64]) -> EnergyBalanceTerms:
         flow = self.conductance * (temperature[1] - temperature[0])
-        return np.array([flow, -flow])
+        return EnergyBalanceTerms(heat_flow=np.array([flow, -flow]))
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
@@ -76,8 +76,8 @@ class _SharedBath:
     nodes: tuple[str, ...]
     conductance: float
 
-    def calc_heat_flow(self, temperature: NDArray[np.float64]) -> NDArray[np.float64]:
-        return self.conductance * (temperature.mean() - temperature)
+    def calc_energy_balance_terms(self, temperature: NDArray[np.float64]) -> EnergyBalanceTerms:
+        return EnergyBalanceTerms(heat_flow=self.conductance * (temperature.mean() - temperature))
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
@@ -88,8 +88,8 @@ class _Source:
     nodes: tuple[str]
     power: float
 
-    def calc_heat_flow(self, temperature: NDArray[np.float64]) -> NDArray[np.float64]:
-        return np.full_like(temperature, self.power)
+    def calc_energy_balance_terms(self, temperature: NDArray[np.float64]) -> EnergyBalanceTerms:
+        return EnergyBalanceTerms(heat_flow=np.full_like(temperature, self.power))
 
 
 def _network() -> Graph:
@@ -184,3 +184,27 @@ def test_every_fixed_boundary_node_holds():
     rate = calc_temperature_rate_of_change(_boundary_network(), (2, 0), 0.0, _BOUNDARY_TEMPERATURE)
 
     np.testing.assert_allclose(rate, [0.0, 5.74, 0.0])
+
+
+@dataclasses.dataclass(frozen=True, slots=True)
+class _GasStore:
+    """Gas with a constant heat capacity at each of its nodes that transfers no heat."""
+
+    name: str
+    nodes: tuple[str, ...]
+    capacity: float
+
+    def calc_energy_balance_terms(self, temperature: NDArray[np.float64]) -> EnergyBalanceTerms:
+        return EnergyBalanceTerms(
+            heat_flow=np.zeros_like(temperature), heat_capacity=np.full_like(temperature, self.capacity)
+        )
+
+
+def test_heat_capacity_of_a_link_adds_to_its_nodes():
+    graph = _boundary_network()
+    graph = Graph(nodes=graph.nodes, links=(*graph.links, _GasStore("gas", ("RGP", "CFP"), 50.0)))
+
+    rate = calc_temperature_rate_of_change(graph, (), 0.0, _BOUNDARY_TEMPERATURE)
+
+    # RGP: 574 / (100 + 50). CFP: 11 / (200 + 50).
+    np.testing.assert_allclose(rate, [-580.0 / 1800.0, 574.0 / 150.0, 11.0 / 250.0])

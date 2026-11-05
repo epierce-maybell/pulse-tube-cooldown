@@ -58,6 +58,7 @@ __all__ = [
     "calc_gas_mass",
     "calc_heat_flow",
     "calc_mass_swing",
+    "calc_pore_heat_capacity",
 ]
 
 
@@ -100,6 +101,24 @@ def calc_gas_mass(
     )
     warm_volume = model.dead_volume + sum(tube.reservoir_volume for tube in model.pulse_tubes)
     return float(pores + tubes + warm_volume * helium.density(warm, pressure))
+
+
+def calc_pore_heat_capacity(model: HeadModel, temperature: NDArray[np.float64], pressure: float) -> NDArray[np.float64]:
+    """Calculates the heat capacity of the pore gas at each element of a head's chain.
+
+    Args:
+        model: The head's design.
+        temperature: Temperatures in K along the head's chain.
+        pressure: Pressure in Pa throughout the head.
+
+    Returns:
+        Heat capacity in J/K at each element of the chain, zero at the warm flange and stages.
+    """
+    return (
+        _pore_volume_along_chain(model)
+        * helium.density(temperature, pressure)
+        * helium.isobaric_specific_heat(temperature, pressure)
+    )
 
 
 def calc_mass_swing(

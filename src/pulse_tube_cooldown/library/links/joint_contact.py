@@ -16,6 +16,8 @@ from typing import Any
 import numpy as np
 from numpy.typing import NDArray
 
+from pulse_tube_cooldown.core.types import EnergyBalanceTerms
+
 __all__ = ["JointContact", "load_joint_contact"]
 
 
@@ -41,7 +43,7 @@ class JointContact:
     temperature_exponent: float
     source: str
 
-    def calc_heat_flow(self, temperature: NDArray[np.float64]) -> NDArray[np.float64]:
+    def calc_energy_balance_terms(self, temperature: NDArray[np.float64]) -> EnergyBalanceTerms:
         """Calculates the heat flow into each of the two nodes.
 
         Args:
@@ -58,7 +60,7 @@ class JointContact:
             * (mean_temperature / self.reference_temperature) ** self.temperature_exponent
         )
         flow = conductance * (second - first)
-        return np.array([flow, -flow], dtype=np.float64)
+        return EnergyBalanceTerms(heat_flow=np.array([flow, -flow], dtype=np.float64))
 
 
 def load_joint_contact(config: Mapping[str, Any]) -> JointContact:

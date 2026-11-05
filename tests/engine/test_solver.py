@@ -7,7 +7,16 @@ import pytest
 from numpy.typing import NDArray
 
 from pulse_tube_cooldown.core.errors import ConfigurationError
-from pulse_tube_cooldown.core.types import Graph, Material, Model, Node, Phase, PhaseSolution, Procedure
+from pulse_tube_cooldown.core.types import (
+    EnergyBalanceTerms,
+    Graph,
+    Material,
+    Model,
+    Node,
+    Phase,
+    PhaseSolution,
+    Procedure,
+)
 from pulse_tube_cooldown.engine.solver import (
     build_result,
     integrate_phase,
@@ -33,9 +42,9 @@ class _Conductance:
     nodes: tuple[str, str]
     conductance: float
 
-    def calc_heat_flow(self, temperature: NDArray[np.float64]) -> NDArray[np.float64]:
+    def calc_energy_balance_terms(self, temperature: NDArray[np.float64]) -> EnergyBalanceTerms:
         flow = self.conductance * (temperature[1] - temperature[0])
-        return np.array([flow, -flow])
+        return EnergyBalanceTerms(heat_flow=np.array([flow, -flow]))
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
@@ -46,8 +55,8 @@ class _Runaway:
     nodes: tuple[str]
     coefficient: float
 
-    def calc_heat_flow(self, temperature: NDArray[np.float64]) -> NDArray[np.float64]:
-        return self.coefficient * temperature**2
+    def calc_energy_balance_terms(self, temperature: NDArray[np.float64]) -> EnergyBalanceTerms:
+        return EnergyBalanceTerms(heat_flow=self.coefficient * temperature**2)
 
 
 # A 2 J/K stage relaxes toward a 4 K bath through 0.5 W/K, so tau = C / G = 4 s and

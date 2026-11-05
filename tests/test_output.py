@@ -6,7 +6,7 @@ import numpy as np
 import xarray as xr
 from numpy.typing import NDArray
 
-from pulse_tube_cooldown.core.types import Material, Model, Node, Phase, PhaseSolution, Procedure
+from pulse_tube_cooldown.core.types import EnergyBalanceTerms, Material, Model, Node, Phase, PhaseSolution, Procedure
 from pulse_tube_cooldown.engine.solver import build_result
 from pulse_tube_cooldown.output import save_output
 
@@ -25,9 +25,9 @@ class _Conductance:
     nodes: tuple[str, ...]
     conductance: float
 
-    def calc_heat_flow(self, temperature: NDArray[np.float64]) -> NDArray[np.float64]:
+    def calc_energy_balance_terms(self, temperature: NDArray[np.float64]) -> EnergyBalanceTerms:
         flow = self.conductance * (temperature[1] - temperature[0])
-        return np.array([flow, -flow])
+        return EnergyBalanceTerms(heat_flow=np.array([flow, -flow]))
 
 
 _META = {"experiment": "Toy switch", "version": "abc1234"}

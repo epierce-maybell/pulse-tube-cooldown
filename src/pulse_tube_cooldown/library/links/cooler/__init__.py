@@ -13,11 +13,15 @@ from pulse_tube_cooldown.library.links.cooler.head import (
     calc_gas_mass,
     calc_heat_flow,
     calc_mass_swing,
+    calc_pore_heat_capacity,
 )
+from pulse_tube_cooldown.library.links.cooler.link import Cooler, MountedHead, load_cooler, load_matrix_nodes
 
 __all__ = [
     "Compressor",
+    "Cooler",
     "Head",
+    "MountedHead",
     "calc_acoustic_power",
     "calc_breakthrough_loss",
     "calc_charge",
@@ -25,5 +29,8 @@ __all__ = [
     "calc_heat_flow",
     "calc_mass_swing",
     "calc_mean_pressure",
+    "calc_pore_heat_capacity",
     "calc_pressure_swing",
+    "load_cooler",
+    "load_matrix_nodes",
 ]

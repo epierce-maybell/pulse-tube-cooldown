@@ -10,7 +10,7 @@ import numpy as np
 from pulse_tube_cooldown.core.errors import ConfigurationError
 from pulse_tube_cooldown.core.types import Graph, Model, Node, Phase, Procedure
 from pulse_tube_cooldown.library.conditions import load_condition
-from pulse_tube_cooldown.library.links.load import load_link
+from pulse_tube_cooldown.library.links.load import load_link, load_link_nodes
 from pulse_tube_cooldown.library.materials.load import load_material
 
 __all__ = ["configure_model", "load_fridge", "load_procedure"]
@@ -65,14 +65,19 @@ def load_fridge(fridge: Mapping[str, Any]) -> Graph:
             pairs, and an optional array of `links` tables, each accepted by `load_link`.
 
     Returns:
-        The graph of the nodes and links, in configuration order.
+        The graph of the nodes and links, in configuration order, with the nodes that link tables define following
+        the configured nodes in link order.
 
     Raises:
         ConfigurationError: A node or link is missing a key, or a name refers to an unknown material, node, or link
             type.
     """
-    nodes = tuple(_load_node(node) for node in fridge["nodes"])
-    links = tuple(load_link(link) for link in fridge.get("links", []))
+    link_configs = fridge.get("links", [])
+    links = tuple(load_link(link) for link in link_configs)
+    nodes = (
+        *(_load_node(node) for node in fridge["nodes"]),
+        *(node for link in link_configs for node in load_link_nodes(link)),
+    )
 
     return Graph(nodes=nodes, links=links)
 

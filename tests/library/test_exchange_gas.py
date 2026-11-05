@@ -81,7 +81,7 @@ def test_monitor_ovc_cubic_shuts_off_near_68_kelvin(pressure_temperature, expect
 )
 def test_flows_sum_gap_conductance_over_facing_pairs(pressure, expected):
     # Both pairs have a mean temperature of 10 K; differences are +4 K and -4 K across them.
-    flow = _chain((0.0, 0.0, 0.0, pressure)).calc_heat_flow(np.array([8.0, 12.0, 8.0]))
+    flow = _chain((0.0, 0.0, 0.0, pressure)).calc_energy_balance_terms(np.array([8.0, 12.0, 8.0])).heat_flow
 
     np.testing.assert_allclose(flow, expected, rtol=1e-9)
     assert flow.sum() == pytest.approx(0.0, abs=1e-12 * np.abs(flow).max())
@@ -92,7 +92,7 @@ def test_shut_off_gas_carries_no_heat_below_its_property_range():
 
     with warnings.catch_warnings():
         warnings.simplefilter("error")
-        flow = link.calc_heat_flow(np.array([290.0, 60.0, 40.0]))
+        flow = link.calc_energy_balance_terms(np.array([290.0, 60.0, 40.0])).heat_flow
 
     np.testing.assert_array_equal(flow, [0.0, 0.0, 0.0])
 

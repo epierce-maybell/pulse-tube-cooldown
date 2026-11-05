@@ -14,8 +14,9 @@ from collections.abc import Callable, Mapping
 from typing import Any
 
 from pulse_tube_cooldown.core.errors import ConfigurationError
-from pulse_tube_cooldown.core.types import Link
+from pulse_tube_cooldown.core.types import Link, Node
 from pulse_tube_cooldown.library.links.conduction import load_conduction
+from pulse_tube_cooldown.library.links.cooler.link import load_cooler, load_matrix_nodes
 from pulse_tube_cooldown.library.links.exchange_gas import load_exchange_gas
 from pulse_tube_cooldown.library.links.gas_gap_switch import load_gas_gap_switch
 from pulse_tube_cooldown.library.links.gas_pushing import load_gas_pushing
@@ -23,10 +24,11 @@ from pulse_tube_cooldown.library.links.joint_contact import load_joint_contact
 from pulse_tube_cooldown.library.links.multi_layer_insulation import load_multi_layer_insulation
 from pulse_tube_cooldown.library.links.radiation import load_radiation
 
-__all__ = ["LINK_TYPES", "load_link"]
+__all__ = ["LINK_TYPES", "load_link", "load_link_nodes"]
 
 LINK_TYPES: Mapping[str, Callable[[Mapping[str, Any]], Link]] = {
     "conduction": load_conduction,
+    "cooler": load_cooler,
     "exchange_gas": load_exchange_gas,
     "gas_gap_switch": load_gas_gap_switch,
     "gas_pushing": load_gas_pushing,
@@ -59,3 +61,17 @@ def load_link(config: Mapping[str, Any]) -> Link:
         return LINK_TYPES[link_type](config)
     except KeyError as error:
         raise ConfigurationError(f"Link {config.get('name')!r} is missing {error}.") from error
+
+
+def load_link_nodes(config: Mapping[str, Any]) -> tuple[Node, ...]:
+    """Builds the nodes that a link's configuration defines, such as a cooler's regenerator matrix nodes.
+
+    Args:
+        config: A link's configuration table that `load_link` accepts.
+
+    Returns:
+        The nodes, in the order the link's type defines them, or none for a type that defines none.
+    """
+    if config["type"] == "cooler":
+        return load_matrix_nodes(config)
+    return ()

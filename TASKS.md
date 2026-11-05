@@ -49,7 +49,7 @@ Work the rest of the section in list order. The first slice runs from 2.5 throug
   Context: `library/property_fits.py` (the `table` and `measured_with_lattice` forms); `library/materials/data/`, `library/gases/data/`.
   Verified by: unchanged values at the table points and continuous first derivatives, in the fit forms and the library's regenerator materials.
 
-- [ ] **2.9 Cooler configuration** · Build, after 2.7
+- [x] **2.9 Cooler configuration** · Build, after 2.7
   The cooler as a configured link: `"cooler"` in `LINK_TYPES`, with its drive and per-head parameter files read from TOML. Propose matching DESIGN "Cooler configuration" text.
   Context: DESIGN "Cooler configuration" and "Public API"; `library/links/load.py`, `library/links/cooler/load.py`.
   Verified by: a fridge TOML with a cooler builds and runs.

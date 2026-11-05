@@ -25,6 +25,7 @@ from numpy.typing import NDArray
 from pulse_tube_cooldown.core.errors import ConfigurationError
 
 __all__ = [
+    "EnergyBalanceTerms",
     "Gas",
     "Graph",
     "Link",
@@ -132,6 +133,20 @@ class Node:
         return float(sum(mass * material.specific_heat(at_temperature)[0] for material, mass in self.composition))
 
 
+@dataclass(frozen=True, slots=True, kw_only=True)
+class EnergyBalanceTerms:
+    """Terms in the energy balance C dT/dt = Q of each of a set of nodes, in their order.
+
+    Attributes:
+        heat_flow: Heat flow Q in W into each node. Positive values indicate heat flow into the node.
+        heat_capacity: Heat capacity C in J/K of gas at each node that shares the node's temperature, or 0.0 where
+            there is none.
+    """
+
+    heat_flow: NDArray[np.float64]
+    heat_capacity: NDArray[np.float64] | float = 0.0
+
+
 class Link(Protocol):
     """Anything that transfers heat to or from its nodes.
 
@@ -149,14 +164,14 @@ class Link(Protocol):
         """Names of the nodes this link touches, in link-local order."""
         ...
 
-    def calc_heat_flow(self, temperature: NDArray[np.float64]) -> NDArray[np.float64]:
-        """Calculates the heat flow into each of this link's nodes.
+    def calc_energy_balance_terms(self, temperature: NDArray[np.float64]) -> EnergyBalanceTerms:
+        """Calculates this link's terms in the energy balance of each of its nodes.
 
         Args:
             temperature: Temperatures in K of this link's nodes, in the order of `nodes`.
 
         Returns:
-            Heat flows in W, in the order of `nodes`. Positive values indicate heat flow into the node.
+            The heat flow into each node and the heat capacity of the link's gas there, in the order of `nodes`.
         """
         ...
 
@@ -172,8 +187,8 @@ class Graph:
         nodes: Nodes with unique names, in index order.
         links: Links with unique names, in index order. Each refers only to nodes in `nodes`.
         connectivity: For each link, the graph indices of its nodes in link-local order, derived from `nodes` and
-            `links`. `temperature[connectivity[i]]` is the input to `links[i].calc_heat_flow`, and its output adds
-            to the nodes at those same indices.
+            `links`. `temperature[connectivity[i]]` is the input to `links[i].calc_energy_balance_terms`, and its
+            terms add to the nodes at those same indices.
 
     Raises:
         ConfigurationError: A node or link name is duplicated, or a link refers to an unknown node.
