@@ -125,7 +125,7 @@ and its heat capacity is $(1 + \epsilon_k) M_k c_{m,k}$. At each boundary betwee
 ## Parameters
 Four parameters are fitted to the load map, per head: packing coefficients $a_i$ and valve resistances $R_i$. 
 
-For the pulse tube head, each design specifies the geometry of the regenerator sections and pulse tubes, the gas volumes, clamp position, valve frequency, and regenerator matrix materials and properties. For each drive, we need the compressor volumetric flow rates, relief swing, fill pressure at rest, warm-line volume, and the configuration of compressors and heads on the manifold. 
+For the pulse tube head, each design specifies the geometry of the regenerator sections and pulse tubes, the gas volumes, clamp position, and regenerator matrix materials and properties. Each unit's valve frequency is its shipped setting. For each drive, we need the compressor volumetric flow rates, relief swing, fill pressure at rest, warm-line volume, and the configuration of compressors and heads on the manifold. 
 
 Model parameters that we don't fit per run include $\kappa$, $\lambda$, and $\sigma$, all taken from Snodgrass et al. (2024) for now.
 
