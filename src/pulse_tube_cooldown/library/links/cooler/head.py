@@ -13,6 +13,15 @@ gamma helium's heat capacity ratio at the warm flange's temperature and P.
 Each pulse tube draws acoustic power E = e P_a^2 at its cold end, with pressure amplitude P_a = kappa dP / 2 and
 e = omega^2 R B^2 / (2 [1 + (omega R B)^2]).
 
+Gas that crosses a whole pulse tube in one cycle carries its enthalpy to the stage. Pulse tube i loses
+
+    L_i = f [h(T_0) - h(T_i)] s(dm_i - lambda m_i)
+
+to stage i, for helium's specific enthalpy h at P and the warm flange's and stage's temperatures, the mass dm_i entering
+the tube's reservoir through its warm end over a cycle, the tube's gas mass m_i at P, and the buffer fraction lambda.
+The smooth positive part s(x) = x Phi(x / w) + w phi(x / w), for the standard normal distribution Phi and its density
+phi, is the mean excess over the buffer of a stroke spread normally with standard deviation w = sigma m_i.
+
 Within a regenerator section, temperature is linear in position between the warm end, the node centres, and the cold
 end. At each node boundary, with x increasing towards the warm end, the energy flow towards the cold end is
 
@@ -26,8 +35,8 @@ over their matrix's. Acoustic power grows towards the warm end as d(ln E) = beta
 node k, from E_2 at stage 2 and from E_1 plus the stage-2 section's warm-end power at stage 1.
 
 A node's heat flow is the energy flow at its warm boundary less that at its cold boundary. Stage i also takes the
-section energy flows on either side, its tube wall's conduction from the warm flange, and -E_i. The warm flange's heat
-flow is zero.
+section energy flows on either side, its tube wall's conduction from the warm flange, L_i, and -E_i. The warm flange's
+heat flow is zero.
 """
 
 import math
@@ -37,11 +46,19 @@ from dataclasses import dataclass
 import numpy as np
 from numpy.polynomial.legendre import leggauss
 from numpy.typing import NDArray
+from scipy.special import ndtr
 
 from pulse_tube_cooldown.library.gases import helium
-from pulse_tube_cooldown.library.heads import HeadModel, RegeneratorSection
+from pulse_tube_cooldown.library.heads import HeadModel, PulseTube, RegeneratorSection
 
-__all__ = ["Head", "calc_acoustic_power", "calc_gas_mass", "calc_heat_flow", "calc_mass_swing"]
+__all__ = [
+    "Head",
+    "calc_acoustic_power",
+    "calc_breakthrough_loss",
+    "calc_gas_mass",
+    "calc_heat_flow",
+    "calc_mass_swing",
+]
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -78,8 +95,7 @@ def calc_gas_mass(
     warm = temperature[0]
     pores = _pore_volume_along_chain(model) @ helium.density(temperature, pressure)
     tubes = sum(
-        tube.volume
-        * _mean_over_tube(lambda t: helium.density(t, pressure), warm, temperature[stage], quadrature_points)
+        _tube_gas_mass(tube, warm, temperature[stage], pressure, quadrature_points)
         for tube, stage in zip(model.pulse_tubes, _stages(model), strict=True)
     )
     warm_volume = model.dead_volume + sum(tube.reservoir_volume for tube in model.pulse_tubes)
@@ -107,10 +123,8 @@ def calc_mass_swing(
         Mass in kg per cycle at each element of the chain. The sum is the head's mass swing.
     """
 
-    def adiabatic_swing(t: NDArray[np.float64] | float, swing: float = pressure_swing) -> NDArray[np.float64]:
-        return helium.isentropic_density(t, mean_pressure, mean_pressure + swing / 2) - helium.isentropic_density(
-            t, mean_pressure, mean_pressure - swing / 2
-        )
+    def adiabatic_swing(t: NDArray[np.float64]) -> NDArray[np.float64]:
+        return _adiabatic_density_swing(t, mean_pressure, pressure_swing)
 
     model = head.model
     warm = temperature[0]
@@ -119,14 +133,10 @@ def calc_mass_swing(
         - helium.density(temperature, mean_pressure - pressure_swing / 2)
     )
     mass[0] += model.dead_volume * float(adiabatic_swing(warm))
-    omega = 2 * math.pi * head.frequency
-    responses = _pressure_responses(model, warm, mean_pressure)
-    for tube, stage, resistance, response in zip(
-        model.pulse_tubes, _stages(model), head.resistance, responses, strict=True
-    ):
-        reservoir_swing = pressure_swing / math.sqrt(1 + (omega * resistance * response) ** 2)
+    reservoirs = _reservoir_mass_swing(head, warm, mean_pressure, pressure_swing)
+    for tube, stage, reservoir in zip(model.pulse_tubes, _stages(model), reservoirs, strict=True):
         mass[stage] += tube.volume * _mean_over_tube(adiabatic_swing, warm, temperature[stage], quadrature_points)
-        mass[stage] += tube.reservoir_volume * float(adiabatic_swing(warm, reservoir_swing))
+        mass[stage] += reservoir
     return mass
 
 
@@ -155,6 +165,40 @@ def calc_acoustic_power(
     return first, second
 
 
+def calc_breakthrough_loss(
+    head: Head, temperature: NDArray[np.float64], mean_pressure: float, pressure_swing: float
+) -> tuple[float, float]:
+    """Calculates the heat each pulse tube's breakthrough carries to its stage.
+
+    Args:
+        head: The head.
+        temperature: Temperatures in K along the head's chain.
+        mean_pressure: Mean of supply and return pressures in Pa.
+        pressure_swing: Supply minus return pressure in Pa.
+
+    Returns:
+        Stage-1 and stage-2 breakthrough loss in W.
+    """
+    model = head.model
+    warm = temperature[0]
+    stages = _stages(model)
+    warm_enthalpy, *stage_enthalpy = helium.enthalpy(temperature[[0, *stages]], mean_pressure)
+    first, second = (
+        head.frequency
+        * (warm_enthalpy - enthalpy)
+        * _smooth_positive_part(stroke - model.buffer_fraction * tube_mass, model.stroke_spread * tube_mass)
+        for tube, stage, enthalpy, stroke in zip(
+            model.pulse_tubes,
+            stages,
+            stage_enthalpy,
+            _reservoir_mass_swing(head, warm, mean_pressure, pressure_swing),
+            strict=True,
+        )
+        for tube_mass in [_tube_gas_mass(tube, warm, temperature[stage], mean_pressure)]
+    )
+    return first, second
+
+
 def calc_heat_flow(
     head: Head, temperature: NDArray[np.float64], mean_pressure: float, pressure_swing: float
 ) -> NDArray[np.float64]:
@@ -175,6 +219,7 @@ def calc_heat_flow(
     mass_swing = calc_mass_swing(head, temperature, mean_pressure, pressure_swing)
     cold_side_flow = head.frequency * np.cumsum(mass_swing[::-1])[::-1]
     tube_power = calc_acoustic_power(head, mean_pressure, pressure_swing, warm)
+    loss = calc_breakthrough_loss(head, temperature, mean_pressure, pressure_swing)
     second, second_warm_power = _energy_flow(
         model.regenerators[1],
         temperature[stage_1 : stage_2 + 1],
@@ -201,9 +246,45 @@ def calc_heat_flow(
     heat = np.zeros_like(temperature, dtype=float)
     heat[1:stage_1] = first[:-1] - first[1:]
     heat[stage_1 + 1 : stage_2] = second[:-1] - second[1:]
-    heat[stage_1] = first[-1] + tube_conduction[0] - tube_power[0] - second[0]
-    heat[stage_2] = second[-1] + tube_conduction[1] - tube_power[1]
+    heat[stage_1] = first[-1] + tube_conduction[0] + loss[0] - tube_power[0] - second[0]
+    heat[stage_2] = second[-1] + tube_conduction[1] + loss[1] - tube_power[1]
     return heat
+
+
+def _adiabatic_density_swing(
+    temperature: NDArray[np.float64] | float, mean_pressure: float, pressure_swing: float
+) -> NDArray[np.float64]:
+    """Density swing in kg/m^3 at constant entropy from `temperature` at the mean pressure."""
+    return helium.isentropic_density(
+        temperature, mean_pressure, mean_pressure + pressure_swing / 2
+    ) - helium.isentropic_density(temperature, mean_pressure, mean_pressure - pressure_swing / 2)
+
+
+def _reservoir_mass_swing(
+    head: Head, warm_temperature: float, mean_pressure: float, pressure_swing: float
+) -> list[float]:
+    """Mass in kg entering each pulse tube's reservoir over one cycle."""
+    omega = 2 * math.pi * head.frequency
+    return [
+        tube.reservoir_volume
+        * float(
+            _adiabatic_density_swing(
+                warm_temperature, mean_pressure, pressure_swing / math.sqrt(1 + (omega * resistance * response) ** 2)
+            )
+        )
+        for tube, resistance, response in zip(
+            head.model.pulse_tubes,
+            head.resistance,
+            _pressure_responses(head.model, warm_temperature, mean_pressure),
+            strict=True,
+        )
+    ]
+
+
+def _smooth_positive_part(value: float, width: float) -> float:
+    """Mean of max(X, 0) for X normally distributed with mean `value` and standard deviation `width`."""
+    scaled = value / width
+    return float(value * ndtr(scaled) + width * math.exp(-(scaled**2) / 2) / math.sqrt(2 * math.pi))
 
 
 def _energy_flow(
@@ -294,6 +375,11 @@ def _pore_volume_along_chain(model: HeadModel) -> NDArray[np.float64]:
         for section in model.regenerators
     )
     return np.array([0.0, *first, 0.0, *second, 0.0])
+
+
+def _tube_gas_mass(tube: PulseTube, warm: float, cold: float, pressure: float, points: int = 16) -> float:
+    """Gas mass in kg in a pulse tube at one pressure, along a linear temperature profile from `warm` to `cold`."""
+    return tube.volume * _mean_over_tube(lambda t: helium.density(t, pressure), warm, cold, points)
 
 
 def _mean_over_tube(

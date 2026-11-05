@@ -5,11 +5,12 @@ array of their broadcast shape in SI units. HEPAK raises `HepakError` for a stat
 """
 
 import numpy as np
-from hepak.properties import _call_calc, _offset, density_TP, entropy_TP, heat_capacity_TP, properties_TP
+from hepak.properties import _call_calc, _offset, density_TP, enthalpy_TP, entropy_TP, heat_capacity_TP, properties_TP
 from numpy.typing import ArrayLike, NDArray
 
 __all__ = [
     "density",
+    "enthalpy",
     "heat_capacity_ratio",
     "isentropic_density",
     "isobaric_expansion_coefficient",
@@ -27,6 +28,7 @@ def _isentropic_density(temperature: float, reference_pressure: float, pressure:
 
 
 _density = np.vectorize(lambda temperature, pressure: density_TP(temperature, pressure, basis="mass"), otypes=[float])
+_enthalpy = np.vectorize(lambda temperature, pressure: enthalpy_TP(temperature, pressure, basis="mass"), otypes=[float])
 _specific_heat = np.vectorize(
     lambda temperature, pressure: heat_capacity_TP(temperature, pressure, basis="mass"), otypes=[float]
 )
@@ -38,6 +40,11 @@ _ratio = np.vectorize(lambda temperature, pressure: properties_TP(temperature, p
 def density(temperature: ArrayLike, pressure: ArrayLike) -> NDArray[np.float64]:
     """Mass density in kg/m^3."""
     return _density(temperature, pressure)
+
+
+def enthalpy(temperature: ArrayLike, pressure: ArrayLike) -> NDArray[np.float64]:
+    """Specific enthalpy in J/kg."""
+    return _enthalpy(temperature, pressure)
 
 
 def isentropic_density(

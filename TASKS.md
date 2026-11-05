@@ -39,7 +39,7 @@ Work the rest of the section in list order. The first slice runs from 2.5 throug
   Context: ADR 03 "Governing equations" and "Regenerator network"; `library/links/cooler/`.
   Verified by: heat flows with continuous derivatives that reach a cold steady state at plausible parameters.
 
-- [ ] **2.8 Breakthrough loss** · Build, after 2.7
+- [x] **2.8 Breakthrough loss** · Build, after 2.7
   Each pulse tube's breakthrough loss, with helium enthalpy and a smooth positive part.
   Context: ADR 03 "Governing equations"; `docs/papers/pulse_tube/Snodgrass2024.pdf`.
   Verified by: no loss while the stroke stays within the buffer, rising smoothly past it.

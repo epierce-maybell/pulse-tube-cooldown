@@ -7,6 +7,7 @@ from scipy.optimize import brentq
 
 from pulse_tube_cooldown.library.gases.helium import (
     density,
+    enthalpy,
     heat_capacity_ratio,
     isentropic_density,
     isobaric_expansion_coefficient,
@@ -84,10 +85,28 @@ def test_isentropic_density_at_reference_pressure_is_density():
     assert isentropic_density(20.0, 1.6e6, 1.6e6) == pytest.approx(density(20.0, 1.6e6), rel=1e-9)
 
 
+@pytest.mark.parametrize("pressure", _HEAD_PRESSURES)
+def test_enthalpy_rise_near_ideal_at_room_temperature(pressure):
+    # h(300 K) - h(250 K) = 5/2 R / M * 50 K for a monatomic ideal gas.
+    rise = enthalpy(300.0, pressure) - enthalpy(250.0, pressure)
+
+    assert rise == pytest.approx(2.5 * _GAS_CONSTANT / _MOLAR_MASS * 50.0, rel=1e-3)
+
+
+@pytest.mark.parametrize("temperature", [4.0, 10.0, 50.0])
+@pytest.mark.parametrize("pressure", _HEAD_PRESSURES)
+def test_enthalpy_rises_with_isobaric_specific_heat(temperature, pressure):
+    step = 1e-3 * temperature
+    rise = enthalpy(temperature + step, pressure) - enthalpy(temperature - step, pressure)
+
+    assert rise / (2 * step) == pytest.approx(isobaric_specific_heat(temperature, pressure), rel=1e-3)
+
+
 @pytest.mark.parametrize(
     "function",
     [
         density,
+        enthalpy,
         isobaric_specific_heat,
         isobaric_expansion_coefficient,
         heat_capacity_ratio,

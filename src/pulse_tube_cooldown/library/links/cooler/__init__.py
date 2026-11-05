@@ -9,6 +9,7 @@ from pulse_tube_cooldown.library.links.cooler.drive import (
 from pulse_tube_cooldown.library.links.cooler.head import (
     Head,
     calc_acoustic_power,
+    calc_breakthrough_loss,
     calc_gas_mass,
     calc_heat_flow,
     calc_mass_swing,
@@ -18,6 +19,7 @@ __all__ = [
     "Compressor",
     "Head",
     "calc_acoustic_power",
+    "calc_breakthrough_loss",
     "calc_charge",
     "calc_gas_mass",
     "calc_heat_flow",

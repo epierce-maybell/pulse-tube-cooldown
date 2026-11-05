@@ -1,4 +1,4 @@
-"""Requirements for one head's gas inventory, mass swing, acoustic power, and heat flows."""
+"""Requirements for one head's gas inventory, mass swing, acoustic power, breakthrough loss, and heat flows."""
 
 import dataclasses
 import math
@@ -13,6 +13,7 @@ from pulse_tube_cooldown.library.heads import HeadModel, MatrixLayer, PulseTube,
 from pulse_tube_cooldown.library.links.cooler.head import (
     Head,
     calc_acoustic_power,
+    calc_breakthrough_loss,
     calc_gas_mass,
     calc_heat_flow,
     calc_mass_swing,
@@ -70,6 +71,8 @@ _COLD = np.array([300.0, 60.0, 40.0, 20.0, 10.0, 6.0, 4.0])
 _PORE = {1: 1.0e-4, 3: 3.0e-5, 4: 2.0e-5, 5: 2.0e-5}  # m^3 at each node's chain index
 _TUBE = {2: 6.0e-5, 6: 2.0e-4}  # m^3 at each stage's chain index
 _FREQUENCY = 1.2
+_STIFF = (1e10, 3e10)  # Pa s/m^3, holding each reservoir near the mean pressure
+_OPEN = (2e7, 6e7)  # Pa s/m^3, letting each reservoir swing
 
 
 def _mean_over_tube(function, warm, cold):
@@ -190,7 +193,13 @@ def test_heat_flow_without_swing_is_wall_conduction():
     #   stage-2 section: 2e-4 * [(40 - 20) / 0.05, (20 - 10) / 0.075, (10 - 6) / 0.05, (6 - 4) / 0.025]
     #                    = 0.08, 0.02667, 0.016, 0.016 W
     #   tubes:           2e-5 / 0.3 * [260, 296] = 0.017333, 0.019733 W
-    head = Head(model=_model(), packing=(0.1, 0.1), resistance=(2e7, 6e7), frequency=_FREQUENCY)
+    # A stroke spread of 1% of each tube's gas leaves no breakthrough while the gas stands still.
+    head = Head(
+        model=dataclasses.replace(_model(), stroke_spread=0.01),
+        packing=(0.1, 0.1),
+        resistance=(2e7, 6e7),
+        frequency=_FREQUENCY,
+    )
     expected = [
         0.0,
         0.48 - 0.04,
@@ -253,6 +262,100 @@ def test_regeneration_at_stage_2_follows_packing():
     change = calc_heat_flow(packed, _COLD, mean_pressure, swing) - calc_heat_flow(loose, _COLD, mean_pressure, swing)
 
     assert change[6] == pytest.approx(expected, rel=1e-9)
+
+
+def _tube_gas_mass(index, pressure):
+    """Gas mass in kg of the pulse tube at a stage's chain index, by adaptive quadrature over its profile."""
+    return _TUBE[index] * _mean_over_tube(lambda t: float(helium.density(t, pressure)), _COLD[0], _COLD[index])
+
+
+def _enthalpy_drop(index, pressure):
+    """Specific enthalpy in J/kg of helium at the warm flange less that at the stage at a chain index."""
+    return float(helium.enthalpy(_COLD[0], pressure) - helium.enthalpy(_COLD[index], pressure))
+
+
+def test_breakthrough_loss_vanishes_while_stroke_stays_within_buffer():
+    # A 0.2 MPa swing with stiff reservoirs moves 2% and 0.1% of each tube's gas through its warm end, at least four
+    # spreads of 10% short of its buffer of half the tube's gas. Each loss is below 1e-4 of the enthalpy one spread of
+    # gas carries per second, f (h(T_0) - h(T_i)) sigma m_i.
+    mean_pressure = 1.4e6
+    head = Head(model=_model(), packing=(0.0, 0.0), resistance=_STIFF, frequency=_FREQUENCY)
+
+    loss = calc_breakthrough_loss(head, _COLD, mean_pressure, 0.2e6)
+
+    for value, index in zip(loss, _TUBE, strict=True):
+        spread_enthalpy = _FREQUENCY * _enthalpy_drop(index, mean_pressure) * 0.1 * _tube_gas_mass(index, mean_pressure)
+        assert 0.0 <= value < 1e-4 * spread_enthalpy
+
+
+def test_breakthrough_loss_ignores_the_tubes_own_compression():
+    # Without reservoirs, a 2.0 MPa swing compresses 89% and 70% of each tube's gas through its cold end, but none
+    # passes the warm end, so nothing breaks through: each loss is below 1e-4 of f (h(T_0) - h(T_i)) sigma m_i.
+    mean_pressure = 1.4e6
+    head = Head(model=_model(reservoir_volume=0.0), packing=(0.0, 0.0), resistance=_OPEN, frequency=_FREQUENCY)
+
+    loss = calc_breakthrough_loss(head, _COLD, mean_pressure, 2.0e6)
+
+    for value, index in zip(loss, _TUBE, strict=True):
+        spread_enthalpy = _FREQUENCY * _enthalpy_drop(index, mean_pressure) * 0.1 * _tube_gas_mass(index, mean_pressure)
+        assert 0.0 <= value < 1e-4 * spread_enthalpy
+
+
+def test_breakthrough_loss_far_past_buffer_carries_excess_enthalpy():
+    # With open valves a 1.2 MPa swing moves 18 and 2.0 times each tube's gas through its warm end, many spreads past
+    # its buffer. Each cycle the excess over half the tube's gas carries the enthalpy difference between the warm
+    # flange and the stage: L_i = f (h(T_0) - h(T_i)) (dm_i - m_i / 2), with dm_i the reservoir's swing, the head's
+    # swing at the stage less that of the same head without reservoirs, and m_i averaged by the default quadrature to
+    # within 1e-4 of adaptive quadrature.
+    mean_pressure, swing = 1.4e6, 1.2e6
+    head = Head(model=_model(), packing=(0.0, 0.0), resistance=_OPEN, frequency=_FREQUENCY)
+    closed = dataclasses.replace(head, model=_model(reservoir_volume=0.0))
+    reservoir_swing = calc_mass_swing(head, _COLD, mean_pressure, swing) - calc_mass_swing(
+        closed, _COLD, mean_pressure, swing
+    )
+    expected = [
+        _FREQUENCY
+        * _enthalpy_drop(index, mean_pressure)
+        * (reservoir_swing[index] - 0.5 * _tube_gas_mass(index, mean_pressure))
+        for index in _TUBE
+    ]
+
+    np.testing.assert_allclose(calc_breakthrough_loss(head, _COLD, mean_pressure, swing), expected, rtol=1e-4)
+
+
+def test_breakthrough_loss_rises_smoothly_past_buffer():
+    # Swings from 0.2 to 2.0 MPa carry each tube's stroke through its warm end from 10% and 9% of its gas, within its
+    # buffer, to 96% and 93%, past it. The loss rises throughout with continuous derivatives, as in the heat-flow
+    # roughness test below.
+    head = Head(model=_model(), packing=(0.0, 0.0), resistance=(2e9, 3e8), frequency=_FREQUENCY)
+
+    def losses(points):
+        return np.array(
+            [calc_breakthrough_loss(head, _COLD, 1.4e6, swing) for swing in np.linspace(0.2e6, 2.0e6, points)]
+        )
+
+    def roughness(loss):
+        return np.max(np.abs(np.diff(loss, 2, axis=0)), axis=0) / np.max(np.abs(np.diff(loss, axis=0)), axis=0)
+
+    coarse, fine = losses(41), losses(161)
+
+    assert np.all(np.diff(fine, axis=0) > 0)
+    assert np.all(fine[0] < 1e-3 * fine[-1])
+    assert np.all(roughness(fine) <= 0.5 * roughness(coarse))
+
+
+def test_heat_flow_takes_breakthrough_loss_at_each_stage():
+    # Against a head whose buffers hold a hundred times each tube's gas, the heat flow gains L_1 at stage 1 and L_2 at
+    # stage 2, and nothing elsewhere.
+    mean_pressure, swing = 1.4e6, 1.2e6
+    head = Head(model=_model(), packing=(0.1, 0.1), resistance=_OPEN, frequency=_FREQUENCY)
+    buffered = dataclasses.replace(head, model=dataclasses.replace(head.model, buffer_fraction=100.0))
+    expected = np.zeros(7)
+    expected[list(_TUBE)] = calc_breakthrough_loss(head, _COLD, mean_pressure, swing)
+
+    change = calc_heat_flow(head, _COLD, mean_pressure, swing) - calc_heat_flow(buffered, _COLD, mean_pressure, swing)
+
+    np.testing.assert_allclose(change, expected, rtol=1e-9, atol=1e-12 * np.max(expected))
 
 
 # PT1.5 with placeholder packing coefficients and valve resistances pending task 2.3's fit, its matrix given a smooth
