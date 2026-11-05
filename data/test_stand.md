@@ -16,9 +16,15 @@ MLI wraps the two regenerators, pulse tube 1, and both stages in 4 to 12 layers 
 
 A cooldown file opens with the calibration curve for each channel, T2 through Z1512 and T1 and T3 (`T3/Taux` in the header) both through Z1518, then a column line. These are the header's recorded assignments; matching curves to the installed sensor serials remains unverified. Each row holds the timestamp, elapsed minutes, T1, TPR, T2, two copies of T1 (`Taux` and `Taux2`), and unused fields. Rows come every 2 s, and T3 updates about every 15 s. The elapsed column can restart within a file, so the timestamp is the clock. `test_stand/s0009/cooldown_2026-05-14.dat` has a second short run appended from 14:19:17.
 
-A load map opens with the valve settings, the valve frequency (`f:1.1`), and the applied powers, then holds one row per steady state: stage-1 and stage-2 heater power in W, elapsed minutes, T1, TPR, T2, `Taux`, and `Taux2`. The operator types in the `f:` field: S0007's header matches its shipped setting, and S0009's and S0034's do not. A head's valve frequency is its shipped setting in `docs/pt_performance_overview_2026-10-30.pdf`, tabulated in `test_stand/valve_settings.csv`.
+A load map opens with the valve settings, the valve frequency (`f:1.1`), and the applied powers, then holds one row per steady state: stage-1 and stage-2 heater power in W, elapsed minutes, T1, TPR, T2, `Taux`, and `Taux2`. The operator types in the `f:` field: S0007's header matches its shipped setting, and S0009's and S0034's do not. A run's valve frequency is the one the index states for it, otherwise its head's shipped setting in `docs/pt_performance_overview_2026-10-30.pdf`, tabulated in `test_stand/valve_settings.csv`.
 
 Some load maps exist only as steady plateaus in a continuous log, about 2 h per point: S0035's on 2026-09-25, and S0038's on 2026-10-02, -06, -08, -09, and -12. A continuous log's trailing fields do not hold the heater powers; they read 0 throughout the Sep 21 log, which contains the plateaus of `dataLoadMap Mon Sep 21 16_36_05 2026.dat`. That file's powers are 25, 20, and 0 W on stage 1 against 0.5 and 0 W on stage 2, and its points match S0035's Sep 25 plateaus within 0.2 K, so it is taken as S0035's.
+
+## Load-map fit set
+
+`test_stand/fit_set.csv` lists the canonical head's load maps, read by `measurements.read_load_map_set`. It holds one Denver map per PT1.5 head whose load-map file is in the archive's `loadmap_data/`, in the standard setup: no elbow or compressor filter, and the head's own rotary valve and compressor hoses. Among a head's repeats it holds the more standard run by the index's notes, otherwise the more recent. Each map is a copy of its archive file, named in `source`. A run has two compressors where the index notes two, otherwise one. Its MLI state is the index's, or `unrecorded` where the index gives none.
+
+Two archive files carry other names than the index's. `LoadMap-SN023-06-20-2026.dat` is S0023's 2026-06-19 map, `dataLoadMap Fri Jun 19 10_52_14 2026.dat`: its first point matches the plateau at 13:16 in that day's continuous log. `dataLoadMap Mon Sep 21 16_36_05 2026.dat` is S0035's 2026-09-21 map. The index lists no raw data for S0019's, S0034's, and S0035's selected maps; the archive holds each one's stand file.
 
 ## Channel behavior
 

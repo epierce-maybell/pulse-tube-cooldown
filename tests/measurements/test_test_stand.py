@@ -5,7 +5,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from pulse_tube_cooldown.measurements.test_stand import read_cooldown, read_load_map
+from pulse_tube_cooldown.measurements.test_stand import read_cooldown, read_load_map, read_load_map_set
 
 _S0009 = Path(__file__).parents[2] / "data/test_stand/s0009"
 
@@ -97,3 +97,49 @@ def test_load_map_units(load_map):
     assert load_map.Q2.attrs["units"] == "W"
     for channel in ("T1", "TPR", "T2"):
         assert load_map[channel].attrs["units"] == "K"
+
+
+_HEADER = "ORV1:- DIV1A:- DIV1B:- ORV2:-DIV2A:- DIV2B:- f:1.1\nPower Stage 1: [20.0, 0.0]\nPower Stage 2: [0.5, 0.0]\n"
+
+
+@pytest.fixture
+def load_map_set(tmp_path):
+    (tmp_path / "s0001").mkdir()
+    (tmp_path / "s0001/load_map_2026-01-02.dat").write_text(
+        _HEADER
+        + "20.0  0.5   120.0   50.0   34.0   3.5   50.0   50.0\n"
+        + "0.0  0.0   240.0   38.0   33.0   2.2   38.0   38.0\n"
+    )
+    (tmp_path / "s0002").mkdir()
+    (tmp_path / "s0002/load_map_2026-03-04.dat").write_text(
+        _HEADER + "0.0  0.5   120.0   41.0   33.5   3.3   41.0   41.0\n"
+    )
+    table = tmp_path / "set.csv"
+    table.write_text(
+        "serial,date,file,source,compressors,valve_frequency,mli\n"
+        "S0001,2026-01-02,s0001/load_map_2026-01-02.dat,a.dat,1,1.0,full\n"
+        "S0002,2026-03-04,s0002/load_map_2026-03-04.dat,b.dat,2,1.1,unrecorded\n"
+    )
+    return read_load_map_set(table)
+
+
+def test_load_map_set_joins_every_point_in_table_order(load_map_set):
+    np.testing.assert_array_equal(load_map_set.Q1, [20.0, 0.0, 0.0])
+    np.testing.assert_array_equal(load_map_set.Q2, [0.5, 0.0, 0.5])
+    np.testing.assert_array_equal(load_map_set.T1, [50.0, 38.0, 41.0])
+    np.testing.assert_array_equal(load_map_set.TPR, [34.0, 33.0, 33.5])
+    np.testing.assert_array_equal(load_map_set.T2, [3.5, 2.2, 3.3])
+
+
+def test_load_map_set_points_carry_their_run(load_map_set):
+    np.testing.assert_array_equal(load_map_set.serial, ["S0001", "S0001", "S0002"])
+    np.testing.assert_array_equal(load_map_set.date, ["2026-01-02", "2026-01-02", "2026-03-04"])
+    np.testing.assert_array_equal(load_map_set.compressors, [1, 1, 2])
+    np.testing.assert_array_equal(load_map_set.valve_frequency, [1.0, 1.0, 1.1])
+    np.testing.assert_array_equal(load_map_set.mli, ["full", "full", "unrecorded"])
+
+
+def test_load_map_set_units(load_map_set):
+    assert load_map_set.valve_frequency.attrs["units"] == "Hz"
+    assert load_map_set.Q1.attrs["units"] == "W"
+    assert load_map_set.T2.attrs["units"] == "K"

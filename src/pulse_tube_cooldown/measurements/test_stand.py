@@ -4,6 +4,7 @@ T1 is stage 1 and T2 stage 2. TPR is the raw column name for T3, the thermometer
 Q1 and Q2 are the stage-1 and stage-2 heater powers. Readings the stand logs as `nan` stay NaN.
 """
 
+import csv
 import os
 from datetime import datetime
 from pathlib import Path
@@ -11,7 +12,7 @@ from pathlib import Path
 import numpy as np
 import xarray as xr
 
-__all__ = ["read_cooldown", "read_load_map"]
+__all__ = ["read_cooldown", "read_load_map", "read_load_map_set"]
 
 
 def read_cooldown(path: str | os.PathLike[str]) -> xr.Dataset:
@@ -49,3 +50,35 @@ def read_load_map(path: str | os.PathLike[str]) -> xr.Dataset:
     return xr.Dataset(
         {name: ("point", column, {"units": units[name]}) for name, column in zip(units, rows.T, strict=True)}
     )
+
+
+def read_load_map_set(path: str | os.PathLike[str]) -> xr.Dataset:
+    """Reads the load maps a set table lists, as one Dataset of points.
+
+    Args:
+        path: A CSV with one row per map and columns serial, date, file, source, compressors, valve_frequency, and mli.
+            `file` is the map's path relative to the CSV's directory, and `source` its name in the stand's archive.
+
+    Returns:
+        Q1, Q2, T1, TPR, and T2 along `point`, in table and measurement order. Each point carries its map's serial,
+        date, compressor count, valve frequency in Hz, and MLI state ("full", "reduced", "none", or "unrecorded")
+        as coordinates.
+    """
+    table = Path(path)
+    with open(table, encoding="utf-8", newline="") as file:
+        rows = list(csv.DictReader(file))
+
+    maps = []
+    for row in rows:
+        points = read_load_map(table.parent / row["file"])
+        count = points.sizes["point"]
+        maps.append(
+            points.assign_coords(
+                serial=("point", [row["serial"]] * count),
+                date=("point", [row["date"]] * count),
+                compressors=("point", [int(row["compressors"])] * count),
+                valve_frequency=("point", [float(row["valve_frequency"])] * count, {"units": "Hz"}),
+                mli=("point", [row["mli"]] * count),
+            )
+        )
+    return xr.concat(maps, dim="point")

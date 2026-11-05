@@ -59,7 +59,7 @@ Work the rest of the section in list order. The first slice runs from 2.5 throug
   Context: `data/test_stand.md`, `data/compressors.md`; `simulations/validation/sn09_bare_head/` for the earlier version.
   Verified by: a load-map surface and a cooldown at placeholder parameters.
 
-- [ ] **2.11 Load-map fit set** · Build
+- [x] **2.11 Load-map fit set** · Build
   The canonical fit's inputs from `data/test_stand/load_map_index_2026-11-05.csv`: one Denver map per PT1.5 head with raw data on file, in the standard setup, which the index notes when it uses two compressors. Among a head's repeats, the more standard run by the notes, otherwise the more recent. Each point carries its run's compressor count, valve frequency, and MLI state. The selection replaces the record list in `data/systems.md`.
   Context: the index; `data/test_stand.md`; `simulations/exploration/loadmaps/`; the archive at `../../data/test_stand/`.
   Verified by: each selected map traces to its index row and raw file.
