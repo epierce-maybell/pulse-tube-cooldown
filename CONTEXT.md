@@ -37,7 +37,7 @@ Paths are under `src/pulse_tube_cooldown/` and `tests/` unless noted. DESIGN nam
 |---|---|---|---|---|
 | Types, graph, procedure, model | DESIGN "Data model", "Phases and Procedure" | `core/`, `library/conditions.py` | `core/`, `library/test_conditions.py` | |
 | Engine and solver | DESIGN "Engine" | `engine/` | `engine/` | |
-| Configuration, CLI, output | DESIGN "Public API" | `config.py`, `__main__.py`, `output.py` | `test_config.py`, `test_cli.py`, `test_output.py` | `tests/integration/fixtures/`, `simulations/validation/toy/` |
+| Configuration, CLI, output | DESIGN "Public API" | `config.py`, `__main__.py`, `output.py` | `test_config.py`, `test_cli.py`, `test_output.py` | `data/<system>/fridge.toml`, `tests/integration/fixtures/`, `simulations/validation/toy/` |
 | Materials and fits | DESIGN "Dilution refrigerator library" | `library/materials/`, `library/property_fits.py` | `library/test_materials.py`, `test_material_data.py`, `test_property_fits.py` | `library/materials/data/` |
 | Gases, surfaces | DESIGN "Dilution refrigerator library" | `library/gases/`, `library/surfaces/` | `library/test_gases.py`, `test_gas_data.py`, `test_helium.py`, `test_surfaces.py` | `library/gases/data/`, `data/gases/` |
 | Conduction, joints, radiation, MLI | DESIGN "Radiation", "Multi-layer insulation", "Joint-contact resistance" | `library/links/` | `library/test_conduction.py`, `test_joint_contact.py`, `test_radiation.py`, `test_multi_layer_insulation.py` | |
@@ -46,7 +46,7 @@ Paths are under `src/pulse_tube_cooldown/` and `tests/` unless noted. DESIGN nam
 | Cooler (heads, drive, link) | DESIGN "Coupled capacity maps", "Cooler configuration"; ADR 03 | `library/links/cooler/`, `library/heads/` | `library/test_head.py`, `test_drive.py`, `test_cooler.py`, `test_head_data.py` | `library/heads/data/`, `data/sn09/pulse_tube/`, `data/test_stand.md`, `data/compressors.md`, `docs/pt_performance_overview_2026-10-30.pdf` |
 | Cooler fits and cold-head experiments | ADR 03; TASKS section 2 | `simulations/validation/sn09_load_map/`, `sn09_bare_head/` | `integration/test_sn09_load_map_fit.py`, `test_sn09_bare_head.py` | `data/sn09/pulse_tube/`, `docs/papers/pulse_tube/` |
 | Plots | DESIGN "Public API" | `plot/result.py` (temperature, heat flow), `plot/graph.py` | `plot/` | |
-| Measurements and validation | TASKS section 4; DESIGN "Validation and testing" | `measurements/` | `measurements/` | `data/systems.md`, `data/test_stand.md`, `data/<system>/` (`bom_by_node.csv`, cooldown traces), `docs/papers/` |
+| Measurements and validation | TASKS section 4; DESIGN "Configuration files" | `measurements/` (test-stand records), `simulations/validation/measurements.py` (cooldowns and residual) | `measurements/`, `simulations/validation/test_measurements.py` | `data/systems.md`, `data/test_stand.md`, `data/<system>/` (`fridge.toml` template, `bom_by_node.csv`, cooldown trace and its `cooldown.toml`), `docs/papers/` |
 
 A link's physics is in its DESIGN section; its TOML registration lives in `library/links/load.py`.
 
