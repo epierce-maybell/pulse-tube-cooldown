@@ -2,9 +2,16 @@
 
 import numpy as np
 import pytest
-from hepak.properties import enthalpy_TP
+from hepak.properties import density_TP, enthalpy_TP, entropy_TP
+from scipy.optimize import brentq
 
-from pulse_tube_cooldown.library.gases.helium import density, isobaric_expansion_coefficient, isobaric_specific_heat
+from pulse_tube_cooldown.library.gases.helium import (
+    density,
+    heat_capacity_ratio,
+    isentropic_density,
+    isobaric_expansion_coefficient,
+    isobaric_specific_heat,
+)
 
 _GAS_CONSTANT = 8.314462618  # J/(mol K)
 _MOLAR_MASS = 4.002602e-3  # kg/mol
@@ -50,7 +57,43 @@ def test_consistent_with_enthalpy_and_density(temperature, pressure):
     )
 
 
-@pytest.mark.parametrize("function", [density, isobaric_specific_heat, isobaric_expansion_coefficient])
+@pytest.mark.parametrize("pressure", [0.8e6, 2.4e6])
+def test_isentropic_density_near_ideal_at_room_temperature(pressure):
+    reference_pressure = 1.6e6
+    expected = density(300.0, reference_pressure) * (pressure / reference_pressure) ** (3 / 5)
+
+    assert isentropic_density(300.0, reference_pressure, pressure) == pytest.approx(expected, rel=5e-3)
+    assert heat_capacity_ratio(300.0, pressure) == pytest.approx(5 / 3, rel=2e-3)
+
+
+@pytest.mark.parametrize("temperature", [4.0, 10.0, 50.0])
+@pytest.mark.parametrize("pressure", [0.8e6, 2.4e6])
+def test_isentropic_density_keeps_entropy(temperature, pressure):
+    reference_pressure = 1.6e6
+    entropy = entropy_TP(temperature, reference_pressure, basis="mass")
+    final_temperature = brentq(
+        lambda t: entropy_TP(t, pressure, basis="mass") - entropy, 0.5 * temperature, 2 * temperature, xtol=1e-12
+    )
+
+    assert isentropic_density(temperature, reference_pressure, pressure) == pytest.approx(
+        density_TP(final_temperature, pressure, basis="mass"), rel=1e-6
+    )
+
+
+def test_isentropic_density_at_reference_pressure_is_density():
+    assert isentropic_density(20.0, 1.6e6, 1.6e6) == pytest.approx(density(20.0, 1.6e6), rel=1e-9)
+
+
+@pytest.mark.parametrize(
+    "function",
+    [
+        density,
+        isobaric_specific_heat,
+        isobaric_expansion_coefficient,
+        heat_capacity_ratio,
+        lambda temperature, pressure: isentropic_density(temperature, 1.6e6, pressure),
+    ],
+)
 def test_broadcasts_over_arrays(function):
     temperature = np.array([[2.0], [40.0], [300.0]])
     pressure = np.array([0.8e6, 2.4e6])

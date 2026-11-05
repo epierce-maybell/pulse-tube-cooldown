@@ -1,32 +1,38 @@
-"""Drive of one gas manifold, from `docs/adrs/coupled-capacity-maps.md`.
+"""Drive of one gas manifold, from `docs/adrs/03-coupled-capacity-maps.md`.
 
-The heads and compressors on a manifold share its supply and return pressures. The mean pressure P is the one at which
-the heads and the manifold's warm volume at the warm temperature T_0 hold the gas charge. The swing dP between supply
-P + dP / 2 and return P - dP / 2 has the heads take the compressors' flow,
+The heads, compressors, and warm lines on a manifold share its supply and return pressures. The mean pressure P is the
+one at which the manifold's gas volumes hold its helium charge. The pressure swing dP between supply P + dP / 2 and
+return P - dP / 2 follows from the supply equation,
 
-    sum of head flows = rho(T_0, P - dP / 2) * sum of displacement rates,
+    sum of head mass flows = rho(T_0, P - dP / 2) * sum of displacement rates,
 
-for helium's density rho, up to the smallest of the compressors' relief swings.
+for helium's density rho at the warm-flange temperature T_0. The relief valve of the compressor with the lowest relief
+swing dP_r holds the swing at dP_r. With dP_s the swing that solves the supply equation, the swing is the smooth minimum
+
+    dP = dP_s - w * ln(1 + exp((dP_s - dP_r) / w)),
+
+for a relief width w.
 """
 
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 
+import numpy as np
 from scipy.optimize import brentq
 
 from pulse_tube_cooldown.library.gases import helium
-from pulse_tube_cooldown.library.links.cooler.head import PulseTubeHead
+from pulse_tube_cooldown.library.heads import HeadModel
 
 __all__ = ["Compressor", "calc_charge", "calc_mean_pressure", "calc_pressure_swing"]
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class Compressor:
-    """A compressor's contribution to the manifold drive.
+    """One compressor on a manifold.
 
     Attributes:
-        displacement_rate: Volumetric displacement rate in m^3/s at warm return conditions.
-        relief_swing: Maximum supply minus return pressure in Pa.
+        displacement_rate: Volume per second drawn in at the low-pressure inlet, in m^3/s.
+        relief_swing: Supply minus return pressure in Pa at which the relief valve opens.
     """
 
     displacement_rate: float
@@ -34,40 +40,38 @@ class Compressor:
 
 
 def calc_charge(
-    heads: Sequence[PulseTubeHead], fill_pressure: float, fill_temperature: float, warm_volume: float
+    models: Sequence[HeadModel], *, warm_volume: float, fill_pressure: float, fill_temperature: float
 ) -> float:
-    """Converts a uniform fill at rest to the manifold's total helium mass in kg.
+    """Calculates a manifold's helium charge from a uniform fill at rest.
 
     Args:
-        heads: All units sharing the manifold.
-        fill_pressure: Absolute equalization pressure in Pa.
-        fill_temperature: Temperature in K of every gas volume when filled.
-        warm_volume: Lines' and buffers' gas volume in m^3.
+        models: Design of each head on the manifold.
+        warm_volume: Gas volume in m^3 of the manifold's lines and buffers.
+        fill_pressure: Absolute pressure in Pa throughout the manifold at rest.
+        fill_temperature: Temperature in K of every gas volume at rest.
 
     Returns:
-        Charge in kg, from helium density at the fill state times the total gas volume.
+        Helium mass in kg.
     """
-    volume = warm_volume + sum(
-        sum(layer.pore_volume for column in unit.columns for layer in column) + sum(unit.pulse_tube_volumes)
-        for unit in heads
-    )
-    return float(helium.density(fill_temperature, fill_pressure)) * volume
+    volume = warm_volume + sum(_gas_volume(model) for model in models)
+    return volume * float(helium.density(fill_temperature, fill_pressure))
 
 
 def calc_mean_pressure(
     head_gas_mass: Callable[[float], float],
     charge: float,
+    *,
     warm_volume: float,
     warm_temperature: float,
-    pressure_bracket: tuple[float, float] = (1.0e4, 2.5e6),
+    pressure_bracket: tuple[float, float] = (1.0e4, 1.0e7),
 ) -> float:
-    """Calculates the mean pressure at which a manifold holds its gas charge.
+    """Calculates the mean pressure at which a manifold holds its helium charge.
 
     Args:
         head_gas_mass: Helium mass in kg in every head on the manifold at a pressure in Pa.
         charge: Helium mass in kg on the manifold.
         warm_volume: Gas volume in m^3 of the manifold's lines and buffers.
-        warm_temperature: Temperature in K of the warm volume.
+        warm_temperature: Temperature in K of the lines and buffers.
         pressure_bracket: Pressures in Pa that bound the mean pressure.
 
     Returns:
@@ -81,32 +85,46 @@ def calc_mean_pressure(
 
 
 def calc_pressure_swing(
-    head_flow: Callable[[float, float], float],
+    head_mass_flow: Callable[[float], float],
     mean_pressure: float,
     warm_temperature: float,
-    displacement_rate: Sequence[float],
-    relief_swing: Sequence[float],
+    *,
+    compressors: Sequence[Compressor],
+    relief_width: float = 5e4,
 ) -> float:
-    """Calculates the pressure swing at which a manifold's heads take its compressors' flow.
+    """Calculates the pressure swing that the supply equation and the relief valve set.
+
+    The search for the supply equation's swing keeps the return pressure above a tenth of the mean pressure and the
+    swing within 20 relief widths above the relief swing, where the smooth minimum is the relief swing.
 
     Args:
-        head_flow: Mass flow in kg/s into every head on the manifold at a supply and a return pressure in Pa.
+        head_mass_flow: Mass flow in kg/s into every head on the manifold at a pressure swing in Pa, about
+            `mean_pressure`.
         mean_pressure: Mean of supply and return pressures in Pa.
-        warm_temperature: Temperature in K of the gas the compressors draw.
-        displacement_rate: Volumetric displacement rate in m^3/s of each compressor.
-        relief_swing: Relief swing in Pa of each compressor.
+        warm_temperature: Temperature in K of the gas the compressors draw in.
+        compressors: Compressors on the manifold.
+        relief_width: Width w in Pa of the relief valve's transition.
 
     Returns:
         Supply minus return pressure in Pa.
     """
-    total_displacement_rate = sum(displacement_rate)
+    displacement_rate = sum(compressor.displacement_rate for compressor in compressors)
+    relief_swing = min(compressor.relief_swing for compressor in compressors)
 
     def excess_flow(swing: float) -> float:
-        return_pressure = mean_pressure - swing / 2
-        compressor_flow = float(helium.density(warm_temperature, return_pressure)) * total_displacement_rate
-        return head_flow(mean_pressure + swing / 2, return_pressure) - compressor_flow
+        supply = float(helium.density(warm_temperature, mean_pressure - swing / 2)) * displacement_rate
+        return head_mass_flow(swing) - supply
 
-    relief_cap = min(relief_swing)
-    if excess_flow(relief_cap) <= 0:
-        return relief_cap
-    return brentq(excess_flow, 0.0, relief_cap)
+    upper = min(relief_swing + 20 * relief_width, 1.8 * mean_pressure)
+    supplied = upper if excess_flow(upper) <= 0 else brentq(excess_flow, 0.0, upper)
+    return supplied - relief_width * _softplus((supplied - relief_swing) / relief_width)
+
+
+def _gas_volume(model: HeadModel) -> float:
+    """Gas volume in m^3 of a head's pores, pulse tubes, reservoirs, and dead volume."""
+    pores = sum(layer.pore_volume for section in model.regenerators for layer in section.layers)
+    return pores + sum(tube.volume + tube.reservoir_volume for tube in model.pulse_tubes) + model.dead_volume
+
+
+def _softplus(x: float) -> float:
+    return float(np.logaddexp(0.0, x))

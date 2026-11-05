@@ -29,7 +29,7 @@ Work the rest of the section in list order. The first slice runs from 2.5 throug
   Context: ADR 03 "Parameters"; DESIGN "Cooler configuration"; `library/heads/`, `library/links/cooler/load.py`, `data/scripts/derive_head_model.py`, `docs/papers/pulse_tube/`.
   Verified by: both models load, with each value traced to its source.
 
-- [ ] **2.6 Manifold pressures** · Build, after 2.5
+- [x] **2.6 Manifold pressures** · Build, after 2.5
   ADR 03's gas inventory and drive: each head's mass swing, the charge and mean pressure, and the supply equation with a smooth relief, with the helium properties these need.
   Context: ADR 03 "Governing equations"; `library/links/cooler/drive.py`, `head.py`; `library/gases/helium.py`; `data/compressors.md`.
   Verified by: mean pressure and swing vary smoothly with temperature and follow the readings in `data/compressors.md`.
