@@ -25,15 +25,15 @@ Q_1 = F^-_1 + L_1 + K_1 (T_0 - T_1) - E_1 - F^+_2, \qquad
 Q_2 = F^-_2 + L_2 + K_2 (T_0 - T_2) - E_2,
 $$
 
-Here, $Q_1$ and $Q_2$ are the cooler's heat flows into the stage nodes, in W. $K_1$ and $K_2$ are the pulse-tube wall conductances, in W/K, $T_1$ and $T_2$ are the stage temperatures, and $T_0$ is the warm-flange temperature. $L_1$ and $L_2$ are the total loss in each pulse tube, so more generally $L_i = L_{s,i} + L_{b,i}$ for shuttling loss $L_s$ (see ADR-04) and breakthrough loss $L_b$ (see below).
+Here, $Q_1$ and $Q_2$ are the cooler's heat flows into the stage nodes, in W. $K_1$ and $K_2$ are the pulse-tube wall conductances, in W/K, $T_1$ and $T_2$ are the stage temperatures, and $T_0$ is the warm-flange temperature. $L_1$ and $L_2$ are the total loss in each pulse tube. As of this ADR, we only consider breakthrough loss. 
 
 Gas that crosses the whole pulse tube in one cycle, "breaking through" the buffer, carries its heat directly to the stage ("large-stroke loss" in Snodgrass et al., 2024). Each cycle, the mass that flows from pulse tube $i$ through its cold end is $\Delta m_i = \sum_j V_j \Delta\rho_j$ over the gas volumes $j$ in the tube and its reservoir. Gas at the warm end when the flow turns towards the stage must push the rest of the tube's gas out ahead of it, so it reaches the stage only when $\Delta m_i$ exceeds the tube's buffer of gas, $\lambda m_i$. The excess breaks through each cycle, so the loss is:
 
 $$
-L_{b,i} = f \left[h(T_0, \bar{P}) - h(T_i, \bar{P})\right] s(\Delta m_i - \lambda m_i),
+L_i = f \left[h(T_0, \bar{P}) - h(T_i, \bar{P})\right] s(\Delta m_i - \lambda m_i),
 $$
 
-where $h$ is helium's specific enthalpy, $m_i$ is the tube's gas mass at $\bar{P}$, $s$ is a smooth positive part whose width, $\sigma m_i$, is the spread in how far gas parcels travel along the tube each cycle, and $\lambda$ is the fraction of the tube's gas that acts as a buffer. $\sigma$ and $\lambda$ each take one value per design. $\sigma$ comes from published data or an estimate and is not fitted.
+where $h$ is helium's specific enthalpy, $m_i$ is the tube's gas mass at $\bar{P}$, $s$ is a smooth positive part whose width, $\sigma m_i$, is the spread in how far gas parcels travel along the tube each cycle, and $\lambda$ is the fraction of the tube's gas that acts as a buffer. $\sigma$ and $\lambda$ each take one value per design. $\sigma$ comes from published data or an estimate and is not fitted. Snodgrass et al. (2024) eq. (4) motivates the large-stroke criterion; here we approximate it using a mass buffer and resulting enthalpy loss. 
 
 Regenerator energy flow then combines pressure-driven transport and a contribution from temperature gradients, including imperfect gas-matrix heat exchange and axial conduction. At steady state, $F$ is constant between external heat inputs, but during cooldown, differences in $F$ cool or heat the matrix. For one-dimensional $x$ increasing from the cold end towards the warm end of each section, we have:
 
@@ -113,16 +113,6 @@ $$
 
 where $\omega = 2\pi f$ and the pressure response $B_i = Vr_i / (\gamma \bar{P})$ depends on reservoir volume $Vr_i$ and helium's heat capacity ratio $\gamma$. Here, $B_i$ is the gas volume entering the reservoir per unit pressure increase, in m^3/Pa. We use the resulting power as the pulse tube's cold-end acoustic power; the tube's heat losses enter the stage balance as $L_i$. Note that when $\omega R_i B_i >> 1$, the reservoir pressure changes very little, and the expression for acoustic power reduces nicely to $E_i = P_a^2 / (2 R_i)$.
 
-The shuttle loss depends on the gas velocity at the tube's cold end. This includes flow carrying acoustic power and flow compressing the gas in the tube and reservoir. These are a quarter-cycle apart, so the squared amplitudes add as:
-
-$$
-U_i = \frac{P_a}{A_i}\sqrt{
-  (2e_i)^2 + \omega^2 \left[B_{t,i} + B_i / (1 + (\omega R_i B_i)^2) \right]^2
-},
-$$
-
-where $U_i$ is the cold-end velocity amplitude, $A_i$ is the tube's cross-sectional area, and $P_a$ is pressure amplitude. $B_{t,i}$ is the pressure compliance of the tube, so $B_{t,i} = V_{tube,i} / (\gamma \bar{P})$.
-
 ## Regenerator network
 Each regenerator section is divided along its length into matrix nodes. Node $k$ has matrix mass $M_k$ with specific heat $c_{m,k}$, pore volume $V_k$, and temperature $T_k$ that the solver integrates. We assume that the pore gas shares that temperature. The capacity ratio of each node is:
 
@@ -142,3 +132,4 @@ Model parameters that we don't fit per run include $\kappa$, $\lambda$, and $\si
 To start a run, we need the warm-flange temperature, $T_0$. 
 
 ## Decision
+Accept. This is our best approximation of a pulse tube cooling power model, with the information we have available at the time of writing.

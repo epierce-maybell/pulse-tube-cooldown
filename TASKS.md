@@ -16,7 +16,7 @@ A completed entry stays while its numbered section has unfinished work. When eve
 
 ## 2. Cooler
 
-- [o] **2.1 Cooler ADR** · Discuss
+- [x] **2.1 Cooler ADR** · Discuss
   Settle `docs/adrs/03-coupled-capacity-maps.md` with the human, superseding ADR 01.
 
 - [ ] **2.2 Cooler tasks** · Discuss, after 2.1

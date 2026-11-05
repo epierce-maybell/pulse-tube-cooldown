@@ -100,5 +100,8 @@ $$
 
 for thermal conductivity $k$ and other parameters as defined above. The angular frequency is $\omega = 2 \pi f$, where $f$ is the set valve frequency.
 
-## Decision
+## Implementation
 Given the temperature readings from pulse tube walls and the physics of the system, we should not ignore gas-wall heat exchange in the pulse tube model. Implementation of this ADR is straightforward: each pulse tube $i$ carries a shuttling loss $L_{s,i}$ into its stage, evaluated at the cold end of the tube with $G_i = (T_0 - T_i) / l_i$, where $l_i$ is the tube length. It depends on physical properties of helium, evaluated at $T_i$ and mean pressure, the tube's geometry, and a cold-end velocity amplitude $U_i$.
+
+## Decision
+Decline to implement. Initial calculations show that losses from this mechanism are hundreds of watts in the warm-temperature region of a cooldown, so this mechanism dominates any reasonable cooling power at that point. If this ADR is revisited in the future, we need to reconsider the applicability regime of the scalings used to derive the key relations, and ideally compare against more detailed wall-temperature measurements.
