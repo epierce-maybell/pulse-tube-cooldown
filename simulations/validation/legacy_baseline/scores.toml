@@ -1,0 +1,44 @@
+legacy_commit = "83c1e78a5aed86a1ffb474d45c7ad1d7eac4b39b"
+# Each run sets every legacy target to 0 K, so it ends at max_time and no linked mass is held at its target.
+# initial_temperature is the mean of the scored nodes' first valid readings, in K; max_time is in s.
+
+[sn09_tuned]
+system = "sn09"
+rms = 0.4585522443434266
+initial_temperature = 295.0162991137608
+max_time = 226380.0
+
+[sn09_tuned.rms_by_node]
+PRP = 0.2856601740970199
+RGP = 0.40794088992748845
+CFP = 0.3359016133131394
+STP = 0.6204956768168814
+ICP = 0.37503582089409904
+DHX = 0.6123728795008037
+
+[sn09_corrected]
+system = "sn09"
+rms = 0.8061201339872129
+initial_temperature = 295.0162991137608
+max_time = 226380.0
+
+[sn09_corrected.rms_by_node]
+PRP = 0.42628410212435
+RGP = 0.6141922542492202
+CFP = 1.0167430802981352
+STP = 1.1189133597141183
+ICP = 0.9052630345446255
+DHX = 0.4838723244670876
+
+[fp1]
+system = "fp1"
+rms = 0.4947023603001441
+initial_temperature = 300.59119999999996
+max_time = 155400.0
+
+[fp1.rms_by_node]
+PRP = 0.4153650195366678
+RGP = 0.4569425348093636
+CFP = 0.3219923535256975
+STP = 0.5017802499933859
+DHX = 0.697757158220195

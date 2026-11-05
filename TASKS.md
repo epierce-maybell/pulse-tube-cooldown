@@ -97,8 +97,9 @@ Each system's records, procedure, and inventory are in `data/systems.md`.
 - [x] **4.2 Measurements and residual** · Build, after 4.7
   Each system's mapped, aligned measurements, and the log-temperature residual over the chosen thermometers.
 
-- [ ] **4.3 Legacy baseline** · Build, after 4.2
+- [x] **4.3 Legacy baseline** · Build, after 4.2
   The legacy model run on each system and scored with the same residual, archived under `simulations/validation/`.
+  Runs `sn09_tuned`, `sn09_corrected`, and `fp1` are in `simulations/validation/legacy_baseline/`.
 
 - [ ] **4.4 Validation-system configurations** · Build, after section 2
   Each system's fridge template, `data/<system>/fridge.toml`, from its inventory, geometry, `data/systems.md`, procedure, and cooler data, porting any materials the library lacks. Its validation run directory, such as `simulations/validation/sn09_cooldown/`, holds a copy of the template as its config and a runner that sets initial temperatures and `max_time` from `simulations/validation/measurements.py`.

@@ -1,0 +1,25 @@
+# The legacy model's inputs for SN09 and FP1, from its `Fridge` saved system (`ptc_systems.json`), the configuration
+# legacy was tuned to SN09 with.
+base_system = "Fridge"
+
+# Each archived run's system, and whether it replaces `Fridge`'s masses and coolers with the system's BOM masses and
+# coolers below. `sn09_tuned` is `Fridge` as saved.
+[runs]
+sn09_tuned = { system = "sn09", system_inputs = false }
+sn09_corrected = { system = "sn09", system_inputs = true }
+fp1 = { system = "fp1", system_inputs = true }
+
+# Legacy material (`ptc_material_properties.json`) for each `data/<system>/bom_by_node.csv` mass column. Columns not
+# listed, such as `Other_kg`, are left out.
+[materials]
+Cu_kg = "OFHC Copper (RRR=100)"
+SS_kg = "304 Stainless Steel"
+Pb_kg = "Lead"
+Al_kg = "6061-T6 Aluminum"
+Brass_kg = "Brass (UNS C2600)"
+G10_kg = "G-10 Fiberglass Epoxy (norm)"
+
+# Legacy cooler models (`user_coolers.json`) for each system's heads and compressors in `data/systems.md`.
+[coolers]
+sn09 = ["PT1.1"]  # one PT1.1 on two compressors: "PT1.1 2X F-70s"
+fp1 = ["PT1.5 (1X F-70)", "PT1.5 (1X F-70)"]  # two PT1.5 heads, each on its own compressor
