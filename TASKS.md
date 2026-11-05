@@ -24,9 +24,9 @@ A completed entry stays while its numbered section has unfinished work. When eve
 
 Work the rest of the section in list order. The first slice runs from 2.5 through 2.3: the canonical head fitted to the test-stand load maps.
 
-- [ ] **2.5 Head design data** · Build
+- [o] **2.5 Head design data** · Build
   The head-model schema, loader, and TOMLs for what ADR 03 reads per design: regenerator section lengths and walls, pulse-tube walls, reservoir and dead volumes, and κ, λ, and σ from Snodgrass 2024. PT1.1 comes from `data/sn09/pulse_tube/geometry.csv` and PT1.5 from `data/fp1/geometry.csv`, both with PT1.1's matrix filling.
-  Context: ADR 03 "Parameters"; DESIGN "Cooler configuration"; `library/heads/`, `library/links/cooler/load.py`, `scripts/data/derive_head_model.py`, `docs/papers/pulse_tube/`.
+  Context: ADR 03 "Parameters"; DESIGN "Cooler configuration"; `library/heads/`, `library/links/cooler/load.py`, `data/scripts/derive_head_model.py`, `docs/papers/pulse_tube/`.
   Verified by: both models load, with each value traced to its source.
 
 - [ ] **2.6 Manifold pressures** · Build, after 2.5
@@ -68,15 +68,6 @@ Work the rest of the section in list order. The first slice runs from 2.5 throug
   Use the test stand cooldown data to validate the pulse tube model in a controlled setting.
   Context: `data/test_stand.md` "Use"; 2.10's model.
 
-## 3. Plots
-
-- [x] **3.1 Heat-flow plot** · Build
-
-- [x] **3.2 Measured-temperature overlay** · Build, after 4.1
-  Measured thermometer traces drawn over their simulated nodes.
-
-- [x] **3.3 Graph plot** · Build
-
 ## 4. Validation
 
 Each system's records, procedure, and inventory are in `data/systems.md`.
@@ -107,9 +98,6 @@ Each system's records, procedure, and inventory are in `data/systems.md`.
 - [ ] **4.5 Full cooldowns and comparison** · Build, after 4.3 and 4.4
   Each system run through its cooldown and scored against the measurements and the legacy baseline, with overlays.
 
-- [ ] **4.6 Resolve the outcome** · Discuss, after 4.5
-  Accept when both systems qualify, or pick the next bounded investigation. Accepted runs become regression tests under `tests/regression/`. The aluminum surface finish is assumed, so emissivity scaling is one candidate.
-
 ## 7. Repository health (once all other tasks completed)
 
 - [ ] **7.1 Test suite** · Build
@@ -138,3 +126,6 @@ Each system's records, procedure, and inventory are in `data/systems.md`.
 
 - [x] **7.9 Data directory cleanup** · Build
   Keep source measurements, reference data, and system inputs in `data/`; put processing tools and exploratory work in their owning directories. Update path consumers and document the layout.
+
+- [o] **7.10 Data preparation tools location** · Build
+  Keep data preparation tools in `data/scripts/`, alongside the measurements and reference inputs they prepare. Move `data/scripts/` there and update path consumers and documentation.
