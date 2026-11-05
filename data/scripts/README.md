@@ -14,12 +14,12 @@ Run these tools from the repository root. Their inputs and outputs live in
 Examples:
 
 ```text
-uv run python scripts/data/reduce_bom.py
-uv run --with cadquery python scripts/data/step_geometry.py extract SN09 <assembly.step> <work_directory>
-uv run --with cadquery python scripts/data/step_geometry.py analyze SN09 <work_directory>
-uv run --with pandas python scripts/data/derive_fp1_cooldown.py <export.csv> [<output.dat>]
-uv run python scripts/data/derive_head_model.py
-uv run python scripts/data/derive_he4_adsorption.py
+uv run python data/scripts/reduce_bom.py
+uv run --with cadquery python data/scripts/step_geometry.py extract SN09 <assembly.step> <work_directory>
+uv run --with cadquery python data/scripts/step_geometry.py analyze SN09 <work_directory>
+uv run --with pandas python data/scripts/derive_fp1_cooldown.py <export.csv> [<output.dat>]
+uv run python data/scripts/derive_head_model.py
+uv run python data/scripts/derive_he4_adsorption.py
 ```
 
 CAD extraction inventories and BREP files belong in the analysis directory for

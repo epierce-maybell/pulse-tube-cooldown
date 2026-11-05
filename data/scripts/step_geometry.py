@@ -2,8 +2,8 @@
 
 Two stages, each a subcommand:
 
-    uv run --with cadquery python scripts/data/step_geometry.py extract <system> <assembly.step> <out_dir>
-    uv run --with cadquery python scripts/data/step_geometry.py analyze <system> <out_dir>
+    uv run --with cadquery python data/scripts/step_geometry.py extract <system> <assembly.step> <out_dir>
+    uv run --with cadquery python data/scripts/step_geometry.py analyze <system> <out_dir>
 
 `extract` loads the assembly once, writes every solid's name, volume, and bounding box to
 `<out_dir>/inventory.csv`, and saves the solids named in the system's table as BREP files under

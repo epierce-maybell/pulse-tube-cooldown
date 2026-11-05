@@ -127,5 +127,5 @@ Each system's records, procedure, and inventory are in `data/systems.md`.
 - [x] **7.9 Data directory cleanup** · Build
   Keep source measurements, reference data, and system inputs in `data/`; put processing tools and exploratory work in their owning directories. Update path consumers and document the layout.
 
-- [o] **7.10 Data preparation tools location** · Build
-  Keep data preparation tools in `data/scripts/`, alongside the measurements and reference inputs they prepare. Move `data/scripts/` there and update path consumers and documentation.
+- [x] **7.10 Data preparation tools location** · Build
+  Keep data preparation tools in `data/scripts/`, alongside the measurements and reference inputs they prepare. Update path consumers and documentation.

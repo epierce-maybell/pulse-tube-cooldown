@@ -5,7 +5,7 @@ query window. The record is in the form of `data/sn09/cooldown_2026-06-04.dat`: 
 rows of `_time` in POSIX seconds on each whole minute of the window, followed by one `<device>_temperature`
 column per logged device holding that minute's mean reading in K. A minute without samples for a device is NaN.
 
-Usage: `uv run --with pandas python scripts/data/derive_fp1_cooldown.py <export.csv> [<output.dat>]`.
+Usage: `uv run --with pandas python data/scripts/derive_fp1_cooldown.py <export.csv> [<output.dat>]`.
 The output defaults to `data/fp1/cooldown_<date>.dat`, dated by the first sample's UTC day.
 """
 

@@ -55,7 +55,7 @@ def render(rows, columns=COLUMNS):
     pulse_tube_volumes = ", ".join(f"{bore_volume(rows, tube):.3e}" for tube in PULSE_TUBES)
 
     lines = [
-        "# Written by scripts/data/derive_head_model.py from data/sn09/pulse_tube/geometry.csv.",
+        "# Written by data/scripts/derive_head_model.py from data/sn09/pulse_tube/geometry.csv.",
         f"# Estimates: {', '.join(estimates)}.",
         'name = "PT1.1"',
         f"clamp_fraction = {rows['clamp_fraction_x_R']['value']}",

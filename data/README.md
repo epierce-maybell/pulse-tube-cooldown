@@ -1,7 +1,7 @@
 # Data
 
 This directory holds source measurements, reference tables, and inputs to the
-simulator. Preparation tools live in [`scripts/data/`](../scripts/data/README.md).
+simulator. Preparation tools live in [`data/scripts/`](scripts/README.md).
 Analysis code, figures, fitted candidates, and reports live with their experiment
 under `simulations/`. Published documents and diagrams live under `docs/`.
 

@@ -55,7 +55,7 @@ A link's physics is in its DESIGN section; its TOML registration lives in `libra
 - `AGENTS.md`: rules for contributing.
 - `docs/adrs/`: numbered decisions. `docs/proposals/`: proposals under consideration. `docs/slides/`: project overview.
 - `simulations/`: targeted experiments and validation runs, each in its own directory.
-- `data/README.md`: measurement and reference-data layout. `scripts/data/`: preparation tools. `docs/diagrams/`: supplied system diagrams.
+- `data/README.md`: measurement and reference-data layout. `data/scripts/`: preparation tools. `docs/diagrams/`: supplied system diagrams.
 
 ## Related resources
 
