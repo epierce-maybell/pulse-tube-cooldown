@@ -1,5 +1,6 @@
-"""Requirements for one head's gas inventory and mass swing."""
+"""Requirements for one head's gas inventory, mass swing, acoustic power, and heat flows."""
 
+import dataclasses
 import math
 
 import numpy as np
@@ -8,14 +9,28 @@ from scipy.integrate import quad
 
 from pulse_tube_cooldown.core.types import Material
 from pulse_tube_cooldown.library.gases import helium
-from pulse_tube_cooldown.library.heads import HeadModel, MatrixLayer, PulseTube, RegeneratorSection
-from pulse_tube_cooldown.library.links.cooler.head import calc_gas_mass, calc_mass_swing
+from pulse_tube_cooldown.library.heads import HeadModel, MatrixLayer, PulseTube, RegeneratorSection, load_head_model
+from pulse_tube_cooldown.library.links.cooler.head import (
+    Head,
+    calc_acoustic_power,
+    calc_gas_mass,
+    calc_heat_flow,
+    calc_mass_swing,
+)
 
 _MOLAR_MASS = 4.002602e-3  # kg/mol
 _GAS_CONSTANT = 8.314462618  # J/(mol K)
 _SECOND_VIRIAL_AT_300_K = 11.8e-6  # m^3/mol
 _MATRIX = Material(
     name="Matrix", density=1.0, specific_heat=lambda t: t, thermal_conductivity=None, conductivity_integral=None
+)
+_WALL_CONDUCTIVITY = 2.0  # W/(m K)
+_WALL = Material(
+    name="Wall",
+    density=1.0,
+    specific_heat=lambda t: t,
+    thermal_conductivity=lambda t: np.full_like(t, _WALL_CONDUCTIVITY),
+    conductivity_integral=lambda t: _WALL_CONDUCTIVITY * np.asarray(t),
 )
 
 
@@ -25,7 +40,7 @@ def _model(reservoir_volume=5.0e-3):
     def section(*layers):
         return RegeneratorSection(
             length=0.2,
-            wall_material=_MATRIX,
+            wall_material=_WALL,
             wall_area=1e-4,
             layers=tuple(
                 MatrixLayer(material=_MATRIX, mass=1.0, pore_volume=volume, length_fraction=fraction, node_count=count)
@@ -35,7 +50,7 @@ def _model(reservoir_volume=5.0e-3):
 
     def tube(volume):
         return PulseTube(
-            length=0.3, volume=volume, wall_material=_MATRIX, wall_area=1e-5, reservoir_volume=reservoir_volume
+            length=0.3, volume=volume, wall_material=_WALL, wall_area=1e-5, reservoir_volume=reservoir_volume
         )
 
     return HeadModel(
@@ -111,9 +126,9 @@ def test_mass_swing_in_ideal_gas_limit():
         adiabatic(2.0e-4) + reservoir[1],
     ]
 
-    mass_swing = calc_mass_swing(
-        _model(), np.full(7, 300.0), mean_pressure, swing, resistance=resistance, frequency=_FREQUENCY
-    )
+    head = Head(model=_model(), packing=(0.0, 0.0), resistance=resistance, frequency=_FREQUENCY)
+
+    mass_swing = calc_mass_swing(head, np.full(7, 300.0), mean_pressure, swing)
 
     np.testing.assert_allclose(mass_swing, expected, rtol=3e-3)
 
@@ -137,8 +152,155 @@ def test_mass_swing_with_cold_pores_and_tubes():
     for index, volume in _TUBE.items():
         expected[index] = volume * _mean_over_tube(adiabatic, _COLD[0], _COLD[index])
 
-    mass_swing = calc_mass_swing(
-        _model(reservoir_volume=0.0), _COLD, mean_pressure, swing, resistance=(1e9, 1e9), frequency=_FREQUENCY
-    )
+    head = Head(model=_model(reservoir_volume=0.0), packing=(0.0, 0.0), resistance=(1e9, 1e9), frequency=_FREQUENCY)
+
+    mass_swing = calc_mass_swing(head, _COLD, mean_pressure, swing)
 
     np.testing.assert_allclose(mass_swing, expected, rtol=1e-3)
+
+
+def test_acoustic_power_follows_reservoir_impedance():
+    # E = kappa^2 dP^2 / 4 * omega^2 R B^2 / (2 [1 + (omega R B)^2]) for B = V_r / (gamma P), with gamma from HEPAK
+    # at the warm flange's temperature and the mean pressure.
+    mean_pressure, swing, warm = 1.4e6, 1.2e6, 300.0
+    resistance = (2.0e7, 6.0e7)
+    head = Head(model=_model(), packing=(0.0, 0.0), resistance=resistance, frequency=_FREQUENCY)
+    omega = 2 * math.pi * _FREQUENCY
+    response = 5.0e-3 / (float(helium.heat_capacity_ratio(warm, mean_pressure)) * mean_pressure)
+    amplitude = math.sqrt(2) * swing / 2
+    expected = [amplitude**2 * omega**2 * r * response**2 / (2 * (1 + (omega * r * response) ** 2)) for r in resistance]
+
+    np.testing.assert_allclose(calc_acoustic_power(head, mean_pressure, swing, warm), expected, rtol=1e-10)
+
+
+def test_acoustic_power_with_stiff_reservoir_is_amplitude_squared_over_twice_resistance():
+    # With omega R B near 4000, E = P_a^2 / (2 R) for P_a = sqrt(2) * 1.2 MPa / 2, to 1 part in 10^7.
+    head = Head(model=_model(), packing=(0.0, 0.0), resistance=(1e11, 4e11), frequency=_FREQUENCY)
+
+    power = calc_acoustic_power(head, 1.4e6, 1.2e6, 300.0)
+
+    np.testing.assert_allclose(power, [0.72e12 / 2e11, 0.72e12 / 8e11], rtol=1e-6)
+
+
+def test_heat_flow_without_swing_is_wall_conduction():
+    # Walls of k = 2 W/(m K). Regenerator walls (A = 1e-4 m^2) conduct along a piecewise-linear profile through the
+    # node centres: stage-1 section centre 0.1 m from either end; stage-2 section centres 0.05, 0.125, and 0.175 m
+    # from stage 1 in its 0.2 m. Each pulse tube (A = 1e-5 m^2, 0.3 m) conducts from the warm flange to its stage.
+    #   stage-1 section: 2e-4 * (300 - 60) / 0.1 = 0.48 W in, 2e-4 * (60 - 40) / 0.1 = 0.04 W out
+    #   stage-2 section: 2e-4 * [(40 - 20) / 0.05, (20 - 10) / 0.075, (10 - 6) / 0.05, (6 - 4) / 0.025]
+    #                    = 0.08, 0.02667, 0.016, 0.016 W
+    #   tubes:           2e-5 / 0.3 * [260, 296] = 0.017333, 0.019733 W
+    head = Head(model=_model(), packing=(0.1, 0.1), resistance=(2e7, 6e7), frequency=_FREQUENCY)
+    expected = [
+        0.0,
+        0.48 - 0.04,
+        0.04 + 0.0173333 - 0.08,
+        0.08 - 0.0266667,
+        0.0266667 - 0.016,
+        0.016 - 0.016,
+        0.016 + 0.0197333,
+    ]
+
+    np.testing.assert_allclose(calc_heat_flow(head, _COLD, 1.4e6, 0.0), expected, atol=1e-6)
+
+
+def _capacity_ratio(temperature, pressure, pore_volume, matrix_mass):
+    """Pore gas over matrix heat capacity, for the test matrix's specific heat of T J/(kg K)."""
+    gas = pore_volume * float(
+        helium.density(temperature, pressure) * helium.isobaric_specific_heat(temperature, pressure)
+    )
+    return gas / (matrix_mass * temperature)
+
+
+def test_heat_flow_at_uniform_temperature_is_pressure_transport():
+    # Without gradients only F = (1 - beta T / (1 + epsilon)) E flows, with E unchanged along each section. Each plate
+    # boundary takes the epsilon of its node. Stage 2 nets -beta T E_2 / (1 + epsilon), stage 1 the stage-1 section's
+    # cold-end flow of E_1 + E_2 less E_1 and the stage-2 section's warm-end flow, and each section's nodes together
+    # the difference between its ends' flows.
+    temperature, mean_pressure, swing = 10.0, 1.4e6, 1.2e6
+    head = Head(model=_model(), packing=(0.1, 0.1), resistance=(2e7, 6e7), frequency=_FREQUENCY)
+    first, second = calc_acoustic_power(head, mean_pressure, swing, temperature)
+    expansion = temperature * float(helium.isobaric_expansion_coefficient(temperature, mean_pressure))
+    stage_1_section = _capacity_ratio(temperature, mean_pressure, 1.0e-4, 1.0)
+    stage_2_warm = _capacity_ratio(temperature, mean_pressure, 3.0e-5, 1.0)
+    stage_2_cold = _capacity_ratio(temperature, mean_pressure, 2.0e-5, 0.5)
+
+    def flow(capacity_ratio, power):
+        return (1 - expansion / (1 + capacity_ratio)) * power
+
+    heat = calc_heat_flow(head, np.full(7, temperature), mean_pressure, swing)
+
+    assert heat[0] == 0.0
+    assert heat[1] == pytest.approx(0.0, abs=1e-9 * first)
+    assert heat[2] == pytest.approx(
+        flow(stage_1_section, first + second) - first - flow(stage_2_warm, second), rel=1e-6
+    )
+    assert heat[3:6].sum() == pytest.approx(flow(stage_2_warm, second) - flow(stage_2_cold, second), rel=1e-6)
+    assert heat[6] == pytest.approx(-expansion * second / (1 + stage_2_cold), rel=1e-6)
+
+
+def test_regeneration_at_stage_2_follows_packing():
+    # The packing coefficient adds a (m c_p)^2 / (f C'_m) dT/dx at the stage-2 boundary, with m the mass flow of tube
+    # 2 and reservoir 2, c_p at T_2, and C'_m the coldest node's matrix heat capacity per length: mass 0.5 kg at
+    # T J/(kg K) over 0.05 m. Its centre at 6 K lies 0.025 m from stage 2 at 4 K.
+    mean_pressure, swing, packing = 1.4e6, 1.2e6, 0.3
+    loose = Head(model=_model(), packing=(0.1, 0.0), resistance=(2e7, 6e7), frequency=_FREQUENCY)
+    packed = Head(model=_model(), packing=(0.1, packing), resistance=(2e7, 6e7), frequency=_FREQUENCY)
+    mass_flow = _FREQUENCY * calc_mass_swing(loose, _COLD, mean_pressure, swing)[6]
+    capacity_rate = mass_flow * float(helium.isobaric_specific_heat(4.0, mean_pressure))
+    expected = packing * capacity_rate**2 / (_FREQUENCY * 0.5 * 6.0 / 0.05) * (6.0 - 4.0) / 0.025
+
+    change = calc_heat_flow(packed, _COLD, mean_pressure, swing) - calc_heat_flow(loose, _COLD, mean_pressure, swing)
+
+    assert change[6] == pytest.approx(expected, rel=1e-9)
+
+
+# PT1.5 with placeholder packing coefficients and valve resistances pending task 2.3's fit, its matrix given a smooth
+# specific heat of 0.1 T^3 + 20 J/(kg K).
+_SMOOTH_MATRIX = dataclasses.replace(_MATRIX, specific_heat=lambda t: 0.1 * np.asarray(t) ** 3 + 20.0)
+_PT1_5 = load_head_model("PT1.5")
+_SMOOTH_PT1_5 = Head(
+    model=dataclasses.replace(
+        _PT1_5,
+        regenerators=tuple(
+            dataclasses.replace(
+                section,
+                layers=tuple(dataclasses.replace(layer, material=_SMOOTH_MATRIX) for layer in section.layers),
+            )
+            for section in _PT1_5.regenerators
+        ),
+    ),
+    packing=(0.15, 0.05),
+    resistance=(1e10, 3e10),
+    frequency=1.4,
+)
+
+
+def test_heat_flow_has_continuous_derivatives_through_a_cooldown():
+    # Stages cooling geometrically from 295 K to 40 K and 4 K at a fixed drive. Along a path with continuous
+    # derivatives, second differences shrink against first differences in proportion to the step; at a kink they do not.
+    # The warm flange carries no heat flow.
+    def roughness(points):
+        heat = []
+        for progress in np.linspace(0.0, 1.0, points):
+            stages = (295.0 * (40.0 / 295.0) ** progress, 295.0 * (4.0 / 295.0) ** progress)
+            temperature = _linear_chain(_PT1_5, stages, warm_temperature=295.0)
+            heat.append(calc_heat_flow(_SMOOTH_PT1_5, temperature, 1.3e6, 1.2e6)[1:])
+        heat = np.array(heat)
+        return np.max(np.abs(np.diff(heat, 2, axis=0)), axis=0) / np.max(np.abs(np.diff(heat, axis=0)), axis=0)
+
+    coarse, fine = roughness(41), roughness(161)
+
+    assert np.all(fine <= 0.5 * coarse)
+
+
+def _linear_chain(model, stage_temperature, *, warm_temperature):
+    """Chain temperatures with each section's nodes linear in position between its ends' temperatures."""
+    ends = (warm_temperature, *stage_temperature)
+    sections = []
+    for section, warm, cold in zip(model.regenerators, ends[:-1], ends[1:], strict=True):
+        fractions = np.array(
+            [layer.length_fraction / layer.node_count for layer in section.layers for _ in range(layer.node_count)]
+        )
+        sections.append(warm + (cold - warm) * (np.cumsum(fractions) - fractions / 2))
+    return np.concatenate(([warm_temperature], sections[0], [ends[1]], sections[1], [ends[2]]))

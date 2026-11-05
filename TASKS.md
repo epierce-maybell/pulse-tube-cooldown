@@ -34,7 +34,7 @@ Work the rest of the section in list order. The first slice runs from 2.5 throug
   Context: ADR 03 "Governing equations"; `library/links/cooler/drive.py`, `head.py`; `library/gases/helium.py`; `data/compressors.md`.
   Verified by: mean pressure and swing vary smoothly with temperature and follow the readings in `data/compressors.md`.
 
-- [ ] **2.7 Cooling power** · Build, after 2.6
+- [x] **2.7 Cooling power** · Build, after 2.6
   The head's heat flows of ADR 03, without losses: acoustic power, regenerator energy flow in both sections, pulse-tube wall conduction, and Q1, Q2, and QR. The fitted parameters become a_i and R_i.
   Context: ADR 03 "Governing equations" and "Regenerator network"; `library/links/cooler/`.
   Verified by: heat flows with continuous derivatives that reach a cold steady state at plausible parameters.
@@ -43,6 +43,11 @@ Work the rest of the section in list order. The first slice runs from 2.5 throug
   Each pulse tube's breakthrough loss, with helium enthalpy and a smooth positive part.
   Context: ADR 03 "Governing equations"; `docs/papers/pulse_tube/Snodgrass2024.pdf`.
   Verified by: no loss while the stroke stays within the buffer, rising smoothly past it.
+
+- [ ] **2.12 Smooth measured specific heats** · Build
+  Tabulated properties interpolate with continuous derivatives, such as a shape-preserving cubic, including where a measured table joins its lattice continuation, so the cooler's heat flows meet ADR 03 requirement 7 with the library's regenerator materials. Gd2O2S's peak at 5.24 K is the sharpest case.
+  Context: `library/property_fits.py` (the `table` and `measured_with_lattice` forms); `library/materials/data/`, `library/gases/data/`; the continuous-derivative test in `tests/library/test_head.py`, which gives PT1.5 a smooth matrix in the meantime.
+  Verified by: unchanged values at the table points, continuous first derivatives, and that test passing with PT1.5's library materials.
 
 - [ ] **2.9 Cooler configuration** · Build, after 2.7
   The cooler as a configured link: `"cooler"` in `LINK_TYPES`, with its drive and per-head parameter files read from TOML. Propose matching DESIGN "Cooler configuration" text.

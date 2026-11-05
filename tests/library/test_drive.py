@@ -14,7 +14,7 @@ from pulse_tube_cooldown.library.links.cooler.drive import (
     calc_mean_pressure,
     calc_pressure_swing,
 )
-from pulse_tube_cooldown.library.links.cooler.head import calc_gas_mass, calc_mass_swing
+from pulse_tube_cooldown.library.links.cooler.head import Head, calc_gas_mass, calc_mass_swing
 
 # Inputs from data/compressors.md: one F-70H's swept displacement rate, the middle of FP1's 18.6 to 20.0 bar relief
 # swing, the test stand's 19.6 L of flexline, and a fill of 17.0 bar absolute at rest.
@@ -60,14 +60,10 @@ def _pressures(models, stage_temperature, compressors):
         warm_temperature=_ROOM_TEMPERATURE,
     )
 
+    heads = [Head(model=model, packing=(0.0, 0.0), resistance=_RESISTANCE, frequency=_FREQUENCY) for model in models]
+
     def head_mass_flow(swing):
-        return sum(
-            _FREQUENCY
-            * calc_mass_swing(
-                model, temperature, mean_pressure, swing, resistance=_RESISTANCE, frequency=_FREQUENCY
-            ).sum()
-            for model in models
-        )
+        return sum(head.frequency * calc_mass_swing(head, temperature, mean_pressure, swing).sum() for head in heads)
 
     swing = calc_pressure_swing(
         head_mass_flow, mean_pressure, _ROOM_TEMPERATURE, compressors=compressors, relief_width=_RELIEF_WIDTH
@@ -98,9 +94,13 @@ def test_mean_pressure_at_rest_is_fill_pressure():
     assert mean_pressure == pytest.approx(_FILL_PRESSURE, rel=1e-8)
 
 
-def test_mean_pressure_holds_the_charge_when_cold():
-    temperature = _chain_temperature(_MODEL, (40.0, 4.0))
-    charge = 0.25  # kg
+@pytest.mark.parametrize("stage_2_temperature", [4.0, 2.0])
+def test_mean_pressure_holds_the_charge_when_cold(stage_2_temperature):
+    # Helium at 2 K melts above about 3 MPa, so the search stays within fluid pressures.
+    temperature = _chain_temperature(_MODEL, (40.0, stage_2_temperature))
+    charge = calc_charge(
+        [_MODEL], warm_volume=_WARM_VOLUME, fill_pressure=_FILL_PRESSURE, fill_temperature=_ROOM_TEMPERATURE
+    )
 
     mean_pressure = calc_mean_pressure(
         lambda pressure: calc_gas_mass(_MODEL, temperature, pressure),
