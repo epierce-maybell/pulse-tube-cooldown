@@ -1,4 +1,4 @@
-# Decision: How to model pulse tube cooling power?
+# ADR-03: Pulse tube cooling power
 
 Target: Derive a model for pulse tube cooling power from first principles and what we can measure for each pulse tube unit, accounting for a regenerator, where each of Q1, Q2, and QR are appropriately coupled. 
 
@@ -22,18 +22,18 @@ We write $F^+$ and $F^-$ for $F$ at the warm and cold ends of a regenerator sect
 
 $$
 Q_1 = F^-_1 + L_1 + K_1 (T_0 - T_1) - E_1 - F^+_2, \qquad
-Q_2 = F^-_2 + L_2 K_2 (T_0 - T_2) - E_2,
+Q_2 = F^-_2 + L_2 + K_2 (T_0 - T_2) - E_2,
 $$
 
-Here, $Q_1$ and $Q_2$ are the cooler's heat flows into the stage nodes, in W. $K_1$ and $K_2$ are the pulse-tube wall conductances, in W/K, $T_1$ and $T_2$ are the stage temperatures, $T_0$ is the warm-flange temperature, and $L_1$ and $L_2$ are the pulse tubes' breakthrough losses.
+Here, $Q_1$ and $Q_2$ are the cooler's heat flows into the stage nodes, in W. $K_1$ and $K_2$ are the pulse-tube wall conductances, in W/K, $T_1$ and $T_2$ are the stage temperatures, and $T_0$ is the warm-flange temperature. $L_1$ and $L_2$ are the total loss in each pulse tube, so more generally $L_i = L_{s,i} + L_{b,i}$ for shuttling loss $L_s$ (see ADR-04) and breakthrough loss $L_b$ (see below).
 
 Gas that crosses the whole pulse tube in one cycle, "breaking through" the buffer, carries its heat directly to the stage ("large-stroke loss" in Snodgrass et al., 2024). Each cycle, the mass that flows from pulse tube $i$ through its cold end is $\Delta m_i = \sum_j V_j \Delta\rho_j$ over the gas volumes $j$ in the tube and its reservoir. Gas at the warm end when the flow turns towards the stage must push the rest of the tube's gas out ahead of it, so it reaches the stage only when $\Delta m_i$ exceeds the tube's buffer of gas, $\lambda m_i$. The excess breaks through each cycle, so the loss is:
 
 $$
-L_i = f \left[h(T_0, \bar{P}) - h(T_i, \bar{P})\right] s(\Delta m_i - \lambda m_i),
+L_{b,i} = f \left[h(T_0, \bar{P}) - h(T_i, \bar{P})\right] s(\Delta m_i - \lambda m_i),
 $$
 
-where $h$ is helium's specific enthalpy, $m_i$ is the tube's gas mass at $\bar{P}$, $s$ is a smooth positive part, and $\lambda$ is the fraction of that gas that acts as a buffer, one value per design.
+where $h$ is helium's specific enthalpy, $m_i$ is the tube's gas mass at $\bar{P}$, $s$ is a smooth positive part whose width, $\sigma m_i$, is the spread in how far gas parcels travel along the tube each cycle, and $\lambda$ is the fraction of the tube's gas that acts as a buffer. $\sigma$ and $\lambda$ each take one value per design. $\sigma$ comes from published data or an estimate and is not fitted.
 
 Regenerator energy flow then combines pressure-driven transport and a contribution from temperature gradients, including imperfect gas-matrix heat exchange and axial conduction. At steady state, $F$ is constant between external heat inputs, but during cooldown, differences in $F$ cool or heat the matrix. For one-dimensional $x$ increasing from the cold end towards the warm end of each section, we have:
 
@@ -59,7 +59,7 @@ $$
 F_{conduction} = k_{ax} A \frac{dT}{dx},
 $$ 
 
-where $k_{ax}$ is the thermal conductivity in the axial direction and $A$ is the cross-sectional area. 
+where $k_{ax}$ is the thermal conductivity in the axial direction and $A$ is the cross-sectional area. The product $k_{ax} A$ is the regenerator tube wall's conduction; conduction through the matrix is neglected.
 
 Acoustic power varies along the regenerator as:
 
@@ -69,33 +69,33 @@ $$
 
 using the low-frequency approximation of Snodgrass et al. (2023, Appendix C), which neglects viscous and thermal relaxation dissipation in the acoustic-power balance. The stage 2 section has cold-end acoustic power $E_2$. The stage-1 section has cold-end acoustic power $E_1 + E^+_2$, where $E^+_2$ is the acoustic power at the warm end of the stage-2 section. 
 
-Each cycle, the mass entering head $h$ is:
+Each cycle, the mass entering head $n$ is:
 
 $$
-\Delta M_h = \sum_j V_j \, \Delta\rho_j
+\Delta M_n = \sum_j V_j \, \Delta\rho_j
 $$
 
 summed over its gas volumes $j$, each with volume $V_j$ and temperature $T_j$, where $\Delta \rho_j$ is the change in density between the high (entry) pressure $P_+$ and low (return) pressure $P_-$. Pore gas exchanges heat with the matrix, so its density changes at its node's temperature. The other gas is compressed adiabatically, so its density difference is taken at constant entropy: the gas in each pulse tube, along a linear temperature gradient from the warm flange to its stage; the volume between the rotary valve and the head, at $T_0$; and each reservoir, also at $T_0$, whose pressure swing is smaller by a factor of $\sqrt{1 + (\omega R_i B_i)^2}$ (see below). 
 
-The compressor(s) must provide that mass at valve frequency $f$, so:
+The compressor(s) must provide that mass at each head's valve frequency $f_n$, so:
 
 $$
-f \sum_h \Delta M_h = \rho(T_0, P_-) \sum_k \dot{V}_k,
+\sum_n f_n \Delta M_n = \rho(T_0, P_-) \sum_k \dot{V}_k,
 $$ 
 
 where $`\dot{V}_k`$ is the volume per second drawn into compressor $k$ at its low-pressure inlet. This supply equation sets the swing $\Delta P = P_+ - P_-$ up to $\Delta P_r$, the relief point set by the compressor (or lowest among multiple compressors). Above that, the relief valve returns the excess flow and holds the swing at $\Delta P_r$, with a smooth transition between the two.
 
-The entire manifold's helium charge $N$ sets the mean pressure, $\bar{P} = (P_+ + P_-) / 2$, where:
+The entire manifold's helium charge $M_{He}$, in kg, sets the mean pressure, $\bar{P} = (P_+ + P_-) / 2$, where:
 
 $$
-N = \sum_j V_j \rho(T_j, \bar{P}),
+M_{He} = \sum_j V_j \rho(T_j, \bar{P}),
 $$
 
-summed over all gas volumes $j$ on the manifold, and the pressure amplitude is given by:
+summed over all gas volumes $j$ on the manifold, each once: supply and return lines, buffers, head dead volumes, pore gas, pulse tubes, and reservoirs. Lines and buffers enter the inventory but not $\Delta M_n$. All pressures are absolute. The pressure amplitude is given by:
 
 $$
 P_a = \frac{1}{2} \kappa \Delta P,
-$$ 
+$$
 
 where $\kappa$ accounts for the shape of the wave (1 for a sinusoidal wave); we follow Snodgrass et al. (2024) and use $\kappa = \sqrt{2}$, corresponding to a square wave, and any waveform error beyond that ends up getting captured in the resistance (below). 
 
@@ -111,7 +111,17 @@ $$
 e_i = \frac{\omega^2 R_i B_i^2}{2 \left[1 + (\omega R_i B_i)^2 \right]},
 $$
 
-where $\omega = 2\pi f$ and the pressure response $B_i = Vr_i / (\gamma \bar{P})$ depends on reservoir volume $Vr_i$ and helium's heat capacity ratio $\gamma$. Here, $B_i$ is the gas volume entering the reservoir per unit pressure increase, in m^3/Pa. We use the resulting power as the pulse tube's cold-end acoustic power, neglecting losses within the tube. Note that when $\omega R_i B_i >> 1$, the reservoir pressure changes very little, and the expression for acoustic power reduces nicely to $E_i = P_a^2 / (2 R_i)$.
+where $\omega = 2\pi f$ and the pressure response $B_i = Vr_i / (\gamma \bar{P})$ depends on reservoir volume $Vr_i$ and helium's heat capacity ratio $\gamma$. Here, $B_i$ is the gas volume entering the reservoir per unit pressure increase, in m^3/Pa. We use the resulting power as the pulse tube's cold-end acoustic power; the tube's heat losses enter the stage balance as $L_i$. Note that when $\omega R_i B_i >> 1$, the reservoir pressure changes very little, and the expression for acoustic power reduces nicely to $E_i = P_a^2 / (2 R_i)$.
+
+The shuttle loss depends on the gas velocity at the tube's cold end. This includes flow carrying acoustic power and flow compressing the gas in the tube and reservoir. These are a quarter-cycle apart, so the squared amplitudes add as:
+
+$$
+U_i = \frac{P_a}{A_i}\sqrt{
+  (2e_i)^2 + \omega^2 \left[B_{t,i} + B_i / (1 + (\omega R_i B_i)^2) \right]^2
+},
+$$
+
+where $U_i$ is the cold-end velocity amplitude, $A_i$ is the tube's cross-sectional area, and $P_a$ is pressure amplitude. $B_{t,i}$ is the pressure compliance of the tube, so $B_{t,i} = V_{tube,i} / (\gamma \bar{P})$.
 
 ## Regenerator network
 Each regenerator section is divided along its length into matrix nodes. Node $k$ has matrix mass $M_k$ with specific heat $c_{m,k}$, pore volume $V_k$, and temperature $T_k$ that the solver integrates. We assume that the pore gas shares that temperature. The capacity ratio of each node is:
@@ -120,4 +130,15 @@ $$
 \epsilon_k = \frac{V_k \rho(T_k, \bar{P}) c_p(T_k, \bar{P})}{M_k c_{m,k}(T_k)},
 $$ 
 
-and its heat capacity is $(1 + \epsilon_k) M_k c_{m,k}$. At each boundary between nodes, the energy flow and acoustic power relations hold, including at the boundary where a node meets a plate. The mass flow at a boundary is $f$ times the mass swing $V_j \Delta\rho_j$ of every gas volume colder than it, so it is $f \Delta M_h$ at the warm flange. The heat flow into a node is $F^+ - F^-$, the energy flows at its warm and cold boundaries. $`F^-_1`$, $`F^+_2`$, and $`F^-_2`$ are $F$ at the stage boundaries, and $Q_R$ is the heat flow into the node containing the clamp, which holds the RGP. At the stage-2 boundary, $F_{pressure}$ is evaluated at the plate temperature $T_2$ with the coldest node's $\epsilon$. Where the temperature gradient there is small, stage 2's net cooling is $\beta T_2 E_2 / (1 + \epsilon) - K_2 (T_0 - T_2)$.
+and its heat capacity is $(1 + \epsilon_k) M_k c_{m,k}$. At each boundary between nodes, the energy flow and acoustic power relations hold, including at the boundary where a node meets a plate. The mass flow at a boundary is $f$ times the mass swing $V_j \Delta\rho_j$ of every gas volume on its cold side, so it is $f_n \Delta M_n$ at the warm flange. At the stage-1 end of the stage-1 section, those volumes are tube 1, reservoir 1, the whole stage-2 section, tube 2, and reservoir 2. The heat flow into a node is $F^+ - F^-$, the energy flows at its warm and cold boundaries. $`F^-_1`$, $`F^+_2`$, and $`F^-_2`$ are $F$ at the stage boundaries, and $Q_R$ is the heat flow into the node containing the clamp, which holds the RGP. At the stage-2 boundary, $F_{pressure}$ is evaluated at the plate temperature $T_2$ with the coldest node's $\epsilon$. Where the temperature gradient there is small, stage 2's net cooling is $\beta T_2 E_2 / (1 + \epsilon) - K_2 (T_0 - T_2) - L_2$.
+
+## Parameters
+Four parameters are fitted to the load map, per head: packing coefficients $a_i$ and valve resistances $R_i$. 
+
+For the pulse tube head, each design specifies the geometry of the regenerator sections and pulse tubes, the gas volumes, clamp position, valve frequency, and regenerator matrix materials and properties. For each drive, we need the compressor volumetric flow rates, relief swing, fill pressure at rest, warm-line volume, and the configuration of compressors and heads on the manifold. 
+
+Model parameters that we don't fit per run include $\kappa$, $\lambda$, and $\sigma$, all taken from Snodgrass et al. (2024) for now.
+
+To start a run, we need the warm-flange temperature, $T_0$. 
+
+## Decision
