@@ -109,31 +109,6 @@ Each system's records, procedure, and inventory are in `data/systems.md`.
 - [ ] **4.6 Resolve the outcome** · Discuss, after 4.5
   Accept when both systems qualify, or pick the next bounded investigation. Accepted runs become regression tests under `tests/regression/`. The aluminum surface finish is assumed, so emissivity scaling is one candidate.
 
-## 5. Inputs
-
-- [x] **5.1 Test-stand inventory** · Human
-
-- [x] **5.2 FP1 pulse-tube records** · Human
-  No per-head records exist; FP1 uses the canonical head (see `data/systems.md`).
-
-- [x] **5.3 SN09 head geometry and regenerator matrix** · Human
-
-- [x] **5.4 Compressor values** · Human
-  The drive values ADR 03 needs for each manifold are in `data/compressors.md`.
-
-- [x] **5.5 Thermometer calibrations** · Human
-
-- [x] **5.6 He-4 adsorption and accommodation data** · Human
-
-- [x] **5.7 Surface emissivities** · Human
-
-- [x] **5.8 Validation measurements** · Human
-
-- [x] **5.9 FP1 geometry from CAD** · Human
-
-- [x] **5.10 Import the test-stand load-map index** · Build
-  Copy the November 5, 2026 draft index from Downloads to `data/test_stand/load_map_index_2026-11-05.csv`.
-
 ## 7. Repository health (once all other tasks completed)
 
 - [ ] **7.1 Test suite** · Build
