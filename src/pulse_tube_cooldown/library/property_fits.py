@@ -16,6 +16,7 @@ import numpy as np
 from numpy.polynomial import polynomial
 from numpy.typing import ArrayLike, NDArray
 from scipy.constants import gas_constant
+from scipy.interpolate import CubicHermiteSpline, PchipInterpolator
 
 __all__ = [
     "PROPERTY_FITS",
@@ -82,9 +83,11 @@ def make_rational_poly_fit(coefficients: Sequence[float]) -> PropertyFit:
 
 
 def make_fit_from_table(table: ArrayLike) -> PropertyFit:
-    """Builds linear interpolation in temperature over tabulated property values.
+    """Builds a shape-preserving cubic in temperature through tabulated property values.
 
-    Temperatures below the first point or above the last take that point's value.
+    The cubic is the piecewise cubic Hermite interpolant of Fritsch and Carlson (PCHIP): it passes through each point
+    with a continuous first derivative, is monotone between points where they are, and has each local extremum at a
+    point. Temperatures below the first point or above the last take that point's value.
 
     Args:
         table: Points as rows of [temperature in K, property value], with strictly increasing temperatures.
@@ -96,20 +99,16 @@ def make_fit_from_table(table: ArrayLike) -> PropertyFit:
         ValueError: If the table has fewer than two points, a row without exactly two values, temperatures that are
             not strictly increasing, or non-finite entries.
     """
-    point_temperature, point_value = _parse_table(table)
-
-    def fit(temperature: NDArray[np.float64]) -> NDArray[np.float64]:
-        return np.interp(temperature, point_temperature, point_value)
-
-    return fit
+    return _make_shape_preserving_interpolant(*_parse_table(table))
 
 
 def make_measured_with_lattice_fit(measured: ArrayLike, molar_mass: float, lattice: Mapping[str, Any]) -> PropertyFit:
     """Builds a measured specific heat continued above its last point by lattice, electronic, and magnetic terms.
 
-    At and below the measured table's last temperature T_m, the specific heat interpolates the table linearly. Above,
-    it is the molar lattice and electronic heat capacity divided by the molar mass, plus the table's excess over those
-    terms at T_m, falling as (T_m / T)^2.
+    At and below the measured table's last temperature T_m, the specific heat follows the table's shape-preserving
+    cubic, as in `make_fit_from_table`, with its slope at T_m set to the continuation's. Above, it is the molar lattice
+    and electronic heat capacity divided by the molar mass, plus the table's excess over those terms at T_m, falling
+    as (T_m / T)^2.
 
     The lattice table holds, with x = theta / T and R the molar gas constant:
 
@@ -162,10 +161,15 @@ def make_measured_with_lattice_fit(measured: ArrayLike, molar_mass: float, latti
     last = point_temperature[-1]
     remainder = point_value[-1] - molar_heat_capacity(np.array([last]))[0] / molar_mass
 
+    def continued(temperature: NDArray[np.float64]) -> NDArray[np.float64]:
+        return molar_heat_capacity(temperature) / molar_mass + remainder * (last / temperature) ** 2
+
+    step = 1e-5 * last
+    end_slope = (continued(np.array([last + step]))[0] - continued(np.array([last - step]))[0]) / (2.0 * step)
+    measured_fit = _make_shape_preserving_interpolant(point_temperature, point_value, end_slope=end_slope)
+
     def fit(temperature: NDArray[np.float64]) -> NDArray[np.float64]:
-        above = np.maximum(temperature, last)
-        continued = molar_heat_capacity(above) / molar_mass + remainder * (last / above) ** 2
-        return np.where(temperature <= last, np.interp(temperature, point_temperature, point_value), continued)
+        return np.where(temperature <= last, measured_fit(temperature), continued(np.maximum(temperature, last)))
 
     return fit
 
@@ -202,6 +206,28 @@ def make_wagner_fit(
         theta = np.maximum(1.0 - temperature / critical_temperature, 0.0)
         log_ratio = critical_temperature / temperature * np.sum(n * theta[..., np.newaxis] ** t, axis=-1)
         return np.where(temperature > critical_temperature, np.inf, critical_pressure * np.exp(log_ratio))
+
+    return fit
+
+
+def _make_shape_preserving_interpolant(
+    point_temperature: NDArray[np.float64], point_value: NDArray[np.float64], end_slope: float | None = None
+) -> PropertyFit:
+    """Builds the PCHIP cubic through the points, held at its end values beyond them.
+
+    Args:
+        point_temperature: Strictly increasing temperatures in K.
+        point_value: Property values at those temperatures.
+        end_slope: Slope at the last point in place of PCHIP's, or None to keep PCHIP's.
+    """
+    slope = PchipInterpolator(point_temperature, point_value).derivative()(point_temperature)
+    if end_slope is not None:
+        slope[-1] = end_slope
+    spline = CubicHermiteSpline(point_temperature, point_value, slope)
+    lower, upper = point_temperature[0], point_temperature[-1]
+
+    def fit(temperature: NDArray[np.float64]) -> NDArray[np.float64]:
+        return spline(np.clip(temperature, lower, upper))
 
     return fit
 

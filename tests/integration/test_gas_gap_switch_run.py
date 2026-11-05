@@ -21,7 +21,7 @@ def test_configured_switch_shuts_off_as_plate_cools():
     assert set(data.phase.values) == {"cooldown"}
     assert switch_flow[0] < -1.0
     assert abs(switch_flow[0]) > abs(support_flow[0])
-    assert 6.0 < plate[-1] < 8.0
+    assert abs(plate[-1] - 6.0) < 1e-6
     assert conductance[-1] < 1e-6 * conductance[0]
     assert abs(switch_flow[-1]) < 1e-3 * abs(support_flow[-1])
     np.testing.assert_allclose(data.heat_flow.sel(link="Switch").sum(dim="node"), 0.0, atol=1e-12)

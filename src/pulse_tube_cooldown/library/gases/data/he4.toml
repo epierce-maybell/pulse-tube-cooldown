@@ -16,7 +16,7 @@ adsorption_capacity = 13.59
 form = "table"
 table = [[5.0, 1.0], [20.0, 0.6], [300.0, 0.43]]
 range = [5.0, 300.0]
-source = "Corruccini, Vacuum 7-8, 19 (1959), as cited by Franke et al., arXiv:2402.11977 (2024): close to unity on copper well below 10 K, about 0.6 at 20 K; Trott et al., Rev. Sci. Instrum. 82 (2011), as cited there: 0.43 at room temperature; linear between"
+source = "Corruccini, Vacuum 7-8, 19 (1959), as cited by Franke et al., arXiv:2402.11977 (2024): close to unity on copper well below 10 K, about 0.6 at 20 K; Trott et al., Rev. Sci. Instrum. 82 (2011), as cited there: 0.43 at room temperature"
 
 # Dilute-gas thermal conductivity in W/(m K).
 [thermal_conductivity]

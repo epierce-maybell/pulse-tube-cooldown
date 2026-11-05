@@ -167,10 +167,13 @@ def test_conductivity_integral_of_tabulated_conductivity_matches_piecewise_integ
 
     material = load_material("Table Metal", directory=tmp_path)
 
-    # k rises as 100 + 20 (T - 10) to 400 at 25 K, then falls as 400 - 20 (T - 25).
-    # Integral to 15 K: 100 * 5 + 10 * 5^2 = 750. To 25 K: 1500 + 2250 = 3750. To 40 K: 3750 + 6000 - 2250 = 7500.
+    # PCHIP slopes: 40 at 10 K and -40 at 40 K from the three-point end formula, 0 at the 25 K peak. Over each 15 K
+    # interval, a cubic Hermite integrates to h (y0 + y1) / 2 + h^2 (d0 - d1) / 12 = 3750 + 750. To 15 K, a third of
+    # the first interval: 15 (100 * 49/162 + 15 * 40 * 11/324 + 400 * 5/162) = 8500 / 9.
     np.testing.assert_allclose(
-        material.conductivity_integral(np.array([10.0, 15.0, 25.0, 40.0])), [0.0, 750.0, 3750.0, 7500.0], rtol=1e-8
+        material.conductivity_integral(np.array([10.0, 15.0, 25.0, 40.0])),
+        [0.0, 8500.0 / 9.0, 4500.0, 9000.0],
+        rtol=1e-8,
     )
 
 
@@ -294,14 +297,14 @@ def test_conductivity_integral_has_conductivity_as_its_slope(tmp_path):
 
 def test_conductivity_integral_of_table_extending_past_range_integrates_within_range(tmp_path):
     text = _TABLE_MATERIAL.replace(
-        "table = [[10.0, 100.0], [40.0, 400.0]]", "table = [[5.0, 100.0], [25.0, 400.0], [50.0, 100.0]]"
+        "table = [[10.0, 100.0], [40.0, 400.0]]", "table = [[5.0, 100.0], [25.0, 400.0], [50.0, 775.0]]"
     )
     _write(tmp_path, "table.toml", text)
 
     material = load_material("Table Metal", directory=tmp_path)
 
-    # Over the range [10, 40] K, k rises as 100 + 15 (T - 5) to 400 at 25 K, then falls as 400 - 12 (T - 25).
-    # Integral to 25 K: (2500 + 3000) - (1000 + 187.5) = 4312.5. To 40 K: 4312.5 + 6000 - 6 * 15^2 = 8962.5.
+    # Over the range [10, 40] K, k = 100 + 15 (T - 5), integrating to 100 (T - 5) + 7.5 (T - 5)^2.
+    # To 25 K: (2000 + 3000) - (500 + 187.5) = 4312.5. To 40 K: (3500 + 9187.5) - 687.5 = 12000.
     np.testing.assert_allclose(
-        material.conductivity_integral(np.array([10.0, 25.0, 40.0])), [0.0, 4312.5, 8962.5], rtol=1e-8
+        material.conductivity_integral(np.array([10.0, 25.0, 40.0])), [0.0, 4312.5, 12000.0], rtol=1e-8
     )

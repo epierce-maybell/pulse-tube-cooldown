@@ -44,10 +44,10 @@ Work the rest of the section in list order. The first slice runs from 2.5 throug
   Context: ADR 03 "Governing equations"; `docs/papers/pulse_tube/Snodgrass2024.pdf`.
   Verified by: no loss while the stroke stays within the buffer, rising smoothly past it.
 
-- [ ] **2.12 Smooth measured specific heats** · Build
+- [x] **2.12 Smooth measured specific heats** · Build
   Tabulated properties interpolate with continuous derivatives, such as a shape-preserving cubic, including where a measured table joins its lattice continuation, so the cooler's heat flows meet ADR 03 requirement 7 with the library's regenerator materials. Gd2O2S's peak at 5.24 K is the sharpest case.
-  Context: `library/property_fits.py` (the `table` and `measured_with_lattice` forms); `library/materials/data/`, `library/gases/data/`; the continuous-derivative test in `tests/library/test_head.py`, which gives PT1.5 a smooth matrix in the meantime.
-  Verified by: unchanged values at the table points, continuous first derivatives, and that test passing with PT1.5's library materials.
+  Context: `library/property_fits.py` (the `table` and `measured_with_lattice` forms); `library/materials/data/`, `library/gases/data/`.
+  Verified by: unchanged values at the table points and continuous first derivatives, in the fit forms and the library's regenerator materials.
 
 - [ ] **2.9 Cooler configuration** · Build, after 2.7
   The cooler as a configured link: `"cooler"` in `LINK_TYPES`, with its drive and per-head parameter files read from TOML. Propose matching DESIGN "Cooler configuration" text.

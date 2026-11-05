@@ -1,9 +1,13 @@
 """Tests for the library's material definitions against their references."""
 
+import tomllib
+from pathlib import Path
+
 import numpy as np
 import pytest
 from scipy.integrate import quad
 
+from pulse_tube_cooldown.library.materials import load as material_load
 from pulse_tube_cooldown.library.materials.load import load_material
 
 # Molar mass of copper used by White & Collocott (1984), in kg/mol.
@@ -234,6 +238,29 @@ def test_regenerator_materials_are_valid_from_2_to_300_kelvin(recwarn, name):
     material.specific_heat(np.geomspace(2.0, 300.0, 50))
 
     assert not recwarn.list
+
+
+@pytest.mark.parametrize(
+    ("name", "file_name"),
+    [("Pb", "pb.toml"), ("Er3Ni", "er3ni.toml"), ("HoCu2", "hocu2.toml"), ("Gd2O2S", "gd2o2s.toml")],
+)
+def test_regenerator_specific_heat_slope_is_continuous_at_its_table_points(name, file_name):
+    # Every tabulated point inside the range, including where a measured table meets its lattice continuation. The
+    # slopes on either side agree to a thousandth of the steeper neighbouring secant; a straight line between points
+    # would differ by the change in secant.
+    spec = tomllib.loads((Path(material_load.__file__).parent / "data" / file_name).read_text())["specific_heat"]
+    point_temperature, point_value = np.array(spec.get("table", spec.get("measured"))).T
+    secant = np.abs(np.diff(point_value) / np.diff(point_temperature))
+    neighbouring_secant = np.maximum(secant, np.append(secant[1:], 0.0))
+    inside = (point_temperature[1:] > spec["range"][0]) & (point_temperature[1:] < spec["range"][1])
+    temperature = point_temperature[1:][inside]
+    step = 1e-7 * temperature
+    specific_heat = load_material(name).specific_heat
+
+    below = (specific_heat(temperature) - specific_heat(temperature - step)) / step
+    above = (specific_heat(temperature + step) - specific_heat(temperature)) / step
+
+    assert np.all(np.abs(below - above) <= 1e-3 * neighbouring_secant[inside])
 
 
 @pytest.mark.parametrize(

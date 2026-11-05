@@ -104,12 +104,38 @@ def test_table_returns_values_at_points():
     np.testing.assert_allclose(fit(np.array([10.0, 20.0, 40.0])), [1.0, 3.0, 7.0])
 
 
-def test_table_interpolates_linearly_in_temperature():
+def test_table_follows_collinear_points_exactly():
     fit = make_fit_from_table(_TABLE)
 
-    # Midpoints of each segment: (1 + 3) / 2 at 15 K and (3 + 7) / 2 at 30 K; a quarter of the way along the second
-    # segment, 3 + 0.25 * 4 at 25 K.
+    # The points lie on 1 + 0.2 (T - 10): 2 at 15 K, 4 at 25 K, and 5 at 30 K.
     np.testing.assert_allclose(fit(np.array([15.0, 25.0, 30.0])), [2.0, 4.0, 5.0])
+
+
+def _one_sided_slopes(fit, temperature):
+    """Slopes just below and just above each temperature."""
+    step = 1e-7 * temperature
+    value = fit(temperature)
+    return (value - fit(temperature - step)) / step, (fit(temperature + step) - value) / step
+
+
+def test_table_slope_is_continuous_at_interior_points():
+    # Secants of 0.2, 0.05, and -0.3 per K, so a straight line between points would kink at 20 and 40 K.
+    fit = make_fit_from_table([[10.0, 1.0], [20.0, 3.0], [40.0, 4.0], [50.0, 1.0]])
+
+    below, above = _one_sided_slopes(fit, np.array([20.0, 40.0]))
+
+    np.testing.assert_allclose(below, above, atol=1e-4)
+
+
+def test_table_stays_between_neighbouring_points():
+    # A step and a peak: each interval's values stay within its end points, so the peak stays at 4 K.
+    points = [[1.0, 0.0], [2.0, 0.0], [3.0, 1.0], [4.0, 5.0], [4.1, 2.0], [6.0, 1.9]]
+    fit = make_fit_from_table(points)
+
+    for (start, start_value), (end, end_value) in zip(points[:-1], points[1:], strict=False):
+        value = fit(np.linspace(start, end, 201))
+        assert np.all(value >= min(start_value, end_value) - 1e-12)
+        assert np.all(value <= max(start_value, end_value) + 1e-12)
 
 
 def test_table_holds_end_values_outside_points():
@@ -208,7 +234,21 @@ def test_measured_with_lattice_follows_measured_table_to_its_last_point():
         measured=[[2.0, 1.0], [4.0, 5.0], [10.0, 2.0]], molar_mass=0.1, lattice={"debye": {"temperature": 200.0}}
     )
 
-    np.testing.assert_allclose(fit(np.array([2.0, 3.0, 4.0, 7.0, 10.0])), [1.0, 3.0, 5.0, 3.5, 2.0])
+    np.testing.assert_allclose(fit(np.array([2.0, 4.0, 10.0])), [1.0, 5.0, 2.0])
+
+
+def test_measured_with_lattice_slope_is_continuous_at_measured_points_and_last_point():
+    # The table falls at 4 per K into 20 K; with no lattice heat capacity above, 80 (20 / T)^2 falls at 8 per K.
+    fit = make_measured_with_lattice_fit(
+        measured=[[5.0, 140.0], [10.0, 110.0], [15.0, 100.0], [20.0, 80.0]],
+        molar_mass=1.0,
+        lattice={"debye": {"temperature": 1.0e6}},
+    )
+
+    below, above = _one_sided_slopes(fit, np.array([10.0, 15.0, 20.0]))
+
+    np.testing.assert_allclose(below, above, atol=1e-4)
+    assert above[-1] == pytest.approx(-8.0, rel=1e-6)
 
 
 def test_measured_with_lattice_debye_term_follows_t_cubed_law_far_below_debye_temperature():
