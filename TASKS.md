@@ -72,7 +72,7 @@ Work the rest of the section in list order. The first slice runs from 2.5 throug
 
 - [x] **3.1 Heat-flow plot** · Build
 
-- [ ] **3.2 Measured-temperature overlay** · Build, after 4.1
+- [x] **3.2 Measured-temperature overlay** · Build, after 4.1
   Measured thermometer traces drawn over their simulated nodes.
 
 - [x] **3.3 Graph plot** · Build
