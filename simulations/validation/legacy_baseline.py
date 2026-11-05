@@ -1,17 +1,20 @@
 """The legacy model run on SN09 and FP1 and scored against their measured cooldowns.
 
 The legacy model is `ptc_cooldown_simulator.py` in `../pulse_tube_cooldown_simulation`, branch
-`Advanced_Feature_SIM`. Its inputs are in `legacy_baseline/inputs.toml`; its runs and scores are archived beside
-them. Run from this directory: `uv run python legacy_baseline.py`.
+`Advanced_Feature_SIM`, at the commit in `legacy_baseline/inputs.toml`. Its inputs are in that file; its runs and
+scores are archived beside it. Run from this directory: `uv run python legacy_baseline.py`.
 """
 
 import copy
 import csv
 import importlib
+import io
 import json
 import subprocess
 import sys
+import tempfile
 import tomllib
+import zipfile
 from pathlib import Path
 
 import numpy as np
@@ -48,6 +51,35 @@ def legacy_system(base: dict, system: str) -> dict:
     return config
 
 
+def with_run_options(config: dict, run: dict) -> dict:
+    """Returns `config` with a run's options from `legacy_baseline/inputs.toml` applied.
+
+    Args:
+        config: A saved system in the legacy `ptc_systems.json` format.
+        run: The run's entry. `gas_gap_tables = false` removes the tabulated conductance (`k_table`) from every
+            gas gap, leaving the legacy internal gas model. `linked_mass_gas_links` replaces the gas links of each
+            named linked mass.
+    """
+    config = copy.deepcopy(config)
+    if not run.get("gas_gap_tables", True):
+        for key in ["gas_links_pr", "gas_links_rc", "gas_links_cs", "gas_links_si", "gas_links_im"]:
+            for link in config[key]:
+                link.pop("k_table", None)
+    for linked_mass in config["linked_masses"]:
+        if linked_mass["name"] in run.get("linked_mass_gas_links", {}):
+            linked_mass["gas_links"] = copy.deepcopy(run["linked_mass_gas_links"][linked_mass["name"]])
+    return config
+
+
+def export_commit(repository: Path, commit: str, directory: Path) -> Path:
+    """Writes `repository`'s tree at `commit` into `directory` and returns `directory`."""
+    archive = subprocess.run(
+        ["git", "archive", "--format=zip", commit], cwd=repository, capture_output=True, check=True
+    ).stdout
+    zipfile.ZipFile(io.BytesIO(archive)).extractall(directory)
+    return directory
+
+
 def simulate_legacy(
     config: dict,
     initial_temperature: float,
@@ -70,7 +102,7 @@ def simulate_legacy(
     sys.path.insert(0, str(legacy))
     engine = importlib.import_module("ptc_cooldown_simulator")
 
-    def gas_links(key):
+    def gas_links(links):
         pascals_per_torr = 133.322
         return [
             {
@@ -83,7 +115,7 @@ def simulate_legacy(
                 "series_links": None,
             }
             | ({"k_table": sorted([float(t), float(k)] for t, k in link["k_table"])} if "k_table" in link else {})
-            for link in config[key]
+            for link in links
         ]
 
     def material_list(materials):
@@ -106,7 +138,7 @@ def simulate_legacy(
                 for link in linked_mass["links"]
             ],
             "lib_links": [],
-            "gas_links": [],
+            "gas_links": gas_links(linked_mass.get("gas_links", [])),
         }
         for linked_mass in config["linked_masses"]
     ]
@@ -164,11 +196,11 @@ def simulate_legacy(
         {stage: 0.0 for stage in engine.STAGES},
         initial_temperature,
         include_par=config["parasitic"],
-        gas_links_prp_rgp=gas_links("gas_links_pr"),
-        gas_links_rgp_cfp=gas_links("gas_links_rc"),
-        gas_links_cfp_stp=gas_links("gas_links_cs"),
-        gas_links_stp_icp=gas_links("gas_links_si"),
-        gas_links_icp_mxp=gas_links("gas_links_im"),
+        gas_links_prp_rgp=gas_links(config["gas_links_pr"]),
+        gas_links_rgp_cfp=gas_links(config["gas_links_rc"]),
+        gas_links_cfp_stp=gas_links(config["gas_links_cs"]),
+        gas_links_stp_icp=gas_links(config["gas_links_si"]),
+        gas_links_icp_mxp=gas_links(config["gas_links_im"]),
         linked_masses=linked_masses,
         mli_cfg=multi_layer_insulation,
         rad_loads=radiative_loads,
@@ -224,16 +256,17 @@ def plot_runs(
     return figure
 
 
-def main(legacy: Path = Path(__file__).parents[3] / "pulse_tube_cooldown_simulation") -> None:
-    """Runs and scores each run in `legacy_baseline/inputs.toml` and archives the results and figures beside it."""
+def main(repository: Path = Path(__file__).parents[3] / "pulse_tube_cooldown_simulation") -> None:
+    """Runs and scores each run in `legacy_baseline/inputs.toml` and archives the results and figures beside it.
+
+    Args:
+        repository: The legacy repository. Every run uses its tree at `inputs.toml`'s `legacy_commit`, whatever
+            is checked out.
+    """
     archive = Path(__file__).parent / "legacy_baseline"
     with (archive / "inputs.toml").open("rb") as file:
         inputs = tomllib.load(file)
-    with (legacy / "ptc_systems.json").open(encoding="utf-8") as file:
-        base = json.load(file)[inputs["base_system"]]
-    commit = subprocess.run(
-        ["git", "rev-parse", "HEAD"], cwd=legacy, capture_output=True, text=True, check=True
-    ).stdout.strip()
+    commit = inputs["legacy_commit"]
 
     scores = [
         f'legacy_commit = "{commit}"',
@@ -242,33 +275,39 @@ def main(legacy: Path = Path(__file__).parents[3] / "pulse_tube_cooldown_simulat
     ]
     temperatures = {system: {} for system in inputs["coolers"]}
     rms_by_run = {system: {} for system in inputs["coolers"]}
-    for name, run in inputs["runs"].items():
-        system = run["system"]
-        measured = read_measurements(system)
-        scored = measured.temperature.sel(node=measured.node[measured.scored])
-        initial_temperature = float(np.mean([readings.dropna("time")[0] for readings in scored.transpose("node", ...)]))
-        max_time = float(measured.time[-1]) + 3600.0
+    with tempfile.TemporaryDirectory() as directory:
+        legacy = export_commit(repository, commit, Path(directory))
+        with (legacy / "ptc_systems.json").open(encoding="utf-8") as file:
+            base = json.load(file)[inputs["base_system"]]
+        for name, run in inputs["runs"].items():
+            system = run["system"]
+            measured = read_measurements(system)
+            scored = measured.temperature.sel(node=measured.node[measured.scored])
+            initial_temperature = float(
+                np.mean([readings.dropna("time")[0] for readings in scored.transpose("node", ...)])
+            )
+            max_time = float(measured.time[-1]) + 3600.0
 
-        config = legacy_system(base, system) if run["system_inputs"] else copy.deepcopy(base)
-        config["T_init"] = initial_temperature
-        config["max_time_hrs"] = max_time / 3600.0
-        temperature = simulate_legacy(config, initial_temperature, max_time, legacy)
-        rms, rms_by_node = residual(temperature, measured)
-        temperatures[system][name] = temperature
-        rms_by_run[system][name] = rms_by_node
+            config = with_run_options(legacy_system(base, system) if run["system_inputs"] else base, run)
+            config["T_init"] = initial_temperature
+            config["max_time_hrs"] = max_time / 3600.0
+            temperature = simulate_legacy(config, initial_temperature, max_time, legacy)
+            rms, rms_by_node = residual(temperature, measured)
+            temperatures[system][name] = temperature
+            rms_by_run[system][name] = rms_by_node
 
-        (archive / f"{name}.json").write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
-        temperature.to_dataset(name="temperature").to_netcdf(archive / f"{name}.nc")
-        scores += [
-            f"\n[{name}]",
-            f'system = "{system}"',
-            f"rms = {rms}",
-            f"initial_temperature = {initial_temperature}",
-            f"max_time = {max_time}",
-            f"\n[{name}.rms_by_node]",
-            *(f"{node} = {value}" for node, value in rms_by_node.items()),
-        ]
-        print(f"{name}: rms {rms:.4f}", {node: round(value, 4) for node, value in rms_by_node.items()})
+            (archive / f"{name}.json").write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
+            temperature.to_dataset(name="temperature").to_netcdf(archive / f"{name}.nc")
+            scores += [
+                f"\n[{name}]",
+                f'system = "{system}"',
+                f"rms = {rms}",
+                f"initial_temperature = {initial_temperature}",
+                f"max_time = {max_time}",
+                f"\n[{name}.rms_by_node]",
+                *(f"{node} = {value}" for node, value in rms_by_node.items()),
+            ]
+            print(f"{name}: rms {rms:.4f}", {node: round(value, 4) for node, value in rms_by_node.items()})
 
     (archive / "scores.toml").write_text("\n".join(scores) + "\n", encoding="utf-8")
     for system, runs in temperatures.items():

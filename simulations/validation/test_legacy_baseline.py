@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 import xarray as xr
-from legacy_baseline import legacy_system
+from legacy_baseline import legacy_system, with_run_options
 from measurements import read_measurements, residual
 
 ARCHIVE = Path(__file__).parent / "legacy_baseline"
@@ -64,7 +64,24 @@ def test_fp1_system():
     assert {"material": "OFHC Copper (RRR=100)", "mass": 31.556} in config["stages"]["STP"]["materials"]
 
 
-@pytest.mark.parametrize("run", ["sn09_tuned", "sn09_corrected", "fp1"])
+def test_run_options():
+    """`gas_gap_tables = false` removes every gas gap's table; `linked_mass_gas_links` replaces DHX's gas links."""
+    tabled = {"gas": "N2", "k_table": [[5.0, 0.0002], [300.0, 0.03]]}
+    config = _fridge() | {
+        key: [dict(tabled)] for key in ["gas_links_pr", "gas_links_rc", "gas_links_cs", "gas_links_si", "gas_links_im"]
+    }
+    dhx_links = [{"gas": "He-4", "pressure_torr": 750.0, "p_mode": "T_avg"}]
+
+    options = with_run_options(config, {"gas_gap_tables": False, "linked_mass_gas_links": {"DHX": dhx_links}})
+
+    assert options["gas_links_cs"] == [{"gas": "N2"}]
+    assert options["linked_masses"][0]["gas_links"] == dhx_links
+    assert config["gas_links_cs"] == [tabled]
+    assert "gas_links" not in config["linked_masses"][0]
+    assert with_run_options(config, {}) == config
+
+
+@pytest.mark.parametrize("run", ["sn09_tuned", "sn09_corrected", "fp1", "fp1_generous"])
 def test_archived_scores(run):
     """Each archived run covers its window and scores as recorded."""
     with (ARCHIVE / "scores.toml").open("rb") as file:

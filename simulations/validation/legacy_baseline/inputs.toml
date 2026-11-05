@@ -2,12 +2,35 @@
 # legacy was tuned to SN09 with.
 base_system = "Fridge"
 
+# The legacy commit every run uses, on `Advanced_Feature_SIM`.
+legacy_commit = "83c1e78a5aed86a1ffb474d45c7ad1d7eac4b39b"
+
+# Each system's baseline run: its best legacy score over committed legacy inputs.
+[baselines]
+sn09 = "sn09_tuned"
+fp1 = "fp1_generous"
+
 # Each archived run's system, and whether it replaces `Fridge`'s masses and coolers with the system's BOM masses and
-# coolers below. `sn09_tuned` is `Fridge` as saved.
+# coolers below. `sn09_tuned` is `Fridge` as saved. `gas_gap_tables = false` removes every gas gap's tabulated
+# conductance (`k_table`); `linked_mass_gas_links` replaces a linked mass's gas links.
 [runs]
 sn09_tuned = { system = "sn09", system_inputs = false }
 sn09_corrected = { system = "sn09", system_inputs = true }
 fp1 = { system = "fp1", system_inputs = true }
+
+[runs.fp1_generous]
+system = "fp1"
+system_inputs = true
+gas_gap_tables = false
+
+# The DHX gas link of legacy commit ddc79e8's saved system "FP1 - 2x PT1.5 (imported)".
+[[runs.fp1_generous.linked_mass_gas_links.DHX]]
+gas = "He-4"
+pressure_torr = 750.0
+area_cm2 = 10.0
+length_cm = 0.05
+shutoff_K = 14.0
+p_mode = "T_avg"
 
 # Legacy material (`ptc_material_properties.json`) for each `data/<system>/bom_by_node.csv` mass column. Columns not
 # listed, such as `Other_kg`, are left out.
