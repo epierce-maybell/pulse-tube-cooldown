@@ -26,3 +26,6 @@ stage1_pulse_tube_gas_volume,250.8,cm^3,derived,pi (r - wall)^2 x length; linear
 stage2_regenerator_gas_volume_prp_to_clamp,50.0,cm^3,derived,pi (r - wall)^2 x length x x_R x porosity_spheres; linear profile T1 to TR
 stage2_regenerator_gas_volume_clamp_to_cfp,24.8,cm^3,derived,pi (r - wall)^2 x length x (1 - x_R) x porosity_spheres; linear profile TR to T2
 stage2_pulse_tube_gas_volume,200.9,cm^3,derived,pi (r - wall)^2 x length; linear profile Ta to T2
+reservoir_volume,5258,cm^3,"STEP export of CAD 910-000018, 2026-11-03","TANK, BUFFER 350-000175 (BOM line 326), one per pulse tube; bore radius 76.5 mm over 286 mm; lid and bottom pockets under 0.06 L neglected"
+reservoir_hose_volume,34,cm^3,"STEP export of CAD 910-000018, 2026-11-03","HOSE, BUFFER (BOM lines 714-715), one per reservoir; bore radius 4.763 mm over 482.6 mm"
+valve_to_head_dead_volume,45,cm^3,"STEP export of CAD 910-000018, 2026-11-03","rough sum of bores: VH inlet tube, isolator, isolator-to-hose tube, 24 in hose 400-000132 (7.04 mm bore), glands and elbow; rotary valve ports are not in the CAD"
