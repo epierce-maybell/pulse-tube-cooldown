@@ -78,8 +78,8 @@ Each system's records, procedure, and inventory are in `data/systems.md`.
 
 - [x] **5.3 SN09 head geometry and regenerator matrix** · Human
 
-- [o] **5.4 Compressor values** · Human
-  The drive values ADR 03 needs for each manifold. What is known is in `data/compressors.md`. Still missing: supply and return pressures with a system at base, and the stage temperatures at that moment.
+- [x] **5.4 Compressor values** · Human
+  The drive values ADR 03 needs for each manifold are in `data/compressors.md`.
 
 - [x] **5.5 Thermometer calibrations** · Human
 
