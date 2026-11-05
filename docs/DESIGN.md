@@ -10,7 +10,7 @@ import pulse_tube_cooldown as ptc
 ```
 
 #### Configuration files
-Each system takes one configuration file as an input that references the data subdirectory where necessary.
+Each fridge has a template file which describes its architecture, including nodes, links, materials, and so forth. A simulation (a "run") should be self-contained in its own subdirectory, where we store the configuration file, including any changes from the template, and output, including raw output data and any figures. We should strive for human-readable simulation directories: plots of the configured graph for quick viewing, highlighted changes to templates, and summaries of key results, where applicable.
 
 Configuration files are written in TOML, with the following sections:
 ```toml
@@ -494,13 +494,6 @@ reference_temperature = 4.2      # K
 temperature_exponent = 1.1
 source = "Dhuley 2019, Tables 2 and 5, Au-plated Cu assembled warm"
 ```
-
-## Validation and testing
-Validation experiments should live in simulations/validation/identifier, where identifier is usually a subdirectory that stores the runner script, the configuration file(s), and output.
-
-In the future, we will want regression tests. The first validation experiment(s) that pass, leading us to v1 release, will become the regression tests for later iterations of the model.
-
-Our test suite should include unit tests for each discrete unit of code that is worth testing (e.g., could reasonably not do what we expect it to). Analytic tests are appropriate where we have access to analytic solutions
 
 ## Package layout
 The repository structure should have the following shape, although this is not a comprehensive description (specific files may be added or removed later, during implementation):
