@@ -77,7 +77,7 @@ Work the rest of the section in list order. The first slice runs from 2.5 throug
 
 This section builds 2.3 and 2.4. ADR 03 as written cannot meet requirement 4, so the head gains the cold heat exchangers' gas voids and a stage-1 coupling term, `c E_2 x (1 - x)` with `x = beta T_2 / (1 + epsilon)` at the stage-2 boundary. 3.1 records the evidence. Out of scope: PT1.1's values (4.4), and `simulations/validation/test_stand_steady_state/` with 2.10's open sub-item.
 
-- [ ] **3.1 Findings and ADR 03 proposal** · Discuss
+- [x] **3.1 Findings and ADR 03 proposal** · Discuss
   `simulations/validation/test_stand_head/findings.md`: the energy-budget argument, the void and parameter scans, the coupling gut check, and proposed ADR 03 wording for the voids, the coupling term, and requirement 4. The human edits ADR 03 from it.
   Context: ADR 03; `simulations/exploration/loadmaps/summary.txt`; `data/heads/pt1_5/geometry.csv`.
   Verified by: the human's ADR 03 edit.
