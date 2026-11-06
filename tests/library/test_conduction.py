@@ -12,6 +12,7 @@ CONSTANT = Material(
     name="Constant",
     density=1.0,
     specific_heat=lambda t: 1.0 + 0.0 * t,
+    specific_heat_integral=lambda t: 1.0 * t,
     thermal_conductivity=lambda t: 2.0 + 0.0 * t,
     conductivity_integral=lambda t: 2.0 * t,
 )

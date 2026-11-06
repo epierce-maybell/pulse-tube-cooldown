@@ -21,15 +21,17 @@ Each property is a table read by `make_fit`. Within its range, a property takes 
 takes the value at the nearest end of the range and issues a RuntimeWarning naming the material, property, and side.
 Python's default warning filter shows each distinct warning once.
 
-Each material also has a conductivity integral, the integral of thermal conductivity from the low end of its range.
-Within the range, it is a cubic Hermite spline through Simpson-rule integrals at knots, with the conductivity as its
-slopes. Knots are log-spaced and include any table points. Outside the range, it extends linearly with the
-conductivity at the nearest end and warns as the properties do.
+Each property also has an integral over temperature from the low end of its range: the specific-heat integral and,
+where there is a thermal conductivity, the conductivity integral. Within the range, an integral is a cubic Hermite
+spline through Simpson-rule integrals at knots, with the property as its slopes. Knots are log-spaced and include any
+tabulated points. Outside the range, it extends linearly with the property at the nearest end and warns as the
+properties do.
 """
 
 import os
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
@@ -58,41 +60,41 @@ def load_material(name: str, /, *, directory: str | os.PathLike[str] = _DATA_DIR
         ConfigurationError: If no file or more than one file defines the name.
     """
     data = read_named_toml(name, directory=directory, kind="materials")
+    specific_heat = make_fit(data["specific_heat"], f"{name} specific_heat")
     conductivity = conductivity_integral = None
 
     if "thermal_conductivity" in data:
-        spec = data["thermal_conductivity"]
-        conductivity = make_fit(spec, f"{name} thermal_conductivity")
-        table = np.array(spec.get("table", []), dtype=np.float64).reshape(-1, 2)
-        conductivity_integral = _integrate(conductivity, spec["range"], table[:, 0], f"{name} conductivity_integral")
+        conductivity = make_fit(data["thermal_conductivity"], f"{name} thermal_conductivity")
+        conductivity_integral = _integrate(conductivity, data["thermal_conductivity"], f"{name} conductivity_integral")
 
     return Material(
         name=name,
         density=float(data["density"]),
-        specific_heat=make_fit(data["specific_heat"], f"{name} specific_heat"),
+        specific_heat=specific_heat,
+        specific_heat_integral=_integrate(specific_heat, data["specific_heat"], f"{name} specific_heat_integral"),
         thermal_conductivity=conductivity,
         conductivity_integral=conductivity_integral,
     )
 
 
-def _integrate(
-    conductivity: PropertyFit, valid_range: Sequence[float], table_temperature: NDArray[np.float64], label: str
-) -> PropertyFit:
-    """Builds the conductivity integral from the low end of the range, extended linearly outside the range."""
+def _integrate(fit: PropertyFit, spec: Mapping[str, Any], label: str) -> PropertyFit:
+    """Builds a property's integral from the low end of its range, extended linearly outside the range."""
+    valid_range: Sequence[float] = spec["range"]
     lower, upper = valid_range
+    point_temperature = np.array(spec.get("table", spec.get("measured", [])), dtype=np.float64).reshape(-1, 2)[:, 0]
     knots = np.union1d(
-        np.geomspace(lower, upper, 1025), table_temperature[(lower < table_temperature) & (table_temperature < upper)]
+        np.geomspace(lower, upper, 1025), point_temperature[(lower < point_temperature) & (point_temperature < upper)]
     )
 
-    slope = conductivity(knots)
-    midpoint_conductivity = conductivity((knots[:-1] + knots[1:]) / 2.0)
-    simpson_integral = np.diff(knots) / 6.0 * (slope[:-1] + 4.0 * midpoint_conductivity + slope[1:])
+    slope = fit(knots)
+    midpoint_value = fit((knots[:-1] + knots[1:]) / 2.0)
+    simpson_integral = np.diff(knots) / 6.0 * (slope[:-1] + 4.0 * midpoint_value + slope[1:])
     spline = CubicHermiteSpline(knots, np.concatenate(([0.0], np.cumsum(simpson_integral))), slope)
 
-    def conductivity_integral(temperature: NDArray[np.float64]) -> NDArray[np.float64]:
+    def integral(temperature: NDArray[np.float64]) -> NDArray[np.float64]:
         warn_below(temperature, valid_range, label, f"extending linearly from {lower:g} K")
         warn_above(temperature, valid_range, label, f"extending linearly from {upper:g} K")
         clipped = np.clip(temperature, lower, upper)
         return spline(clipped) + spline(clipped, 1) * (temperature - clipped)
 
-    return conductivity_integral
+    return integral

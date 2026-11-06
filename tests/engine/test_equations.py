@@ -14,19 +14,20 @@ from pulse_tube_cooldown.engine.equations import (
 )
 
 
-def _material(name: str, specific_heat) -> Material:
+def _material(name: str, specific_heat, specific_heat_integral) -> Material:
     return Material(
         name=name,
         density=1.0,
         specific_heat=specific_heat,
+        specific_heat_integral=specific_heat_integral,
         thermal_conductivity=lambda t: 0.0 * t,
         conductivity_integral=lambda t: 0.0 * t,
     )
 
 
-LINEAR = _material("Linear", lambda t: 2.0 * t)
-QUADRATIC = _material("Quadratic", lambda t: 0.5 * t**2)
-CONSTANT = _material("Constant", lambda t: 400.0 + 0.0 * t)
+LINEAR = _material("Linear", lambda t: 2.0 * t, lambda t: t**2)
+QUADRATIC = _material("Quadratic", lambda t: 0.5 * t**2, lambda t: t**3 / 6.0)
+CONSTANT = _material("Constant", lambda t: 400.0 + 0.0 * t, lambda t: 400.0 * t)
 
 
 def test_single_material_node_capacity_follows_temperature():

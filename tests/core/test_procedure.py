@@ -14,6 +14,7 @@ _TOY = Material(
     name="Toy",
     density=1.0,
     specific_heat=lambda t: t,
+    specific_heat_integral=lambda t: t**2 / 2.0,
     thermal_conductivity=lambda t: t,
     conductivity_integral=lambda t: t**2 / 2.0,
 )

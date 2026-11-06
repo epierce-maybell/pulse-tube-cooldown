@@ -23,13 +23,19 @@ _MOLAR_MASS = 4.002602e-3  # kg/mol
 _GAS_CONSTANT = 8.314462618  # J/(mol K)
 _SECOND_VIRIAL_AT_300_K = 11.8e-6  # m^3/mol
 _MATRIX = Material(
-    name="Matrix", density=1.0, specific_heat=lambda t: t, thermal_conductivity=None, conductivity_integral=None
+    name="Matrix",
+    density=1.0,
+    specific_heat=lambda t: t,
+    specific_heat_integral=lambda t: t**2 / 2.0,
+    thermal_conductivity=None,
+    conductivity_integral=None,
 )
 _WALL_CONDUCTIVITY = 2.0  # W/(m K)
 _WALL = Material(
     name="Wall",
     density=1.0,
     specific_heat=lambda t: t,
+    specific_heat_integral=lambda t: t**2 / 2.0,
     thermal_conductivity=lambda t: np.full_like(t, _WALL_CONDUCTIVITY),
     conductivity_integral=lambda t: _WALL_CONDUCTIVITY * np.asarray(t),
 )

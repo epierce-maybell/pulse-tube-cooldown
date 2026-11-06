@@ -15,6 +15,7 @@ def _linear_material() -> Material:
         name="Toy",
         density=1.0,
         specific_heat=lambda temperature: 2.0 * temperature,
+        specific_heat_integral=lambda temperature: temperature**2,
         thermal_conductivity=lambda temperature: 3.0 + 0.0 * temperature,
         conductivity_integral=lambda temperature: 3.0 * temperature,
     )
@@ -94,6 +95,7 @@ def test_node_composition_pairs_materials_with_masses():
         name="Steel",
         density=1.0,
         specific_heat=lambda t: t,
+        specific_heat_integral=lambda t: t**2 / 2.0,
         thermal_conductivity=lambda t: t,
         conductivity_integral=lambda t: t**2 / 2.0,
     )
@@ -134,6 +136,7 @@ def test_node_with_nonpositive_mass_is_rejected(mass):
         name="Steel",
         density=1.0,
         specific_heat=lambda t: t,
+        specific_heat_integral=lambda t: t**2 / 2.0,
         thermal_conductivity=lambda t: t,
         conductivity_integral=lambda t: t**2 / 2.0,
     )

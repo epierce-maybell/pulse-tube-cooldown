@@ -30,6 +30,7 @@ def _switch():
         name="Worked bracket",
         density=1.0,
         specific_heat=lambda temperature: np.ones_like(temperature),
+        specific_heat_integral=lambda temperature: 1.0 * temperature,
         thermal_conductivity=lambda temperature: 0.5 * temperature,
         conductivity_integral=lambda temperature: 0.25 * temperature**2,
     )

@@ -82,7 +82,7 @@ This section builds 2.3 and 2.4. ADR 03 as written cannot meet requirement 4, so
   Context: ADR 03; `simulations/exploration/loadmaps/summary.txt`; `data/heads/pt1_5/geometry.csv`.
   Verified by: the human's ADR 03 edit.
 
-- [ ] **3.2 Specific-heat integral** · Build
+- [x] **3.2 Specific-heat integral** · Build
   Each material's specific-heat integral over temperature, alongside `conductivity_integral`, for every fit form.
   Context: `library/materials/load.py`, `library/property_fits.py`.
   Verified by: agreement with quadrature for each fit form.

@@ -5,6 +5,7 @@ import warnings
 
 import numpy as np
 import pytest
+from scipy.integrate import quad
 
 from pulse_tube_cooldown.core.errors import ConfigurationError
 from pulse_tube_cooldown.core.types import Material
@@ -293,6 +294,114 @@ def test_conductivity_integral_has_conductivity_as_its_slope(tmp_path):
         material.conductivity_integral(temperature + step) - material.conductivity_integral(temperature - step)
     ) / (2.0 * step)
     np.testing.assert_allclose(slope, material.thermal_conductivity(temperature), rtol=1e-6)
+
+
+_RATIONAL_POLY_SPECIFIC_HEAT_MATERIAL = """
+    name = "Rational Metal"
+    density = 8000.0
+
+    [specific_heat]
+    form = "rational_poly"
+    coefficients = [0.0, 0.5, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    range = [4.0, 300.0]
+"""
+
+
+def _quadrature(material, temperature, lower, breakpoints=()):
+    def specific_heat(t):
+        return material.specific_heat(np.array([t])).item()
+
+    return [
+        quad(
+            specific_heat,
+            lower,
+            t,
+            points=[p for p in breakpoints if lower < p < t] or None,
+            limit=1000,
+            epsabs=1e-12,
+            epsrel=1e-12,
+        )[0]
+        for t in temperature
+    ]
+
+
+@pytest.mark.parametrize(
+    ("filename", "text", "name", "temperature", "breakpoints"),
+    [
+        ("poly.toml", _POLY_MATERIAL, "Poly Metal", [4.0, 7.0, 55.0, 300.0], ()),
+        (
+            "rational.toml",
+            _RATIONAL_POLY_SPECIFIC_HEAT_MATERIAL,
+            "Rational Metal",
+            [4.0, 9.0, 120.0, 300.0],
+            (),
+        ),
+        ("table.toml", _TABLE_MATERIAL, "Table Metal", [10.0, 15.0, 25.0, 40.0], (20.0,)),
+    ],
+    ids=["log_poly", "rational_poly", "table"],
+)
+def test_specific_heat_integral_agrees_with_quadrature(tmp_path, filename, text, name, temperature, breakpoints):
+    _write(tmp_path, filename, text)
+
+    material = load_material(name, directory=tmp_path)
+
+    np.testing.assert_allclose(
+        material.specific_heat_integral(np.array(temperature)),
+        _quadrature(material, temperature, temperature[0], breakpoints),
+        rtol=1e-7,
+        atol=1e-9,
+    )
+
+
+def test_specific_heat_integral_of_measured_with_lattice_agrees_with_quadrature_across_its_peak():
+    material = load_material("Gd2O2S")
+
+    # Range [2, 300] K; the measured table, on a 0.05 K grid, peaks at 5.24 K and joins the lattice continuation at
+    # 10 K. Between knots on the peak, the integral's spline is within 1e-5 of the quadrature.
+    temperature = [2.0, 4.0, 5.24, 6.0, 10.0, 50.0, 300.0]
+    measured_grid = np.round(np.arange(2.05, 10.01, 0.05), 2)
+    np.testing.assert_allclose(
+        material.specific_heat_integral(np.array(temperature)),
+        _quadrature(material, temperature, 2.0, breakpoints=measured_grid),
+        rtol=1e-5,
+    )
+
+
+def test_specific_heat_integral_of_table_matches_piecewise_integral(tmp_path):
+    _write(tmp_path, "table.toml", _TABLE_MATERIAL)
+
+    material = load_material("Table Metal", directory=tmp_path)
+
+    # Points (10, 1), (20, 3), (40, 7) are collinear in slope 0.2, so PCHIP is the line c = 1 + 0.2 (T - 10),
+    # integrating to (T - 10) + 0.1 (T - 10)^2.
+    np.testing.assert_allclose(
+        material.specific_heat_integral(np.array([10.0, 15.0, 25.0, 40.0])), [0.0, 7.5, 37.5, 120.0], rtol=1e-8
+    )
+
+
+def test_specific_heat_integral_extends_linearly_outside_range(tmp_path):
+    _write(tmp_path, "poly.toml", _POLY_MATERIAL)
+
+    material = load_material("Poly Metal", directory=tmp_path)
+
+    # c = T on [4, 300] K. Below, -4 * (4 - 2); above, (300^2 - 4^2) / 2 plus 300 * (400 - 300).
+    with pytest.warns(RuntimeWarning):
+        integral = material.specific_heat_integral(np.array([2.0, 400.0]))
+
+    np.testing.assert_allclose(integral, [-8.0, 44992.0 + 30000.0], rtol=1e-8)
+
+
+@pytest.mark.parametrize(
+    ("temperature", "side"),
+    [([1.0, 5.0], "below"), ([5.0, 1000.0], "above")],
+)
+def test_specific_heat_integral_warns_naming_material_and_side_outside_range(tmp_path, temperature, side):
+    _write(tmp_path, "poly.toml", _POLY_MATERIAL)
+
+    material = load_material("Poly Metal", directory=tmp_path)
+
+    with pytest.warns(RuntimeWarning, match=rf"Poly Metal.*specific_heat_integral.*{side}.*4.*300"):
+        material.specific_heat_integral(np.array(temperature))
 
 
 def test_conductivity_integral_of_table_extending_past_range_integrates_within_range(tmp_path):
