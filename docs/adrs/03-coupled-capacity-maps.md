@@ -6,7 +6,7 @@ Target: Derive a model for pulse tube cooling power from first principles and wh
 1. The model should be able to predict cooling power from the same unit, on the same drive, for a different trajectory in (T1, T2, TR) space. It should also be able to predict cooling power under a different drive configuration, if the number of compressors or heads on a manifold changes.
 2. Per-unit parameters should be fit from a single load map; in future coupled models, we can require a load map as input for the pulse tube head. In an ideal case, cooldowns on the test stand would be used for validation only, but if certain population-level parameters are required, we can consider fitting those once per design or group.
 3. We are not concerned with run-to-run variability among units. If we decide that this can be *useful* to a model later on (e.g., testing behavior that should be invariant), we can revisit this. But we have no details about what changed between runs, and the list of possibilities is too long to constrain anything.
-4. Coupling between stages should emerge from model physics, rather than being fit directly. With heat flow into a node positive, our data imply that dQ1/dT2 should be positive at fixed T1, about +1.4 W/K on one compressor and +2.7 W/K on two, weakening as T1 rises; dQ2/dT1 at fixed T2 is nearly zero.
+4. Coupling between stages should follow from model physics where it can. Where the physics as modeled cannot reproduce it, one design-level coefficient may carry it, tied to a modeled quantity rather than fitted as a free cross-term. With heat flow into a node positive, our data imply that dQ1/dT2 should be positive at fixed T1, about +1.4 W/K on one compressor and +2.7 W/K on two, weakening as T1 rises; dQ2/dT1 at fixed T2 is nearly zero.
 5. QR is coupled to Q1 and Q2 in both directions, and its behavior follows from model physics and design parameters. Test stand load maps have nothing mounted there, so they are a point at QR = 0.
 6. A prediction will be judged on the cooldown trajectory for T1 and T2 and cooling powers Q1 and Q2 at base.
 7. This routine will run inside an implicit solver of some kind. The heat flows need to be functions of temperature alone with continuous derivatives. Internal solves are acceptable, but need to be weighted against the cost of nested iteration.
@@ -26,6 +26,8 @@ Q_2 = F^-_2 + L_2 + K_2 (T_0 - T_2) - E_2,
 $$
 
 Here, $Q_1$ and $Q_2$ are the cooler's heat flows into the stage nodes, in W. $K_1$ and $K_2$ are the pulse-tube wall conductances, in W/K, $T_1$ and $T_2$ are the stage temperatures, and $T_0$ is the warm-flange temperature. $L_1$ and $L_2$ are the total loss in each pulse tube. As of this ADR, we only consider breakthrough loss. 
+
+Stage 1 also carries $c E_2 x (1 - x)$, where $x = \beta T_2 / (1 + \epsilon)$ is stage 2's gross-cooling fraction, taken at the stage-2 boundary with the coldest node's $\epsilon$. The term is the stage-1 cost of producing stage 2's cooling in the non-ideal helium regime, which the regenerator and drive model do not capture. $c$ takes one value per design, fitted to the population's load maps.
 
 Gas that crosses the whole pulse tube in one cycle, "breaking through" the buffer, carries its heat directly to the stage ("large-stroke loss" in Snodgrass et al., 2024). Each cycle, the mass that flows through the warm end of pulse tube $i$, into and out of its reservoir, is $\Delta m_i = V_{r,i} \Delta\rho_{r,i}$. Gas entering the tube's warm end must push the tube's gas out through its cold end ahead of it. The tube's own compression moves gas in and out of the cold end without carrying warm gas along, so warm gas reaches the stage only when $\Delta m_i$ exceeds the tube's buffer of gas, $\lambda m_i$. For a tube at one temperature, $\Delta m_i / m_i$ is the stroke $2|\xi|/L$ of Snodgrass et al. (2024) eq. (4), taken from the flow at the warm end, so $\lambda$ and $\sigma$ read from their Fig. 8 apply directly. The excess breaks through each cycle, so the loss is:
 
@@ -75,7 +77,7 @@ $$
 \Delta M_n = \sum_j V_j \, \Delta\rho_j
 $$
 
-summed over its gas volumes $j$, each with volume $V_j$ and temperature $T_j$, where $\Delta \rho_j$ is the change in density between the high (entry) pressure $P_+$ and low (return) pressure $P_-$. Pore gas exchanges heat with the matrix, so its density changes at its node's temperature. The other gas is compressed adiabatically, so its density difference is taken at constant entropy: the gas in each pulse tube, along a linear temperature gradient from the warm flange to its stage; the volume between the rotary valve and the head, at $T_0$; and each reservoir, also at $T_0$, whose pressure swing is smaller by a factor of $\sqrt{1 + (\omega R_i B_i)^2}$ (see below). 
+summed over its gas volumes $j$, each with volume $V_j$ and temperature $T_j$, where $\Delta \rho_j$ is the change in density between the high (entry) pressure $P_+$ and low (return) pressure $P_-$. Pore gas exchanges heat with the matrix, so its density changes at its node's temperature. So does the gas in each stage's cold heat exchanger, at its stage temperature. The other gas is compressed adiabatically, so its density difference is taken at constant entropy: the gas in each pulse tube, along a linear temperature gradient from the warm flange to its stage; the volume between the rotary valve and the head, at $T_0$; and each reservoir, also at $T_0$, whose pressure swing is smaller by a factor of $\sqrt{1 + (\omega R_i B_i)^2}$ (see below). 
 
 The compressor(s) must provide that mass at each head's valve frequency $f_n$, so:
 
@@ -91,7 +93,7 @@ $$
 M_{He} = \sum_j V_j \rho(T_j, \bar{P}),
 $$
 
-summed over all gas volumes $j$ on the manifold, each once: supply and return lines, buffers, head dead volumes, pore gas, pulse tubes, and reservoirs. Lines and buffers enter the inventory but not $\Delta M_n$. All pressures are absolute. The pressure amplitude is given by:
+summed over all gas volumes $j$ on the manifold, each once: supply and return lines, buffers, head dead volumes, heat-exchanger voids, pore gas, pulse tubes, and reservoirs. Lines and buffers enter the inventory but not $\Delta M_n$. All pressures are absolute. The pressure amplitude is given by:
 
 $$
 P_a = \frac{1}{2} \kappa \Delta P,
@@ -120,12 +122,12 @@ $$
 \epsilon_k = \frac{V_k \rho(T_k, \bar{P}) c_p(T_k, \bar{P})}{M_k c_{m,k}(T_k)},
 $$ 
 
-and its heat capacity is $(1 + \epsilon_k) M_k c_{m,k}$. At each boundary between nodes, the energy flow and acoustic power relations hold, including at the boundary where a node meets a plate. The mass flow at a boundary is $f$ times the mass swing $V_j \Delta\rho_j$ of every gas volume on its cold side, so it is $f_n \Delta M_n$ at the warm flange. At the stage-1 end of the stage-1 section, those volumes are tube 1, reservoir 1, the whole stage-2 section, tube 2, and reservoir 2. The heat flow into a node is $F^+ - F^-$, the energy flows at its warm and cold boundaries. $`F^-_1`$, $`F^+_2`$, and $`F^-_2`$ are $F$ at the stage boundaries, and $Q_R$ is the heat flow into the node containing the clamp, which holds the RGP. At the stage-2 boundary, $F_{pressure}$ is evaluated at the plate temperature $T_2$ with the coldest node's $\epsilon$. Where the temperature gradient there is small, stage 2's net cooling is $\beta T_2 E_2 / (1 + \epsilon) - K_2 (T_0 - T_2) - L_2$.
+and its heat capacity is $(1 + \epsilon_k) M_k c_{m,k}$. At each boundary between nodes, the energy flow and acoustic power relations hold, including at the boundary where a node meets a plate. The mass flow at a boundary is $f$ times the mass swing $V_j \Delta\rho_j$ of every gas volume on its cold side, so it is $f_n \Delta M_n$ at the warm flange. At the stage-1 end of the stage-1 section, those volumes are the stage-1 heat exchanger, tube 1, reservoir 1, the whole stage-2 section, the stage-2 heat exchanger, tube 2, and reservoir 2. The heat flow into a node is $F^+ - F^-$, the energy flows at its warm and cold boundaries. $`F^-_1`$, $`F^+_2`$, and $`F^-_2`$ are $F$ at the stage boundaries, and $Q_R$ is the heat flow into the node containing the clamp, which holds the RGP. At the stage-2 boundary, $F_{pressure}$ is evaluated at the plate temperature $T_2$ with the coldest node's $\epsilon$. Where the temperature gradient there is small, stage 2's net cooling is $\beta T_2 E_2 / (1 + \epsilon) - K_2 (T_0 - T_2) - L_2$.
 
 ## Parameters
-Four parameters are fitted to the load map, per head: packing coefficients $a_i$ and valve resistances $R_i$. 
+Four parameters are fitted to the load map, per head: packing coefficients $a_i$ and valve resistances $R_i$. Each design also has a coupling coefficient $c$, fitted once to the population's load maps.
 
-For the pulse tube head, each design specifies the geometry of the regenerator sections and pulse tubes, the gas volumes, clamp position, and regenerator matrix materials and properties. Each unit's valve frequency is its shipped setting. For each drive, we need the compressor volumetric flow rates, relief swing, fill pressure at rest, warm-line volume, and the configuration of compressors and heads on the manifold. 
+For the pulse tube head, each design specifies the geometry of the regenerator sections and pulse tubes, the gas volumes, including each stage's cold heat-exchanger void, clamp position, and regenerator matrix materials and properties. Each unit's valve frequency is its shipped setting. For each drive, we need the compressor volumetric flow rates, relief swing, fill pressure at rest, warm-line volume, and the configuration of compressors and heads on the manifold. 
 
 Model parameters that we don't fit per run include $\kappa$, $\lambda$, and $\sigma$, all taken from Snodgrass et al. (2024) for now.
 
