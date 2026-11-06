@@ -50,6 +50,21 @@ class _ProportionalConductance:
         return EnergyBalanceTerms(heat_flow=np.array([flow, -flow]))
 
 
+@dataclasses.dataclass(frozen=True, slots=True)
+class _CountedConductance:
+    """Constant conductance G from the first node to the second, recording each evaluation in `calls`."""
+
+    name: str
+    nodes: tuple[str, str]
+    conductance: float
+    calls: list[None] = dataclasses.field(default_factory=list)
+
+    def calc_energy_balance_terms(self, temperature: NDArray[np.float64]) -> EnergyBalanceTerms:
+        self.calls.append(None)
+        flow = self.conductance * (temperature[1] - temperature[0])
+        return EnergyBalanceTerms(heat_flow=np.array([flow, -flow]))
+
+
 def test_heater_power_crosses_a_chain_of_conductances():
     graph = Graph(
         nodes=_nodes("Bath", "Plate", "Sample"),
@@ -57,7 +72,7 @@ def test_heater_power_crosses_a_chain_of_conductances():
     )
 
     temperature = solve_steady_state(
-        graph, np.array([4.0, 10.0, 10.0]), fixed_boundary_nodes=(0,), heat_input={"Sample": 1.0}
+        graph, np.array([4.0, 10.0, 10.0]), fixed_boundary_nodes=(0,), heat_input={"Sample": 1.0}, tolerance=1e-12
     )
 
     # 1 W crosses both links: the plate is 1 / 2 K above the bath, the sample 1 / 0.5 K above the plate.
@@ -68,7 +83,7 @@ def test_nonlinear_link_from_a_distant_guess():
     graph = Graph(nodes=_nodes("Bath", "Stage"), links=(_ProportionalConductance("Strap", ("Stage", "Bath"), 0.1),))
 
     temperature = solve_steady_state(
-        graph, np.array([4.0, 300.0]), fixed_boundary_nodes=(0,), heat_input={"Stage": 1.0}
+        graph, np.array([4.0, 300.0]), fixed_boundary_nodes=(0,), heat_input={"Stage": 1.0}, tolerance=1e-12
     )
 
     # 1 W = 0.1 (T^2 - 4^2) / 2, so T = 6 K.
@@ -91,3 +106,30 @@ def test_no_steady_state_raises():
 
     with pytest.raises(SimulationError):
         solve_steady_state(graph, np.array([4.0, 10.0]), fixed_boundary_nodes=(0,), heat_input={"Isolated": 1.0})
+
+
+def test_state_below_the_floor_raises_promptly():
+    link = _CountedConductance("Rod", ("Bath", "Stage"), 1.0)
+    graph = Graph(nodes=_nodes("Bath", "Stage"), links=(link,))
+
+    # 1 W/K (3 - T) = 2 W gives T = 1 K, below the 2.1 K floor.
+    with pytest.raises(SimulationError, match="Stage"):
+        solve_steady_state(graph, np.array([3.0, 10.0]), fixed_boundary_nodes=(0,), heat_input={"Stage": -2.0})
+
+    # A tenth of the heat-flow evaluations a single free node is allowed by the default 500 steps.
+    assert len(link.calls) <= 100
+
+
+def test_lower_floor_admits_a_colder_state():
+    graph = Graph(nodes=_nodes("Bath", "Stage"), links=(_Conductance("Rod", ("Bath", "Stage"), 1.0),))
+
+    temperature = solve_steady_state(
+        graph,
+        np.array([3.0, 10.0]),
+        fixed_boundary_nodes=(0,),
+        heat_input={"Stage": -2.0},
+        temperature_floor=0.5,
+        tolerance=1e-12,
+    )
+
+    np.testing.assert_allclose(temperature, [3.0, 1.0], rtol=1e-8)
