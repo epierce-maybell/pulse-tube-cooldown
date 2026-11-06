@@ -36,8 +36,9 @@ over their matrix's. Acoustic power grows towards the warm end as d(ln E) = beta
 node k, from E_2 at stage 2 and from E_1 plus the stage-2 section's warm-end power at stage 1.
 
 A node's heat flow is the energy flow at its warm boundary less that at its cold boundary. Stage i also takes the
-section energy flows on either side, its tube wall's conduction from the warm flange, L_i, and -E_i. The warm flange's
-heat flow is zero.
+section energy flows on either side, its tube wall's conduction from the warm flange, L_i, and -E_i. Stage 1 also takes
+c E_2 x (1 - x), for the design's stage coupling c and stage 2's gross-cooling fraction x = beta T / (1 + epsilon) at
+the stage-2 boundary. The warm flange's heat flow is zero.
 """
 
 import math
@@ -242,7 +243,7 @@ def calc_heat_flow(
     cold_side_flow = head.frequency * np.cumsum(mass_swing[::-1])[::-1]
     tube_power = calc_acoustic_power(head, mean_pressure, pressure_swing, warm)
     loss = calc_breakthrough_loss(head, temperature, mean_pressure, pressure_swing)
-    second, second_warm_power = _energy_flow(
+    second, second_warm_power, stage_2_cooling_fraction = _energy_flow(
         model.regenerators[1],
         temperature[stage_1 : stage_2 + 1],
         cold_side_flow[stage_1 + 1 : stage_2 + 1],
@@ -251,7 +252,7 @@ def calc_heat_flow(
         frequency=head.frequency,
         pressure=mean_pressure,
     )
-    first, _ = _energy_flow(
+    first, _, _ = _energy_flow(
         model.regenerators[0],
         temperature[: stage_1 + 1],
         cold_side_flow[1 : stage_1 + 1],
@@ -264,11 +265,12 @@ def calc_heat_flow(
     for tube, stage in zip(model.pulse_tubes, (stage_1, stage_2), strict=True):
         integral = tube.wall_material.conductivity_integral(np.array([warm, temperature[stage]]))
         tube_conduction.append(tube.wall_area / tube.length * float(integral[0] - integral[1]))
+    coupling = model.stage_coupling * tube_power[1] * stage_2_cooling_fraction * (1 - stage_2_cooling_fraction)
 
     heat = np.zeros_like(temperature, dtype=float)
     heat[1:stage_1] = first[:-1] - first[1:]
     heat[stage_1 + 1 : stage_2] = second[:-1] - second[1:]
-    heat[stage_1] = first[-1] + tube_conduction[0] + loss[0] - tube_power[0] - second[0]
+    heat[stage_1] = first[-1] + tube_conduction[0] + loss[0] - tube_power[0] - second[0] + coupling
     heat[stage_2] = second[-1] + tube_conduction[1] + loss[1] - tube_power[1]
     return heat
 
@@ -318,8 +320,8 @@ def _energy_flow(
     packing: float,
     frequency: float,
     pressure: float,
-) -> tuple[NDArray[np.float64], float]:
-    """Energy flow at a section's node boundaries and acoustic power at its warm end.
+) -> tuple[NDArray[np.float64], float, float]:
+    """Energy flow at a section's node boundaries, acoustic power at its warm end, and gross cooling at its cold end.
 
     Args:
         section: The regenerator section.
@@ -331,8 +333,8 @@ def _energy_flow(
         pressure: Mean pressure in Pa.
 
     Returns:
-        Energy flow in W towards the cold end at each node boundary from the warm end, and acoustic power in W at the
-        warm end.
+        Energy flow in W towards the cold end at each node boundary from the warm end, acoustic power in W at the warm
+        end, and the gross-cooling fraction beta T / (1 + epsilon) at the cold end.
     """
     node_layers = [layer for layer in section.layers for _ in range(layer.node_count)]
     length = section.length * np.array([layer.length_fraction / layer.node_count for layer in node_layers])
@@ -369,10 +371,11 @@ def _energy_flow(
     power = cold_power * np.exp(np.concatenate((np.cumsum(log_power_step[::-1])[::-1], [0.0])))
 
     capacity_rate = mass_flow * helium.isobaric_specific_heat(boundary_temperature, pressure)
-    pressure_flow = (1 - boundary_beta_t / (1 + boundary_ratio)) * power
+    cooling_fraction = boundary_beta_t / (1 + boundary_ratio)
+    pressure_flow = (1 - cooling_fraction) * power
     regeneration = packing * capacity_rate**2 / (frequency * boundary_matrix / span) * gradient
     conduction = -section.wall_area * np.diff(section.wall_material.conductivity_integral(temperature)) / span
-    return pressure_flow + regeneration + conduction, float(power[0])
+    return pressure_flow + regeneration + conduction, float(power[0]), float(cooling_fraction[-1])
 
 
 def _pressure_responses(model: HeadModel, warm_temperature: float, mean_pressure: float) -> list[float]:

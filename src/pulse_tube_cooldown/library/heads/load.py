@@ -42,6 +42,7 @@ def load_head_model(name: str, /, *, directory: str | os.PathLike[str] = Path(__
         buffer_fraction=float(data["buffer_fraction"]),
         stroke_spread=float(data["stroke_spread"]),
         heat_exchanger_voids=(float(stage_1_void), float(stage_2_void)),
+        stage_coupling=float(data.get("stage_coupling", 0.0)),
     )
 
 

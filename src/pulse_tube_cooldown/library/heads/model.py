@@ -78,6 +78,8 @@ class HeadModel:
         buffer_fraction: Fraction of a pulse tube's gas that buffers its stroke, lambda.
         stroke_spread: Spread of the stroke as a fraction of a pulse tube's gas, sigma.
         heat_exchanger_voids: Gas volumes in m^3 of the stage-1 and stage-2 cold heat exchangers, outside the tubes.
+        stage_coupling: Coefficient c of stage 1's heat flow c E_2 x (1 - x), for stage 2's acoustic power E_2 and
+            gross-cooling fraction x.
     """
 
     name: str
@@ -89,3 +91,4 @@ class HeadModel:
     buffer_fraction: float
     stroke_spread: float
     heat_exchanger_voids: tuple[float, float] = (0.0, 0.0)
+    stage_coupling: float = 0.0

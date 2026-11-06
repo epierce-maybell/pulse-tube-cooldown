@@ -97,7 +97,7 @@ This section builds 2.3 and 2.4. ADR 03 as written cannot meet requirement 4, so
   Context: ADR 03 as edited in 3.1; `library/heads/`, `library/links/cooler/head.py`, `drive.py`.
   Verified by: zero voids reproduce today's heat flows, and a hand-computed void mass swing.
 
-- [ ] **3.5 Stage-coupling term** · Build, after 3.1
+- [x] **3.5 Stage-coupling term** · Build, after 3.1
   The design's coupling coefficient `c` in `HeadModel` and its TOML, zero when absent, and `c E_2 x (1 - x)` in stage 1's heat flow.
   Context: ADR 03 as edited in 3.1; `library/heads/`, `library/links/cooler/head.py`.
   Verified by: `c = 0` reproduces today's heat flows, and a hand-computed term.
@@ -112,7 +112,7 @@ This section builds 2.3 and 2.4. ADR 03 as written cannot meet requirement 4, so
   Verified by: the analytic steady states, a prompt failure where no state exists above the floor, and the template converging at a load-map point.
 
 - [ ] **3.8 Canonical PT1.5 fit** · Build, after 3.5, 3.6, and 3.7
-  a1, a2, R1, R2, and `c` fitted jointly to every map in `data/test_stand/fit_set.csv`, with equal weight per map and each run at its own compressor count and valve frequency. At each point the stages are held at the measured T1 and T2, the matrix is solved, and the stage heat flows are compared with the applied heater powers. Every run uses the template's bare-shield radiation link. a, R, and the frequency go to `data/heads/pt1_5/parameters.toml`, `c` to `pt1_5.toml`, and the test-stand template points at both.
+  a1, a2, R1, R2, and `c` fitted jointly to every map in `data/test_stand/fit_set.csv`, with equal weight per map and each run at its own compressor count and valve frequency. At each point the stages are held at the measured T1 and T2, the matrix is solved, and the stage heat flows are compared with the applied heater powers. Every run uses the template's bare-shield radiation link. a, R, and the frequency go to `data/heads/pt1_5/parameters.toml`, `c` to `pt1_5.toml`, and the test-stand template points at both. `data/scripts/derive_head_model.py` writes `c` and its source into `pt1_5.toml`.
   Context: `simulations/validation/test_stand_head/`; `simulations/exploration/loadmaps/characterization.md`.
   Verified by: each run's residual, with S0028 reported separately, and the four couplings against figure 07's grid cells.
 

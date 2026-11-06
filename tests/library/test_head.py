@@ -436,9 +436,47 @@ def test_heat_flow_takes_breakthrough_loss_at_each_stage():
     np.testing.assert_allclose(change, expected, rtol=1e-9, atol=1e-12 * np.max(expected))
 
 
+def test_stage_coupling_loads_stage_1_with_stage_2s_gross_cooling():
+    # Against the uncoupled head, stage 1 gains c E_2 x (1 - x) and nothing else changes. x = beta T_2 / (1 + epsilon)
+    # at T_2 = 4 K, with epsilon the coldest node's: pore gas of 2e-5 m^3 at 6 K over 0.5 kg of matrix at a constant
+    # 5 J/(kg K).
+    mean_pressure, swing, coupling = 1.4e6, 1.2e6, 2.0
+    constant = dataclasses.replace(
+        _MATRIX, specific_heat=lambda t: np.full(np.shape(t), 5.0), specific_heat_integral=lambda t: 5.0 * np.asarray(t)
+    )
+    model = _model()
+    model = dataclasses.replace(
+        model,
+        regenerators=tuple(
+            dataclasses.replace(
+                section, layers=tuple(dataclasses.replace(layer, material=constant) for layer in section.layers)
+            )
+            for section in model.regenerators
+        ),
+    )
+    uncoupled = Head(model=model, packing=(0.1, 0.1), resistance=(2e7, 6e7), frequency=_FREQUENCY)
+    coupled = dataclasses.replace(uncoupled, model=dataclasses.replace(model, stage_coupling=coupling))
+    _, stage_2_power = calc_acoustic_power(uncoupled, mean_pressure, swing, _COLD[0])
+    expansion = 4.0 * float(helium.isobaric_expansion_coefficient(4.0, mean_pressure))
+    gas = 2.0e-5 * float(helium.density(6.0, mean_pressure) * helium.isobaric_specific_heat(6.0, mean_pressure))
+    fraction = expansion / (1 + gas / (0.5 * 5.0))
+    expected = np.zeros(7)
+    expected[2] = coupling * stage_2_power * fraction * (1 - fraction)
+
+    change = calc_heat_flow(coupled, _COLD, mean_pressure, swing) - calc_heat_flow(
+        uncoupled, _COLD, mean_pressure, swing
+    )
+
+    np.testing.assert_allclose(change, expected, rtol=1e-9, atol=1e-12 * abs(expected[2]))
+
+
 # PT1.5 with placeholder packing coefficients and valve resistances pending task 2.3's fit, its matrix given a smooth
 # specific heat of 0.1 T^3 + 20 J/(kg K).
-_SMOOTH_MATRIX = dataclasses.replace(_MATRIX, specific_heat=lambda t: 0.1 * np.asarray(t) ** 3 + 20.0)
+_SMOOTH_MATRIX = dataclasses.replace(
+    _MATRIX,
+    specific_heat=lambda t: 0.1 * np.asarray(t) ** 3 + 20.0,
+    specific_heat_integral=lambda t: 0.025 * np.asarray(t) ** 4 + 20.0 * np.asarray(t),
+)
 _PT1_5 = load_head_model("PT1.5")
 _SMOOTH_PT1_5 = Head(
     model=dataclasses.replace(

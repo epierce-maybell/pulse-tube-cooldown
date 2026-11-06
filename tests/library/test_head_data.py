@@ -155,3 +155,12 @@ def test_design_without_voids_loads_them_as_zero(tmp_path):
     _write_design(tmp_path, 'index = 0\nmaterial = "Pb"\nmass = 1.0\npore_volume = 1e-5\nlength_fraction = 1.0\n')
 
     assert load_head_model("Test", directory=tmp_path).heat_exchanger_voids == (0.0, 0.0)
+
+
+@pytest.mark.parametrize(("line", "expected"), [("", 0.0), ("stage_coupling = 1.5\n", 1.5)])
+def test_stage_coupling_loads_from_design_and_defaults_to_zero(tmp_path, line, expected):
+    _write_design(tmp_path, 'index = 0\nmaterial = "Pb"\nmass = 1.0\npore_volume = 1e-5\nlength_fraction = 1.0\n')
+    design = tmp_path / "design.toml"
+    design.write_text(line + design.read_text(encoding="utf-8"), encoding="utf-8")
+
+    assert load_head_model("Test", directory=tmp_path).stage_coupling == expected
