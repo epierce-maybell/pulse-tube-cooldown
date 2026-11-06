@@ -1,0 +1,168 @@
+One amplitude-dependent harmonic/mean-equilibrium check, 2026-11-06
+
+Decision: this version has not earned a production replacement. Adding the
+minimum amplitude-dependent transport closures produces a formal balanced
+matrix profile, but its temperature oscillations violate the first-order
+approximation decisively. No coupling slope from it would be meaningful.
+No further mechanisms or parameter searches were added to this study.
+
+What was tried
+
+One operating point: T0/T1/T2=295/58/3.4 K, fixed mean pressure1.565067 MPa,
+fixed sinusoidal inlet peak pressure1 MPa, frequency1 Hz, and the existing
+valve resistances(1e10,3e10) Pa s/m^3. The starting matrix temperatures are
+the archived current-model equilibrium. This is a fixed-drive diagnostic;
+charge and compressor supply were not solved. The inlet amplitude was
+specified directly, without a square-wave factor. It is already64% of the
+mean pressure, so pressure linearization is also a significant limitation.
+
+The central previous geometry assumptions were retained:0.3 mm spheres,
+40 um wire, sphere/screen porosities.38/.70, and screen tortuosity2.
+They are not measurements of this PT1.5. No parameters were fitted.
+
+Local effective drag is Darcy plus the fundamental of Ergun's quadratic
+drag for sinusoidal mass flow:
+ r_eff=r_D+[8/(3*pi)]*b*|m_hat|
+ b=1.75*(1-phi)/(phi^3*dp*rho*Ab^2).
+Heat transfer uses Nu=2+1.1*Re^.6*Pr^(1/3), with the local peak mass
+amplitude used in Re. This is a quasi-steady, peak-value approximation
+using a steady packed-bed correlation, not a validated oscillatory-flow
+correlation. The screen uses its estimated hydraulic diameter in the same
+simple closure; that extension is another explicit approximation.
+
+The harmonic coefficients were updated by one damped local fixed-point
+iteration(60% new amplitude), bounded at20 iterations. Mean equilibrium
+used the original13 matrix temperatures as unknowns, bounded to2.5-295 K,
+with least_squares limited to30 function evaluations plus its numerical
+Jacobian evaluations and a55-second wall-time deadline. There was one
+initial guess and one mean-equilibrium attempt, without continuation or
+alternative branches.
+
+Matrix nodes share ONE energy flux at each physical face. Adjacent cell
+endpoint estimates are averaged at that face, then used by both nodes.
+Existing wall conduction is retained. The stage balances retain ideal
+pulse-tube acoustic removal, tube-wall conduction, and the existing smooth
+mass-buffer breakthrough expression using solved reservoir mass amplitude.
+No new loss mechanism was introduced. The spatial discretization is only
+a feasibility mesh and was not convergence-studied after the validity gate
+failed.
+
+Results
+
+The nonlinear harmonic solve converged at both profiles. At the final one:
+  harmonic iterations                         12 of20
+  relative mass-amplitude iteration change     1.15e-5
+  maximum matrix heat imbalance               7.1e-11 W
+  stage1 heat INTO stage                      +13.96 W
+  stage2 heat INTO stage                      +16.74 W
+  tube acoustic powers                        38.75,9.46 W
+  stage pressure amplitudes / inlet           .881,.600
+  tube-wall heat                              1.020,.256 W
+  breakthrough heat                           .000141,.0000315 W
+  inlet mass-flow peak                        .03137 kg/s
+
+The tiny reported imbalance is the numerical residual of this discretized
+closure with its bounded inner iteration; it is not physical accuracy.
+Its matrix interior temperatures span4.575-198.835 K. The stage2 matrix
+starts with59.39 K next to the58 K stage and then falls to4.575 K next
+to the3.4 K stage. Each regenerator's common energy flux is constant to
+the achieved residual:77.63 W in stage1 and25.94 W in stage2. The
+telescoping energy balance gives
+ Q1+Q2+sum(matrix heat)=F1_warm-E1-E2+walls+breakthrough,
+which is also consistent with the reported30.70 W net stage heating.
+No positive heater loads can balance the positive stage heat flows at
+this operating point under the diagnostic's fixed drive.
+
+The decisive failure is amplitude validity:
+  max |theta_g|/T in regenerator1              .173
+  max |theta_g|/T in regenerator2              21.63
+  max |theta_m|/T in regenerator2              21.63
+  largest absolute gas temperature peak       213.9 K
+
+The maximum ratio is in the GOS region at x=.22922 m from stage2
+regenerator's warm end(length.2445 m). Its cell coefficient mean
+temperature is9.18 K; the mean profile at that face is8.54 K; the
+gas temperature peak is198.7 K. Thus the failure occurs near9 K,
+not solely in the3.4 K property extrapolation. Gas and matrix move
+together there, so simply increasing H cannot restore small amplitudes.
+A first-order sinusoid would imply grossly unphysical temperatures during
+part of a cycle. A frozen-coefficient scaling would require over216-fold
+drive reduction to make this maximum ratio below.1. That is only an
+illustration: r and H themselves depend on amplitude, so it is not an
+operating prediction or an additional calculated case.
+
+Stability: not evaluated because the first-order amplitude gate fails.
+Relaxed forward/reverse coupling: not evaluated for the same reason.
+There are no partial slopes presented as equilibrium slopes. Formal matrix
+balance alone does not make these thermodynamic oscillations admissible.
+
+Cost and stopping reason
+
+The single mean solve completed in26.94 s, before its55 s deadline, with
+126 actual residual evaluations including finite-difference Jacobians.
+One replay of that same result to extract amplitude-location metadata took
+.35 s. No extra operating point was solved. Work stopped because the
+balanced solution fails the small-amplitude assumption by over two orders
+of magnitude relative to a.1 ratio criterion.
+
+Complexity assessment
+
+This network could replace the current separate acoustic propagation,
+scalar mass-swing regeneration loss, and empirical packing coefficient a
+with a common complex pressure/flow solution and physically estimated drag
+and heat transfer. That is a coherent reason to consider it. However,
+even the minimal version requires an amplitude iteration nested inside a
+mean matrix solve, uncertain microgeometry, and correlations whose
+oscillatory applicability has not been established. Here it has delivered
+neither a valid operating cycle nor evidence for the measured asymmetric
+stage coupling. Those benefits do not justify production integration.
+
+No higher-H or reduced-inertia variant was attempted: the primary model
+failed its validity gate. No more mechanisms are proposed as part of this
+study. The present first-order model should be set aside as an unvalidated
+replacement, rather than becoming the starting point for a broad fit.
+
+Reproduction and sources
+
+Run from the repository root:
+ .venv/Scripts/python -m simulations.validation.test_stand_steady_state.phase_feasibility.balanced
+The isolated code is balanced.py and saved output is balanced_results.json.
+The prior report.txt records the geometry assumptions, real-gas/material
+sources, units, and correlation references. Those assumptions remain in
+force. In particular, HEPAK's expansion_coefficient output is beta*T,
+not beta; the equations use it accordingly. Its conductivity below4 K
+is held at the4 K value in this diagnostic because the3.4 K output is
+zero; low-temperature viscosity was not independently validated.
+
+Primary correlation sources:
+ Ergun(1952):https://www.industrydocuments.ucsf.edu/tid/efk76a99/pdf
+ Wakao,Kaguei,Funazkri(1979):https://doi.org/10.1016/0009-2509(79)85064-2
+
+Follow-up trace of the large temperature amplitude
+
+One replay of the saved equilibrium, with no new equilibrium solve, split
+theta_g=a*p+b*m at the maximum-ratio location. At9.184 K:
+  pressure-driven temperature amplitude       .868 K
+  gradient-driven temperature amplitude      197.827 K
+  combined temperature amplitude             198.685 K
+  local mass-flow peak                        .05680 kg/s
+  density                                    104.05 kg/m^3
+  pore area                                  .0003056 m^2
+  mean temperature gradient                 -842.43 K/m
+  gas capacity per length                    218.40 J/(m K)
+  matrix capacity per length                  45.96 J/(m K)
+  gas-matrix conductance per length           170383 W/(m K)
+
+The inferred gas-displacement amplitude |m|/(omega*rho*Ag) is.284 m,
+whereas the local mean-temperature length T/|dT/dx| is.0109 m.
+In the strong-exchange limit the gradient term is approximately
+  |theta_gradient| = [Cg/(Cg+Cm)] * |displacement*dT/dx|.
+These values reproduce the roughly198 K result. The linearized local
+gradient is being used far beyond its small-displacement range. This is
+not a credible prediction that the real matrix oscillates through200 K.
+HEPAK cp agrees with the production mass-specific-heat accessor; the
+beta*T convention was checked. Cell transfer equations reproduce their
+stored end states with relative error below5e-16. These checks do not
+constitute an independent audit of the whole model. The large computed
+flow and its origin remain the immediate issue to examine before adding
+physics or treating this diagnostic as a rejection of the broader approach.

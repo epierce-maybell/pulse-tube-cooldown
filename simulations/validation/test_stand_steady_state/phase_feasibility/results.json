@@ -1,0 +1,303 @@
+{
+  "scales": [
+    {
+      "material": "304 SS",
+      "temperature_K": 228.2,
+      "r_Pa_s_per_kg_m": 17025131.194769263,
+      "H_W_per_m_K": 262775.33045679564,
+      "omega_Cg_over_H": 0.000891560935472599,
+      "omega_Cm_over_H": 0.07959308747143722,
+      "sphere_H_Wakao_at_0.01_kg_s": null,
+      "sphere_r_eff_at_0.01_kg_s": null,
+      "a_equivalent_sinusoidal": 0.006194264566750164
+    },
+    {
+      "material": "Pb",
+      "temperature_K": 96.8,
+      "r_Pa_s_per_kg_m": 4780854.046144047,
+      "H_W_per_m_K": 19105.781862851094,
+      "omega_Cg_over_H": 0.015546175549469158,
+      "omega_Cm_over_H": 0.8478966926602176,
+      "sphere_H_Wakao_at_0.01_kg_s": 164511.50065320887,
+      "sphere_r_eff_at_0.01_kg_s": 12256878.232679589,
+      "a_equivalent_sinusoidal": 0.06505048544363737
+    },
+    {
+      "material": "Pb",
+      "temperature_K": 50.0,
+      "r_Pa_s_per_kg_m": 6639722.132536837,
+      "H_W_per_m_K": 3261.507056583172,
+      "omega_Cg_over_H": 0.04533241322641571,
+      "omega_Cm_over_H": 1.1281888380207885,
+      "sphere_H_Wakao_at_0.01_kg_s": 74991.30107042636,
+      "sphere_r_eff_at_0.01_kg_s": 66255549.91121554,
+      "a_equivalent_sinusoidal": 0.08281891383303479
+    },
+    {
+      "material": "Er3Ni",
+      "temperature_K": 31.6,
+      "r_Pa_s_per_kg_m": 3275971.0110024908,
+      "H_W_per_m_K": 2542.31201431274,
+      "omega_Cg_over_H": 0.09509704267070303,
+      "omega_Cm_over_H": 1.010057736647068,
+      "sphere_H_Wakao_at_0.01_kg_s": 68263.15902787169,
+      "sphere_r_eff_at_0.01_kg_s": 41054547.96226109,
+      "a_equivalent_sinusoidal": 0.06663680507230253
+    },
+    {
+      "material": "HoCu2",
+      "temperature_K": 14.8,
+      "r_Pa_s_per_kg_m": 1006007.1537507994,
+      "H_W_per_m_K": 1873.6654183387607,
+      "omega_Cg_over_H": 0.3621369401459656,
+      "omega_Cm_over_H": 0.45247242093538215,
+      "sphere_H_Wakao_at_0.01_kg_s": 64055.455247486956,
+      "sphere_r_eff_at_0.01_kg_s": 17133816.696642835,
+      "a_equivalent_sinusoidal": 0.01067682419273053
+    },
+    {
+      "material": "Gd2O2S",
+      "temperature_K": 7.5,
+      "r_Pa_s_per_kg_m": 463936.6199093358,
+      "H_W_per_m_K": 1886.1020145754117,
+      "omega_Cg_over_H": 0.6906562658549117,
+      "omega_Cm_over_H": 0.2075174696898792,
+      "sphere_H_Wakao_at_0.01_kg_s": 58711.659727164864,
+      "sphere_r_eff_at_0.01_kg_s": 7262375.222320482,
+      "a_equivalent_sinusoidal": 0.0008596335455924126
+    },
+    {
+      "material": "Gd2O2S",
+      "temperature_K": 4.0,
+      "r_Pa_s_per_kg_m": 530339.1501533937,
+      "H_W_per_m_K": 1619.9614061704008,
+      "omega_Cg_over_H": 0.4951782185384095,
+      "omega_Cm_over_H": 0.8756080807943812,
+      "sphere_H_Wakao_at_0.01_kg_s": 38336.4378036238,
+      "sphere_r_eff_at_0.01_kg_s": 5931289.7915638015,
+      "a_equivalent_sinusoidal": 0.025844537092244005
+    },
+    {
+      "material": "Gd2O2S",
+      "temperature_K": 3.4,
+      "r_Pa_s_per_kg_m": 514174.69473358063,
+      "H_W_per_m_K": 1619.9614061704008,
+      "omega_Cg_over_H": 0.4099699705952625,
+      "omega_Cm_over_H": 0.7173667861624607,
+      "sphere_H_Wakao_at_0.01_kg_s": 35966.87693826136,
+      "sphere_r_eff_at_0.01_kg_s": 5807975.730943731,
+      "a_equivalent_sinusoidal": 0.021642715594631816
+    }
+  ],
+  "network": [
+    {
+      "physical_r_H": false,
+      "sphere_m": 0.0003,
+      "wire_m": 4e-05,
+      "Q_transport_W": [
+        -47.28717224907301,
+        -1.655665019183317
+      ],
+      "stage_pressure_over_drive": [
+        1.0000410567845406,
+        1.0003920332299148
+      ],
+      "stage_mass_amplitude_kg_s": [
+        0.0630462591437257,
+        0.11901879513688488
+      ],
+      "amplitude_sanity": [
+        {
+          "max_theta_g_over_mean_T": 0.5405832785968797,
+          "max_sphere_Re_superficial": 809.6804515572389,
+          "max_Forchheimer_fundamental_over_Darcy": 12.932652664250718
+        },
+        {
+          "max_theta_g_over_mean_T": 16.64104902298634,
+          "max_sphere_Re_superficial": 9650.324926420524,
+          "max_Forchheimer_fundamental_over_Darcy": 154.1401921344703
+        }
+      ],
+      "inlet_mass_amplitude_kg_s": 0.06709189933979093,
+      "unrelaxed_derivative_W_K": {
+        "fixed_matrix": [
+          [
+            -0.02400873366639189,
+            -0.0001093002197194437
+          ],
+          [
+            2.989260394770099e-07,
+            -1.2849521353071935
+          ]
+        ],
+        "smooth_profile": [
+          [
+            -0.023984627911488587,
+            -0.00013560737812667867
+          ],
+          [
+            1.2250824354964607e-05,
+            -1.2849311864535196
+          ]
+        ]
+      }
+    },
+    {
+      "physical_r_H": true,
+      "sphere_m": 0.0003,
+      "wire_m": 4e-05,
+      "Q_transport_W": [
+        1143.0368457257937,
+        4326.545241122296
+      ],
+      "stage_pressure_over_drive": [
+        0.9487236341663082,
+        0.9397108933751451
+      ],
+      "stage_mass_amplitude_kg_s": [
+        0.05675422025916188,
+        0.1117994292151776
+      ],
+      "amplitude_sanity": [
+        {
+          "max_theta_g_over_mean_T": 0.7089085052607339,
+          "max_sphere_Re_superficial": 728.8269199803832,
+          "max_Forchheimer_fundamental_over_Darcy": 11.641216470440643
+        },
+        {
+          "max_theta_g_over_mean_T": 22.316634140302323,
+          "max_sphere_Re_superficial": 8957.571724983545,
+          "max_Forchheimer_fundamental_over_Darcy": 143.07516454364574
+        }
+      ],
+      "inlet_mass_amplitude_kg_s": 0.06041989243551598,
+      "unrelaxed_derivative_W_K": {
+        "fixed_matrix": [
+          [
+            -613.1747631434564,
+            28.053177065794443
+          ],
+          [
+            0.27258301779511385,
+            1258.084121380216
+          ]
+        ],
+        "smooth_profile": [
+          [
+            -91.30949104335286,
+            57.320955226418846
+          ],
+          [
+            26.28325372825202,
+            3359.9109149346077
+          ]
+        ]
+      }
+    },
+    {
+      "physical_r_H": true,
+      "sphere_m": 0.0002,
+      "wire_m": 3e-05,
+      "Q_transport_W": [
+        466.9189082711227,
+        1842.6047618831835
+      ],
+      "stage_pressure_over_drive": [
+        0.9107493220643158,
+        0.8962293882582274
+      ],
+      "stage_mass_amplitude_kg_s": [
+        0.056087366690385915,
+        0.1066263408879493
+      ],
+      "amplitude_sanity": [
+        {
+          "max_theta_g_over_mean_T": 0.5315476826468024,
+          "max_sphere_Re_superficial": 480.19383284656186,
+          "max_Forchheimer_fundamental_over_Darcy": 7.669914766715637
+        },
+        {
+          "max_theta_g_over_mean_T": 16.532832379618924,
+          "max_sphere_Re_superficial": 5748.873395910913,
+          "max_Forchheimer_fundamental_over_Darcy": 91.8241050491898
+        }
+      ],
+      "inlet_mass_amplitude_kg_s": 0.05967869336019421,
+      "unrelaxed_derivative_W_K": {
+        "fixed_matrix": [
+          [
+            -267.25240027816994,
+            9.561444095322713
+          ],
+          [
+            0.22631483750501502,
+            601.4185627159122
+          ]
+        ],
+        "smooth_profile": [
+          [
+            -39.792422707915875,
+            25.452946462769432
+          ],
+          [
+            10.019955200800723,
+            1493.550003771952
+          ]
+        ]
+      }
+    },
+    {
+      "physical_r_H": true,
+      "sphere_m": 0.0005,
+      "wire_m": 6e-05,
+      "Q_transport_W": [
+        2575.8658495822406,
+        8943.3359204136
+      ],
+      "stage_pressure_over_drive": [
+        0.9730533615884603,
+        0.968585629488467
+      ],
+      "stage_mass_amplitude_kg_s": [
+        0.04806885118874117,
+        0.11523471876962094
+      ],
+      "amplitude_sanity": [
+        {
+          "max_theta_g_over_mean_T": 1.2786250695293668,
+          "max_sphere_Re_superficial": 1028.571940619624,
+          "max_Forchheimer_fundamental_over_Darcy": 16.428905530131274
+        },
+        {
+          "max_theta_g_over_mean_T": 36.751829353281785,
+          "max_sphere_Re_superficial": 14739.62532327112,
+          "max_Forchheimer_fundamental_over_Darcy": 235.42924167236595
+        }
+      ],
+      "inlet_mass_amplitude_kg_s": 0.051526065223899194,
+      "unrelaxed_derivative_W_K": {
+        "fixed_matrix": [
+          [
+            -1185.9434225353652,
+            92.11109165489688
+          ],
+          [
+            0.2941749769888702,
+            672.1484681267611
+          ]
+        ],
+        "smooth_profile": [
+          [
+            -181.63091686492407,
+            109.38858971881018
+          ],
+          [
+            55.32844573153852,
+            5048.908299131472
+          ]
+        ]
+      }
+    }
+  ],
+  "runtime_s": 0.7490812999894843
+}

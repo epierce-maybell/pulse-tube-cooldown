@@ -1,0 +1,98 @@
+Test-stand steady-state diagnosis, 2026-11-06
+
+Inputs: data/test_stand/fridge.toml at a9e9d86, its unchanged one-compressor
+drive and placeholder head parameters, no applied heater power, boundaries
+held at 295 K. Production code and physical inputs were not changed.
+
+Two distinct problems
+
+1. The direct steady-state search from the uniform 295 K initial condition
+   enters an inverted-temperature branch and stalls with nonzero heat flow.
+   solve_steady_state minimizes squared heat imbalances in log temperature;
+   its bounds (2 to 1000 K) do not enforce an ordered regenerator profile.
+   A first run capped at 100 function evaluations reached a maximum imbalance
+   of 3.526 W. Restarting from that result terminated on xtol after 90 more
+   evaluations, at 3.326 W. Stage 1 was 12.851 K, stage 2 was 34.569 K,
+   and the hottest second-section matrix node was 264.380 K.
+   The residual check correctly rejects this result.
+
+2. A cold equilibrium exists, but the equilibrium found is dynamically
+   unstable because of the Gd2O2S heat-capacity feedback in regenerator flow.
+   Starting stage 1 at 45 K and stage 2 at 5 K, with each section's matrix
+   temperatures linearly interpolated at its node centers between its end
+   temperatures, converged in 39 function evaluations (about 15 s).
+   Stage 1 = 43.21967056 K; stage 2 = 3.13403475 K.
+   Maximum free-node imbalance = 7.45e-11 W, well below 1e-6 W tolerance.
+
+   Equilibrium temperatures in configured graph order, in K:
+   [295, 295, 43.21967056, 3.13403475, 222.70565885, 84.18527372,
+    37.72324017, 24.56445317, 13.01793574, 7.91567591, 7.84192735,
+    7.75419686, 7.64807061, 7.51697982, 7.35054704, 7.13079306,
+    5.38051750]
+
+Focused instability check
+
+At equilibrium, form the free-node heat-flow Jacobian with centered
+temperature differences of 1e-4 times each temperature, and divide each row
+by that node's total matrix-plus-gas heat capacity. Its dominant eigenvalue
+pair is approximately 0.53394 +/- 0.88498j per second. Positive real parts
+mean growing perturbations; the growth time is about 1.87 s.
+
+The coldest Gd2O2S node is on the descending side of the specific-heat peak.
+Its self-derivative dQ/dT is +5.2135 W/K. Around its equilibrium temperature:
+
+  Temperature (K)   Matrix heat capacity (J/K)   Net heat into node (W)
+  5.37051750        1.412849                     -0.055432
+  5.38051750        1.365020                      0
+  5.39051750        1.321955                     +0.049169
+
+In cooler/head.py:_energy_flow, matrix_capacity enters both the gas/matrix
+capacity ratio in pressure_flow and the denominator in regeneration. As
+this node warms, its matrix heat capacity falls rapidly, and both terms
+increase its net heating. Tube-wall conduction provides only a small
+opposing response. This dependence acts in the heat-flow equation itself,
+not just in the heat capacity multiplying dT/dt.
+
+Controlled check: freeze only the eight Gd2O2S matrix capacities inside
+_energy_flow at their equilibrium values, retaining all other temperature
+dependence and the same equilibrium. The residual remains 7.45e-11 W.
+The largest real part of the dynamics eigenvalues becomes -0.00239838 /s;
+the coldest node's dQ/dT becomes -1.64207 W/K. Difference steps of 1e-4
+and 1e-5 give the same conclusion. This isolates the destabilizing feedback
+to the Gd2O2S matrix-capacity dependence in the regenerator energy flows.
+Freezing capacity was an in-memory diagnostic, not a proposed physical fix.
+
+Follow-up isolation: freezing Gd2O2S capacity only in the regeneration
+denominator makes the largest real eigenvalue -0.00281507 /s. Freezing it
+only in the pressure-flow and acoustic-power capacity ratios leaves an
+unstable eigenvalue with real part +0.104787 /s. The regeneration term is
+therefore the first target for a discretization correction. These checks
+retain the same equilibrium and all other temperature dependence.
+
+Stage-coupling check at this equilibrium: hold stage 1 and the boundaries
+fixed, perturb stage 2, and solve the linearized matrix energy balances.
+With heat into a stage positive, dQ1/dT2 = -0.138037 W/K in the original
+model. Freezing Gd2O2S capacity only in regeneration changes it to
+-0.123623 W/K. Centered differences of 1e-4 and 1e-5 relative temperature
+agree. The derivative uses J_stage - J_stage,matrix * inverse(J_matrix) *
+J_matrix,stage, so the matrix is re-equilibrated rather than held fixed.
+The stability diagnostic therefore does not correct the coupling sign at
+this operating point. The proposed integrated-flux discretization has not
+been implemented or checked for coupling; these results are not a test of
+that proposal, nor of other fitted parameters or operating points.
+
+Implications
+
+A cold initial guess addresses the demonstrated root-finding failure, but
+the resulting root cannot be treated as a stable cooldown endpoint.
+The next model investigation should focus on _energy_flow's treatment of
+the sharp Gd2O2S capacity variation across node boundaries. This check does
+not establish whether a different discretization or fitted head parameters
+remove the instability, nor whether another stable equilibrium exists.
+Increasing optimizer iterations or loosening the residual tolerance does
+not address the identified physical feedback. No parameter grid was run.
+
+Coverage gap: test_test_stand_template.py checks construction and fixed
+boundaries only. test_steady_state.py checks simple conductive graphs.
+The separate bare-head cooldown test uses 1.4 Hz and no shield-radiation
+link; the template uses 1.0 Hz with shield radiation.

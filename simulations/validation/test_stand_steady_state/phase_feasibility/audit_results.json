@@ -1,0 +1,229 @@
+{
+  "status": "`xtol` termination condition is satisfied.",
+  "fixed_drive_peak_Pa": 1000000.0,
+  "corrected_at_saved_profile": {
+    "residual": [
+      -0.012228237952278675,
+      -2.829932303768068,
+      -0.8936806345322275,
+      -1.655189753339993,
+      0.0396784189039181,
+      0.3027456000161557,
+      -0.2669677018791745,
+      -0.29000587272322775,
+      -0.3390491825988633,
+      -0.3918078927322739,
+      -0.5810004699725901,
+      -0.5405637543878967,
+      -0.8292068117637399
+    ],
+    "Q": [
+      6.090512352026915,
+      12.551751651270669
+    ],
+    "harmonic_converged": true,
+    "harmonic_iterations": 12,
+    "harmonic_relative_change": 1.2618773214024848e-05,
+    "amplitude_sanity": [
+      {
+        "max_theta_g_over_T": 0.16416476189336043,
+        "max_theta_m_over_T": 0.16384525282935486,
+        "maximum_ratio_location": {
+          "x_from_section_warm_m": 0.1737,
+          "coefficient_mean_temperature_K": 61.50458610118375,
+          "profile_temperature_at_position_K": 65.00917220236752,
+          "theta_g_peak_K": 10.096885732650515,
+          "pressure_temperature_peak_K": 0.42954768191383014,
+          "gradient_temperature_peak_K": 9.706552587233038,
+          "mass_peak_kg_s": 0.025954883147284263,
+          "pressure_peak_Pa": 918830.5042878876,
+          "gradient_K_per_m": -1112.567016248815,
+          "gas_displacement_peak_m": 0.2925268517397779,
+          "gas_capacity_J_per_m_K": 74.3285499210473,
+          "matrix_capacity_J_per_m_K": 2422.7252139509565
+        },
+        "largest_absolute_theta_g_peak_K": 11.851461291965425
+      },
+      {
+        "max_theta_g_over_T": 17.826841734599775,
+        "max_theta_m_over_T": 17.82680943770757,
+        "maximum_ratio_location": {
+          "x_from_section_warm_m": 0.22921875,
+          "coefficient_mean_temperature_K": 9.18406770321267,
+          "profile_temperature_at_position_K": 8.540398498341666,
+          "theta_g_peak_K": 163.7229214250215,
+          "pressure_temperature_peak_K": 1.1152503896818948,
+          "gradient_temperature_peak_K": 162.61418357162873,
+          "mass_peak_kg_s": 0.04668583182716516,
+          "pressure_peak_Pa": 777222.78061248,
+          "gradient_K_per_m": -842.4300431849585,
+          "gas_displacement_peak_m": 0.23364842704081157,
+          "gas_capacity_J_per_m_K": 218.40153936001025,
+          "matrix_capacity_J_per_m_K": 45.95753950906599
+        },
+        "largest_absolute_theta_g_peak_K": 176.79124420247442
+      }
+    ],
+    "stage_pressure_over_drive": [
+      0.9178052279526695,
+      0.7746770163244592
+    ],
+    "tube_power_W": [
+      42.11572409658709,
+      10.002006112524459
+    ],
+    "breakthrough_W": [
+      0.0001577398757521633,
+      3.4378539052720574e-05
+    ],
+    "wall_W": [
+      1.0201590719801628,
+      0.25611406915206786
+    ],
+    "face_flux_W": [
+      [
+        61.196320356131835,
+        61.208548594084114,
+        64.03848089785218
+      ],
+      [
+        16.852561261094095,
+        17.746241895626323,
+        19.401431648966316,
+        19.361753230062398,
+        19.059007630046242,
+        19.325975331925417,
+        19.615981204648644,
+        19.955030387247508,
+        20.34683827997978,
+        20.92783874995237,
+        21.46840250434027,
+        22.29760931610401
+      ]
+    ],
+    "inlet_mass_amplitude_kg_s": 0.030409342491876334
+  },
+  "best": {
+    "residual": [
+      -1.2668266435866826e-10,
+      1.4168222151056398e-11,
+      8.881784197001252e-14,
+      -2.1316282072803006e-14,
+      -7.105427357601002e-14,
+      -8.881784197001252e-14,
+      2.948752353404416e-13,
+      -5.186961971048731e-13,
+      2.9700686354772188e-12,
+      -2.7782220968219917e-12,
+      9.592326932761353e-14,
+      -3.979039320256561e-13,
+      5.613287612504791e-13
+    ],
+    "Q": [
+      2.9323060104283627,
+      10.269556315898951
+    ],
+    "harmonic_converged": true,
+    "harmonic_iterations": 12,
+    "harmonic_relative_change": 1.1830929302470507e-05,
+    "amplitude_sanity": [
+      {
+        "max_theta_g_over_T": 0.15799381483404107,
+        "max_theta_m_over_T": 0.15769281445462657,
+        "maximum_ratio_location": {
+          "x_from_section_warm_m": 0.1737,
+          "coefficient_mean_temperature_K": 61.290382064684096,
+          "profile_temperature_at_position_K": 64.58076412936823,
+          "theta_g_peak_K": 9.683501275035331,
+          "pressure_temperature_peak_K": 0.4280703566818279,
+          "gradient_temperature_peak_K": 9.296417025297607,
+          "mass_peak_kg_s": 0.026458470638075233,
+          "pressure_peak_Pa": 915120.9586789786,
+          "gradient_K_per_m": -1044.565734820354,
+          "gas_displacement_peak_m": 0.2971874830059408,
+          "gas_capacity_J_per_m_K": 74.59077865891355,
+          "matrix_capacity_J_per_m_K": 2420.9419641173395
+        },
+        "largest_absolute_theta_g_peak_K": 12.184951809363918
+      },
+      {
+        "max_theta_g_over_T": 13.648912002524874,
+        "max_theta_m_over_T": 13.648875235819814,
+        "maximum_ratio_location": {
+          "x_from_section_warm_m": 0.22921875,
+          "coefficient_mean_temperature_K": 7.946498409704574,
+          "profile_temperature_at_position_K": 7.4687896760073516,
+          "theta_g_peak_K": 108.46105752226158,
+          "pressure_temperature_peak_K": 0.763194479735921,
+          "gradient_temperature_peak_K": 107.70231151335798,
+          "mass_peak_kg_s": 0.05074648566882779,
+          "pressure_peak_Pa": 768186.2267401749,
+          "gradient_K_per_m": -625.2220645526068,
+          "gas_displacement_peak_m": 0.21774110599008334,
+          "gas_capacity_J_per_m_K": 214.55908354486397,
+          "matrix_capacity_J_per_m_K": 56.645509052795475
+        },
+        "largest_absolute_theta_g_peak_K": 134.66854139446383
+      }
+    ],
+    "stage_pressure_over_drive": [
+      0.9140377132277844,
+      0.7656784752983695
+    ],
+    "tube_power_W": [
+      41.77067061698978,
+      9.770991827657497
+    ],
+    "breakthrough_W": [
+      0.00015595918822451443,
+      3.422280271043111e-05
+    ],
+    "wall_W": [
+      1.0201590719801628,
+      0.25611406915206786
+    ],
+    "face_flux_W": [
+      [
+        63.46706144773905,
+        63.46706144786573,
+        63.46706144785156
+      ],
+      [
+        19.784399851601805,
+        19.784399851601716,
+        19.784399851601737,
+        19.78439985160181,
+        19.784399851601897,
+        19.784399851601602,
+        19.78439985160212,
+        19.78439985159915,
+        19.78439985160193,
+        19.784399851601833,
+        19.78439985160223,
+        19.78439985160167
+      ]
+    ],
+    "inlet_mass_amplitude_kg_s": 0.030889084220122036
+  },
+  "temperature_K": [
+    295.0,
+    197.71478445414036,
+    84.32305651747292,
+    58.0,
+    58.410029627002785,
+    53.68098260143162,
+    33.36269139088183,
+    19.864763346254147,
+    19.1060049255605,
+    17.681318459678586,
+    15.27752160560258,
+    11.290459545585156,
+    7.4687896760073516,
+    5.292489007760697,
+    4.398417768905759,
+    3.4
+  ],
+  "max_matrix_residual_W": 1.2668266435866826e-10,
+  "mean_evaluations": 98,
+  "runtime_s": 9.213998999912292
+}

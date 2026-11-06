@@ -1,0 +1,157 @@
+Stage cross-coupling: focused checks, 2026-11-06
+
+Status: no validated physical correction yet. The current equations can give
+positive dQ1/dT2 on a stable branch, but the tested parameter changes do not
+recover the measured combination of stage responses. This is not a proof
+that no parameter fit can succeed. No production equations or parameter
+files were changed.
+
+Convention and operating point
+
+Q is heat into a stage, so balancing heater power is -Q. Every derivative
+below holds the other stage and warm boundary fixed, re-equilibrates the
+matrix, and includes the manifold pressure response. The operating point
+is T0 = 295 K, T1 = 58 K, T2 = 3.4 K, using the template's head and drive.
+Cooler-only heat flows exclude the separate shield radiation link.
+At fixed T1 that link contributes zero to dQ1/dT2.
+
+The archived baseline branch differs from the other session's reported
+branch: here dQ1/dT2 is -0.425 W/K, rather than approximately -0.8 to -0.93.
+Both have the wrong sign. The matrix equilibrium residual is 3.34e-11 W.
+Its largest real matrix eigenvalue is -0.003074 /s, and with stages free
+it is -0.002271 /s. The wrong coupling therefore also exists on a locally
+stable branch, independently of the unstable no-load root in report.txt.
+
+Parameter checks, all at the same plate temperatures
+
+  Parameters                         dQ1/dT1   dQ1/dT2   dQ2/dT1   dQ2/dT2
+                                      W/K       W/K       W/K       W/K
+  Placeholder                         -1.351    -0.425    -0.00351  -0.492
+  Both R x4; both a /4                 -0.344    -0.128    -0.00168  -0.132
+  a1 /4                               -0.788    -0.279    -0.00305  -0.492
+  R1 x4; a1 = 0.02                     -0.310    +0.0666   -0.00229  -0.491
+  Previous case, both R x4; both a /4   -0.0801   +0.0149   -0.00155  -0.132
+
+Placeholder a = [0.15, 0.05], R = [1e10, 3e10] Pa s/m^3, f = 1 Hz.
+The last two cases have positive forward coupling and are locally stable,
+but their stage-1 temperature response is too weak and their reverse
+coupling remains negative. These are diagnostic examples, not replacement
+parameter files. Uniform reduction of powers and regeneration losses does
+not fix the sign. The uniformly scaled placeholder case is also unstable.
+Changing only both R by x4 did not produce an equilibrium in the bounded
+check and is not included as a valid operating point.
+
+The data's pooled one-compressor derivatives imply dQ1/dT1 near -1.2 W/K
+at 58 K and dQ1/dT2 near +1.0 W/K at 58 K / 3.4 K; ADR 03's +1.4 W/K
+summarizes the population near 50 K. Actual run-specific load maps remain
+the fitting targets. These estimates come from characterization.md's
+Functional forms section, with heater signs reversed.
+
+Term isolation at the placeholder operating point
+
+  Contribution to dQ1/dT2                         W/K
+  First-section pressure flow                    -0.06394
+  First-section regeneration flow                -0.22798
+  First-section wall conduction                  +0.00080
+  Minus second-section pressure flow             +0.13379
+  Minus second-section regeneration flow         +0.20147
+  Minus second-section wall conduction           +0.00066
+  Minus stage-1 acoustic power                    -0.46933
+  Stage-1 breakthrough loss                      +0.0000013
+  Total                                          -0.42454
+
+F1 at the cold boundary contains pressure flow, regeneration, and wall
+conduction. It must not be identified entirely with pressure-driven flow.
+Here its absolute value is 74.208 W: pressure 7.800 W, regeneration 65.192 W,
+and wall conduction 1.216 W. This makes the upper-regenerator loss law,
+alongside the shared drive, a relevant target for further model work.
+
+Holding pressures fixed still gives dQ1/dT2 = -0.26559 W/K. Freezing only
+the stage-1 regenerator mass-flow feedback, at the same equilibrium, gives
+-0.23322 W/K with self-consistent pressures, or +0.29122 W/K with pressures
+also fixed. Neither simplification is a physical correction. These checks
+show that correcting the shared drive alone is insufficient at this point.
+
+One bounded local fit and why it was rejected
+
+Two targets were interpolated within S0009's May load map using linear
+interpolation over triangles in the (T1, T2) plane:
+  (50 K, 3.2 K): heaters (14.49021 W, 0.479536 W)
+  (50 K, 3.8 K): heaters (13.39929 W, 0.872421 W)
+They require an average dQ1/dT2 = +1.81821 W/K over that interval.
+
+One simultaneous least-squares fit of four positive parameters and both
+matrix profiles was capped at 80 function evaluations (about 128 s).
+The remaining matrix imbalances reached 0.0413 W; the largest total
+residual was 0.0723 W. Those numbers are not acceptable equilibria.
+After re-solving the matrix at the first point with the fitted parameters,
+Q1 changes from approximately -14.486 W to -12.320 W, and dQ1/dT2 is
+-4.078 W/K. The second point still fails the equilibrium tolerance.
+The apparent improvement exploited unbalanced matrix nodes. The full
+rejected result is in rejected_local_fit.json. It is not evidence of an
+acceptable fit or proof that fitting cannot work.
+
+Recommended next step for the canonical fit
+
+1. Solve the internal balances to the existing 1e-6 W tolerance at each
+   fixed-plate load-map point before accepting or differentiating it.
+   Treat matrix balances as constraints, rather than equally weighted
+   observations that can trade against heater residuals. An implicit
+   derivative of the converged internal solution avoids repeated inner
+   solves for each temperature perturbation.
+2. Check both dQ1/dT2 and dQ2/dT1, the two diagonal responses, and local
+   thermal stability against the observed load-map behavior. Correcting
+   only the sign of one derivative is insufficient. Fit heater powers;
+   use measured slopes as validation of the fitted surface.
+3. If a fit satisfying those conditions still fails, revisit the upper
+   regenerator's transport/flow approximation and shared drive together.
+   A revised oscillatory-flow model would require an ADR decision. No
+   particular replacement has yet been demonstrated to fix both couplings;
+   adding a fitted cross-temperature term or reversing F2's sign would
+   bypass the present physical requirements.
+
+Executable handoff
+
+coupling.py supplies analyze_coupling(graph, temperature, stages=...,
+fixed_boundary_nodes=...). It rejects an unbalanced internal matrix and
+computes the reduced stage Jacobian by implicit differentiation. It also
+reports fixed-stage and constant-heater stability. test_coupling.py checks
+the derivative against an independently soluble three-conductance network
+and verifies rejection of a non-equilibrium state.
+
+From the repository root:
+  .venv/Scripts/python -m simulations.validation.test_stand_steady_state.check_cases
+  .venv/Scripts/python -m pytest simulations/validation/test_stand_steady_state/test_coupling.py tests/engine/test_steady_state.py -q -p no:cacheprovider
+
+The first command rechecks five archived equilibrium states and parameter
+choices, without fitting or a search. The second passes six tests. Ruff
+lint and formatting checks pass for this experiment's Python files.
+
+Additional repair investigation
+
+The earlier SN09 baseline reproduced the forward coupling's sign, but its
+stage-2 response was too steep. The later finite-capacity/exchanger fit
+also retained a coupling tradeoff. These existing records are in
+sn09_load_map/coupling_findings.txt, comparison.txt, and adr_investigation/;
+they do not supply a complete replacement to copy into the present model.
+
+A targeted check of the existing breakthrough-loss branch used a scalar
+root for R1 such that L1/E1 = 0.9 at the placeholder operating profile,
+then re-solved all matrix temperatures. R1 = 3.1159382e8 Pa s/m^3, with
+the remaining parameters unchanged. In 11 evaluations the matrix residual
+fell to 6.16e-11 W. At T1 = 58 K, T2 = 3.4 K the result has Q1 = +20.07 W,
+Q2 = -0.8613 W, E1 = 1736.19 W, L1 = 1562.02 W, dQ1/dT2 = -1.7823 W/K.
+This particular loss-dominated branch does not provide the repair. It is
+one directed check of an existing mechanism, not a parameter survey.
+
+A useful conservation constraint on the repair follows by summing the two
+stage balances at matrix equilibrium:
+  Q1 + Q2 = F1_cold + L1 + L2 + tube_wall1 + tube_wall2 - E1 - E2.
+Here F1_cold is total energy arriving from the first regenerator section,
+L1 and L2 are tube losses, and the tube_wall terms are heat conducted into
+the stages. At fixed T1, the measured positive dQ1/dT2 and negative
+dQ2/dT2 imply a positive derivative of their sum near the representative
+one-compressor point. The placeholder gives -0.9169 W/K at 58 K / 3.4 K.
+Redistributing a term solely between the two stage balances cannot repair
+this summed response. Work must address the upstream energy flow, tube
+losses, or delivered acoustic powers consistently with that balance.
