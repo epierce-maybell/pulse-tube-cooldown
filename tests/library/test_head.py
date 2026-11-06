@@ -42,7 +42,7 @@ _WALL = Material(
 )
 
 
-def _model(reservoir_volume=5.0e-3, heat_exchanger_voids=(0.0, 0.0)):
+def _model(reservoir_volume=5.0e-3, heat_exchanger_voids=(0.0, 0.0), matrix=_MATRIX):
     """A head whose stage-2 section's second layer splits into two nodes, giving four nodes in all."""
 
     def section(*layers):
@@ -51,7 +51,7 @@ def _model(reservoir_volume=5.0e-3, heat_exchanger_voids=(0.0, 0.0)):
             wall_material=_WALL,
             wall_area=1e-4,
             layers=tuple(
-                MatrixLayer(material=_MATRIX, mass=1.0, pore_volume=volume, length_fraction=fraction, node_count=count)
+                MatrixLayer(material=matrix, mass=1.0, pore_volume=volume, length_fraction=fraction, node_count=count)
                 for volume, fraction, count in layers
             ),
         )
@@ -303,8 +303,9 @@ def _isothermal_swing(volume, temperature, mean_pressure, swing):
 @pytest.mark.parametrize("voids", [_NO_VOIDS, _VOIDS])
 def test_regeneration_at_stage_2_follows_packing(voids):
     # The packing coefficient adds a (m c_p)^2 / (f C'_m) dT/dx at the stage-2 boundary, with m the mass flow of tube
-    # 2, reservoir 2, and the stage-2 heat exchanger's void at 4 K, c_p at T_2, and C'_m the coldest node's matrix
-    # heat capacity per length: mass 0.5 kg at T J/(kg K) over 0.05 m. Its centre at 6 K lies 0.025 m from stage 2.
+    # 2, reservoir 2, and the stage-2 heat exchanger's void at 4 K, and c_p at T_2. C'_m is half the coldest node,
+    # 0.25 kg, at the test matrix's mean specific heat between its centre's 6 K and stage 2's 4 K,
+    # (6^2 - 4^2) / 2 / (6 - 4) = 5 J/(kg K), over the 0.025 m between them.
     mean_pressure, swing, packing = 1.4e6, 1.2e6, 0.3
     bare = Head(model=_model(), packing=(0.1, 0.0), resistance=(2e7, 6e7), frequency=_FREQUENCY)
     loose = dataclasses.replace(bare, model=_model(heat_exchanger_voids=voids))
@@ -313,7 +314,7 @@ def test_regeneration_at_stage_2_follows_packing(voids):
         calc_mass_swing(bare, _COLD, mean_pressure, swing)[6] + _isothermal_swing(voids[1], 4.0, mean_pressure, swing)
     )
     capacity_rate = mass_flow * float(helium.isobaric_specific_heat(4.0, mean_pressure))
-    expected = packing * capacity_rate**2 / (_FREQUENCY * 0.5 * 6.0 / 0.05) * (6.0 - 4.0) / 0.025
+    expected = packing * capacity_rate**2 / (_FREQUENCY * 0.25 * 5.0 / 0.025) * (6.0 - 4.0) / 0.025
 
     change = calc_heat_flow(packed, _COLD, mean_pressure, swing) - calc_heat_flow(loose, _COLD, mean_pressure, swing)
 
@@ -323,8 +324,9 @@ def test_regeneration_at_stage_2_follows_packing(voids):
 @pytest.mark.parametrize("voids", [_NO_VOIDS, _VOIDS])
 def test_regeneration_at_stage_1_carries_every_cold_side_volume(voids):
     # At the stage-1 boundary, m is the mass flow of everything from stage 1 down: the void-free head's swing there
-    # and beyond, plus both heat-exchanger voids at their stage temperatures. c_p is at T_1 = 40 K, and C'_m is half
-    # the stage-1 section's node, 1 kg at 60 J/(kg K), over the 0.1 m from its centre at 60 K to stage 1.
+    # and beyond, plus both heat-exchanger voids at their stage temperatures. c_p is at T_1 = 40 K. C'_m is half the
+    # stage-1 section's node, 0.5 kg, at the mean specific heat between its centre's 60 K and stage 1's 40 K,
+    # (60^2 - 40^2) / 2 / (60 - 40) = 50 J/(kg K), over the 0.1 m between them.
     mean_pressure, swing, packing = 1.4e6, 1.2e6, 0.3
     bare = Head(model=_model(), packing=(0.0, 0.1), resistance=(2e7, 6e7), frequency=_FREQUENCY)
     loose = dataclasses.replace(bare, model=_model(heat_exchanger_voids=voids))
@@ -335,11 +337,74 @@ def test_regeneration_at_stage_1_carries_every_cold_side_volume(voids):
         + _isothermal_swing(voids[1], 4.0, mean_pressure, swing)
     )
     capacity_rate = mass_flow * float(helium.isobaric_specific_heat(40.0, mean_pressure))
-    expected = packing * capacity_rate**2 / (_FREQUENCY * 30.0 / 0.1) * (60.0 - 40.0) / 0.1
+    expected = packing * capacity_rate**2 / (_FREQUENCY * 0.5 * 50.0 / 0.1) * (60.0 - 40.0) / 0.1
 
     change = calc_heat_flow(packed, _COLD, mean_pressure, swing) - calc_heat_flow(loose, _COLD, mean_pressure, swing)
 
     assert change[2] == pytest.approx(expected, rel=1e-9)
+
+
+def test_regeneration_between_layers_takes_each_half_nodes_mean_specific_heat():
+    # The stage-2 section's boundary 0.1 m from stage 1 lies between the first layer's node, 1 kg centred 0.05 m in at
+    # 20 K, and the second layer's first node, 0.5 kg centred at 0.125 m at 10 K. C'_m is both half-nodes,
+    # 0.5 + 0.25 kg, at the mean specific heat between 20 K and 10 K, (20^2 - 10^2) / 2 / (20 - 10) = 15 J/(kg K),
+    # over the 0.075 m between centres. m is the mass flow of everything on the cold side, and c_p is at the boundary's
+    # 20 - 10 * 0.05 / 0.075 K. Packing only the stage-2 section leaves stage 1's flow from its own section unchanged,
+    # so stage 1 and the 20 K node together lose this boundary's flow.
+    mean_pressure, swing, packing = 1.4e6, 1.2e6, 0.3
+    loose = Head(model=_model(), packing=(0.1, 0.0), resistance=(2e7, 6e7), frequency=_FREQUENCY)
+    packed = dataclasses.replace(loose, packing=(0.1, packing))
+    mass_flow = _FREQUENCY * calc_mass_swing(loose, _COLD, mean_pressure, swing)[4:].sum()
+    capacity_rate = mass_flow * float(helium.isobaric_specific_heat(20.0 - 10.0 * 0.05 / 0.075, mean_pressure))
+    expected = packing * capacity_rate**2 / (_FREQUENCY * 0.75 * 15.0 / 0.075) * (20.0 - 10.0) / 0.075
+
+    change = calc_heat_flow(packed, _COLD, mean_pressure, swing) - calc_heat_flow(loose, _COLD, mean_pressure, swing)
+
+    assert change[2] + change[3] == pytest.approx(-expected, rel=1e-9)
+
+
+def test_pressure_transport_at_stage_2_takes_the_mean_specific_heat():
+    # Without packing, stage 2 takes -beta T E_2 / (1 + epsilon) from pressure transport at its boundary, and nothing
+    # else there depends on the matrix. Against a matrix a trillion times heavier, where epsilon vanishes, it gains
+    # beta T E_2 epsilon / (1 + epsilon), with beta T at 4 K. epsilon is half the coldest node's pore gas, 1e-5 m^3 at
+    # 6 K, over half its matrix, 0.25 kg at the mean specific heat of 5 J/(kg K) between 6 K and 4 K.
+    mean_pressure, swing = 1.4e6, 1.2e6
+    head = Head(model=_model(), packing=(0.0, 0.0), resistance=(2e7, 6e7), frequency=_FREQUENCY)
+    heavy_matrix = dataclasses.replace(
+        _MATRIX, specific_heat=lambda t: 1e12 * t, specific_heat_integral=lambda t: 5e11 * t**2
+    )
+    heavy = dataclasses.replace(head, model=_model(matrix=heavy_matrix))
+    _, power = calc_acoustic_power(head, mean_pressure, swing, _COLD[0])
+    expansion = 4.0 * float(helium.isobaric_expansion_coefficient(4.0, mean_pressure))
+    gas = 1.0e-5 * float(helium.density(6.0, mean_pressure) * helium.isobaric_specific_heat(6.0, mean_pressure))
+    ratio = gas / (0.25 * 5.0)
+    expected = expansion * power * ratio / (1 + ratio)
+
+    change = calc_heat_flow(head, _COLD, mean_pressure, swing) - calc_heat_flow(heavy, _COLD, mean_pressure, swing)
+
+    assert change[6] == pytest.approx(expected, rel=1e-9)
+
+
+def test_heat_flow_with_constant_specific_heat_is_unchanged_by_boundary_averaging():
+    # A matrix of constant specific heat, 100 J/(kg K), has the same capacity at a boundary whether its specific heat
+    # is taken at the node centres or averaged between them. Heat flows recorded from the point-sampled implementation.
+    constant = dataclasses.replace(
+        _MATRIX,
+        specific_heat=lambda t: np.full_like(np.asarray(t, dtype=float), 100.0),
+        specific_heat_integral=lambda t: 100.0 * np.asarray(t),
+    )
+    head = Head(model=_model(matrix=constant), packing=(0.1, 0.3), resistance=(2e7, 6e7), frequency=_FREQUENCY)
+    expected = [
+        0.0,
+        10894.92186635623,
+        7094.392734657332,
+        3103.710953063086,
+        -2112.114870413167,
+        -1921.017924767319,
+        5443.247966596633,
+    ]
+
+    np.testing.assert_allclose(calc_heat_flow(head, _COLD, 1.4e6, 1.2e6), expected, rtol=1e-9)
 
 
 def _tube_gas_mass(index, pressure):

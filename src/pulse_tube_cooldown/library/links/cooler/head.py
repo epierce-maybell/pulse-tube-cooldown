@@ -31,9 +31,11 @@ end. At each node boundary, with x increasing towards the warm end, the energy f
 for helium's isobaric expansion coefficient beta and specific heat c_p at the boundary's temperature T, the section's
 packing coefficient a, the mass flow m of every gas volume on the boundary's cold side, the valve frequency f, and the
 conductivity integral Lambda of the section's wall of area A. C'_m is the matrix heat capacity of the half-nodes on
-either side of the boundary over the distance between their centres, and epsilon is their pore gas's heat capacity
-over their matrix's. Acoustic power grows towards the warm end as d(ln E) = beta T / (1 + epsilon_k) d(ln T) within
-node k, from E_2 at stage 2 and from E_1 plus the stage-2 section's warm-end power at stage 1.
+either side of the boundary over the distance between the points on either side, at temperatures T_a and T_b. Each
+half-node takes its material's mean specific heat between them, (H(T_a) - H(T_b)) / (T_a - T_b) for the specific-heat
+integral H. epsilon is the half-nodes' pore gas heat capacity, at their node temperatures, over their matrix's.
+Acoustic power grows towards the warm end as d(ln E) = beta T / (1 + epsilon_k) d(ln T) within node k, from E_2 at
+stage 2 and from E_1 plus the stage-2 section's warm-end power at stage 1.
 
 A node's heat flow is the energy flow at its warm boundary less that at its cold boundary. Stage i also takes the
 section energy flows on either side, its tube wall's conduction from the warm flange, L_i, and -E_i. Stage 1 also takes
@@ -50,6 +52,7 @@ from numpy.polynomial.legendre import leggauss
 from numpy.typing import NDArray
 from scipy.special import ndtr
 
+from pulse_tube_cooldown.core.types import Material
 from pulse_tube_cooldown.library.gases import helium
 from pulse_tube_cooldown.library.heads import HeadModel, PulseTube, RegeneratorSection
 
@@ -354,9 +357,15 @@ def _energy_flow(
         * helium.isobaric_specific_heat(node_temperature, pressure)
     )
     node_ratio = gas_capacity / matrix_capacity
-    half_matrix = np.concatenate(([0.0], matrix_capacity / 2, [0.0]))
     half_gas = np.concatenate(([0.0], gas_capacity / 2, [0.0]))
-    boundary_matrix = half_matrix[:-1] + half_matrix[1:]
+    boundary_matrix = np.zeros(len(node_layers) + 1)
+    for node, layer in enumerate(node_layers):
+        boundary_matrix[node : node + 2] += (
+            layer.mass
+            / layer.node_count
+            / 2
+            * _mean_specific_heat(layer.material, temperature[node : node + 2], temperature[node + 1 : node + 3])
+        )
     boundary_ratio = (half_gas[:-1] + half_gas[1:]) / boundary_matrix
 
     span = np.diff(point)
@@ -376,6 +385,21 @@ def _energy_flow(
     regeneration = packing * capacity_rate**2 / (frequency * boundary_matrix / span) * gradient
     conduction = -section.wall_area * np.diff(section.wall_material.conductivity_integral(temperature)) / span
     return pressure_flow + regeneration + conduction, float(power[0]), float(cooling_fraction[-1])
+
+
+def _mean_specific_heat(
+    material: Material, warm: NDArray[np.float64], cold: NDArray[np.float64]
+) -> NDArray[np.float64]:
+    """Mean specific heat in J/(kg K) between `warm` and `cold`, (H(warm) - H(cold)) / (warm - cold).
+
+    Where the two temperatures agree to 1 part in 10^6, it is the specific heat at their midpoint.
+    """
+    difference = warm - cold
+    close = np.abs(difference) <= 1e-6 * warm
+    secant = (material.specific_heat_integral(warm) - material.specific_heat_integral(cold)) / np.where(
+        close, 1.0, difference
+    )
+    return np.where(close, material.specific_heat((warm + cold) / 2), secant)
 
 
 def _pressure_responses(model: HeadModel, warm_temperature: float, mean_pressure: float) -> list[float]:
