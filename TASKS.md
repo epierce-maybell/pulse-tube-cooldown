@@ -102,10 +102,11 @@ This section builds 2.3 and 2.4. ADR 03 as written cannot meet requirement 4, so
   Context: ADR 03 as edited in 3.1; `library/heads/`, `library/links/cooler/head.py`.
   Verified by: `c = 0` reproduces today's heat flows, and a hand-computed term.
 
-- [ ] **3.6 Stage-2 gate** · Discuss, after 3.3 and 3.4
+- [x] **3.6 Stage-2 gate** · Discuss, after 3.3 and 3.4
   With the voids and 3.3, at T1 = 50 K and T2 = 3.4 K over a2 and R2: can dQ2/dT2 reach -0.4 to -0.7 W/K, with heat into the node positive, on a stable state? If not, the result goes to the human before 3.8.
   Context: 3.1's findings; `simulations/validation/test_stand_steady_state/coupling.py` for the derivative method.
   Also: `simulations/validation/test_stand_head/boundary_capacity_stability.txt`. After 3.3 the template's no-load cold root is stable, but stage 2 sits at the 2.1 K helium floor, some Gd2O2S nodes fall below it, and their temperatures alternate node to node. The point-sampled model before 3.3 also relaxed to a stable root, at T2 = 2.32 K.
+  Result, `simulations/validation/test_stand_head/stage2_gate.txt`: yes, on the cold matrix branch, which is stable with the stages held and with heater power held. dQ2/dT2 reaches -0.70 W/K at a2 = 0.038, R2 = 4.3e10 and -0.63 at a2 = 0.034, R2 = 4.8e10, with a stage-2 heater of 0.57 to 0.67 W; a1, R1, and `c` move it by under 0.02 W/K. The branch ends where the warmest Gd2O2S node reaches about 6.2 K, beyond which the matrix settles warm and stage 2 cannot hold 3.4 K; along it, -0.55 W/K at a2 = 0.03 was the closest to the measured -0.46.
 
 - [ ] **3.7 Robust steady state** · Build
   `solve_steady_state` relaxes in log temperature and finishes with Newton. Its temperature floor is an argument defaulting to 2.1 K, the helium-property limit, and a state pinned there raises promptly. Callers continue between points by passing the previous solution.

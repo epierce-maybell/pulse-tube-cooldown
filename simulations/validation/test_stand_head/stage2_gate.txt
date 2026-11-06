@@ -1,0 +1,14 @@
+Stage 2's slope on the cold matrix branch at T1 = 50.0 K, T2 = 3.4 K
+(task 3.6). a1 = 0.15, R1 = 1e10 Pa s/m^3, c = 0. P1 and P2 are the stage heater powers in W. The couplings
+are in W/K with heat into the node positive. The growth rates in 1/s are with the stages held (matrix) and
+with the heater powers held (free).
+
+    a2       R2      P1     P2  dQ1/dT1  dQ1/dT2  dQ2/dT1  dQ2/dT2    matrix      free
+ 0.050    3e+10   -4.36 +1.048   -1.571   +0.350  -0.0103   -0.987 -3.12e-03 -2.40e-03
+ 0.038    3e+10  -10.22 +0.995   -1.540   +0.179  -0.0098   -0.946 -3.23e-03 -2.43e-03
+ 0.038    4e+10   -6.96 +0.724   -1.549   +0.210  -0.0078   -0.742 -3.11e-03 -2.38e-03
+ 0.038  4.3e+10   -6.18 +0.665   -1.534   +1.019  -0.0074   -0.700 -3.08e-03 -2.37e-03
+ 0.034    3e+10  -12.59 +0.973   -1.521   +0.188  -0.0095   -0.930 -3.27e-03 -2.44e-03
+ 0.034    4e+10   -9.24 +0.707   -1.539   +0.096  -0.0076   -0.729 -3.15e-03 -2.40e-03
+ 0.034  4.4e+10   -8.06 +0.632   -1.541   +0.138  -0.0070   -0.672 -3.12e-03 -2.38e-03
+ 0.034  4.8e+10   -7.04 +0.569   -1.533   +0.686  -0.0066   -0.626 -3.08e-03 -2.37e-03
