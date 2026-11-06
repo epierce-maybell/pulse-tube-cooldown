@@ -72,10 +72,10 @@ def _pressures(models, stage_temperature, compressors):
 
 
 def test_charge_fills_every_volume_at_rest():
-    # HEPAK's density at 295 K and 1.70 MPa times the warm volume and both heads' pores, tubes, reservoirs, and dead
-    # volume, from pt1_5.toml.
+    # HEPAK's density at 295 K and 1.70 MPa times the warm volume and both heads' pores, tubes, reservoirs, dead
+    # volume, and heat-exchanger voids, from pt1_5.toml.
     pores = 2.8459e-4 + 6.0081e-5 + 1.1956e-5 + 2 * 2.3911e-5 + 1.4945e-5
-    head = pores + 2.5077e-4 + 2.0086e-4 + 2 * 5.2800e-3 + 4.5e-5
+    head = pores + 2.5077e-4 + 2.0086e-4 + 2 * 5.2800e-3 + 4.5e-5 + 39.3e-6 + 10.8e-6
 
     charge = calc_charge(
         [_MODEL, _MODEL], warm_volume=_WARM_VOLUME, fill_pressure=_FILL_PRESSURE, fill_temperature=_ROOM_TEMPERATURE
@@ -169,11 +169,10 @@ def test_compressors_add_flow_under_the_lowest_relief():
     assert swing == pytest.approx(1.9e6 - _RELIEF_WIDTH * math.log(2), rel=1e-8)
 
 
-@pytest.fixture(scope="module")
-def cooldown():
+def _cooldown(points):
     """Mean pressures and swings of one head on one compressor, its stages cooling geometrically to 40 K and 4 K."""
     compressor = Compressor(displacement_rate=_DISPLACEMENT_RATE, relief_swing=_RELIEF_SWING)
-    progress = np.linspace(0.0, 1.0, 41)
+    progress = np.linspace(0.0, 1.0, points)
     stages = np.column_stack(
         (
             _ROOM_TEMPERATURE * (40.0 / _ROOM_TEMPERATURE) ** progress,
@@ -182,6 +181,11 @@ def cooldown():
     )
     mean_pressure, swing = np.array([_pressures([_MODEL], stage, [compressor]) for stage in stages]).T
     return mean_pressure, swing
+
+
+@pytest.fixture(scope="module")
+def cooldown():
+    return _cooldown(41)
 
 
 def test_warm_head_runs_at_relief(cooldown):
@@ -198,8 +202,13 @@ def test_cold_head_lowers_mean_pressure_and_swing(cooldown):
 
 
 def test_cooldown_pressures_are_smooth(cooldown):
-    mean_pressure, swing = cooldown
+    # Along a path with continuous derivatives, second differences shrink against first differences in proportion to
+    # the step; at a kink they do not.
+    def roughness(values):
+        return np.max(np.abs(np.diff(values, 2))) / np.max(np.abs(np.diff(values)))
 
-    assert np.all(np.diff(mean_pressure) < 0)
-    for values in (mean_pressure, swing):
-        assert np.max(np.abs(np.diff(values, 2))) <= 0.25 * np.max(np.abs(np.diff(values)))
+    fine = _cooldown(161)
+
+    assert np.all(np.diff(fine[0]) < 0)
+    for coarse_values, fine_values in zip(cooldown, fine, strict=True):
+        assert roughness(fine_values) <= 0.5 * roughness(coarse_values)

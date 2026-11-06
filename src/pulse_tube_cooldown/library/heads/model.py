@@ -77,6 +77,7 @@ class HeadModel:
         waveform_factor: Pressure amplitude over half the swing, kappa.
         buffer_fraction: Fraction of a pulse tube's gas that buffers its stroke, lambda.
         stroke_spread: Spread of the stroke as a fraction of a pulse tube's gas, sigma.
+        heat_exchanger_voids: Gas volumes in m^3 of the stage-1 and stage-2 cold heat exchangers, outside the tubes.
     """
 
     name: str
@@ -87,3 +88,4 @@ class HeadModel:
     waveform_factor: float
     buffer_fraction: float
     stroke_spread: float
+    heat_exchanger_voids: tuple[float, float] = (0.0, 0.0)

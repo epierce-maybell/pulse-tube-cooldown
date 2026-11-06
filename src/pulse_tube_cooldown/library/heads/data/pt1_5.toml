@@ -5,6 +5,7 @@ dead_volume = 4.5e-05  # m^3
 waveform_factor = 1.41421
 buffer_fraction = 0.5
 stroke_spread = 0.1
+heat_exchanger_voids = [3.9300e-05, 1.0800e-05]  # m^3, stage 1 and stage 2
 
 [stage_1_regenerator]
 length = 0.18  # m
@@ -79,6 +80,7 @@ dead_volume = "data/heads/pt1_5/geometry.csv: valve_to_head_dead_volume (estimat
 waveform_factor = "Snodgrass 2024 Supp. Methods A, eq. S2: a square-wave pressure source with large omega R C carries twice a sine's acoustic power"
 buffer_fraction = "Snodgrass 2024 Fig. 8: large-stroke loss sets in near a stroke 2|xi|/L of 0.45 at cold impedance and 0.6 more open, read from the figure"
 stroke_spread = "Snodgrass 2024 Fig. 8: spread of the large-stroke onset across both needle settings, read from the figure"
+heat_exchanger_voids = "data/heads/pt1_5/geometry.csv: stage1_heat_exchanger_void_volume, stage2_heat_exchanger_void_volume"
 stage_1_regenerator = "data/heads/pt1_5/geometry.csv: stage1_regenerator_outer_radius, stage1_regenerator_length; data/heads/pt1_1/geometry.csv: tube_wall_thickness (estimate), tube_wall_material, stage1_regenerator_layer_SS, matrix_porosity_screens (estimate), stage1_regenerator_layer_Pb, matrix_porosity_spheres (estimate)"
 stage_2_regenerator = "data/heads/pt1_5/geometry.csv: stage2_regenerator_outer_radius, stage2_regenerator_length; data/heads/pt1_1/geometry.csv: tube_wall_thickness (estimate), tube_wall_material, stage2_regenerator_layer_Pb, matrix_porosity_spheres (estimate), stage2_regenerator_layer_Er3Ni, stage2_regenerator_layer_HoCu2, stage2_regenerator_layer_GOS"
 stage_1_pulse_tube = "data/heads/pt1_5/geometry.csv: stage1_pulse_tube_outer_radius, stage1_pulse_tube_length, reservoir_volume, reservoir_hose_volume; data/heads/pt1_1/geometry.csv: tube_wall_thickness (estimate), tube_wall_material"

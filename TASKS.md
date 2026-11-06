@@ -92,7 +92,7 @@ This section builds 2.3 and 2.4. ADR 03 as written cannot meet requirement 4, so
   Context: `library/links/cooler/head.py` (`_energy_flow`); `simulations/validation/test_stand_steady_state/report.txt`.
   Verified by: unchanged results for a constant specific heat, and a stable cold root where `report.txt` found an unstable one.
 
-- [ ] **3.4 Heat-exchanger voids** · Build, after 3.1
+- [x] **3.4 Heat-exchanger voids** · Build, after 3.1
   Each stage's cold heat-exchanger void, read from `data/heads/pt1_5/geometry.csv` through `data/scripts/derive_head_model.py` into `library/heads/data/pt1_5.toml`. The void's gas is isothermal at its stage temperature. It enters the gas inventory, the mass swing, the boundary mass flows, and the stage's pore heat capacity. A design file without voids loads them as zero.
   Context: ADR 03 as edited in 3.1; `library/heads/`, `library/links/cooler/head.py`, `drive.py`.
   Verified by: zero voids reproduce today's heat flows, and a hand-computed void mass swing.

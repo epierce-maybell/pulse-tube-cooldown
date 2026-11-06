@@ -108,7 +108,7 @@ class Cooler:
         return tuple(dict.fromkeys(name for head in self.heads for name in head.calc_chain(self.warm_flange)))
 
     def calc_energy_balance_terms(self, temperature: NDArray[np.float64]) -> EnergyBalanceTerms:
-        """Calculates the heat flow into each of `nodes` and the heat capacity of the pore gas there.
+        """Calculates the heat flow into each of `nodes` and the heat capacity of the gas at its temperature.
 
         Both follow from the manifold's mean pressure and pressure swing at these temperatures.
 
@@ -116,8 +116,8 @@ class Cooler:
             temperature: Temperatures in K of `nodes`.
 
         Returns:
-            The heat flow in W into each of `nodes`, and the heat capacity in J/K of the pore gas at each, zero at the
-            warm flange and stages.
+            The heat flow in W into each of `nodes`, and the heat capacity in J/K of the gas at each node's temperature:
+            pore gas at matrix nodes, heat-exchanger voids at stages, and none at the warm flange.
         """
         chains = [list(chain) for chain in self.chain_indices]
         warm = float(temperature[0])

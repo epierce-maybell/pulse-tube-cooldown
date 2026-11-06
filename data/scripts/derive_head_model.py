@@ -31,6 +31,7 @@ REGENERATORS = {
     ),
 }
 PULSE_TUBES = {"stage_1_pulse_tube": "stage1_pulse_tube", "stage_2_pulse_tube": "stage2_pulse_tube"}
+HEAT_EXCHANGER_VOIDS = ("stage1_heat_exchanger_void_volume", "stage2_heat_exchanger_void_volume")
 WALL_MATERIAL = "304 SS"
 
 # Values per design from Snodgrass et al. (2024), docs/papers/pulse_tube/, with their sources.
@@ -108,6 +109,10 @@ def render(name, rows):
         f"dead_volume = {value(rows, 'valve_to_head_dead_volume') * 1e-6:.4g}  # m^3",
         *(f"{key} = {entry:.6g}" for key, (entry, _) in SNODGRASS_2024.items()),
     ]
+    if all(row in rows for row in HEAT_EXCHANGER_VOIDS):
+        sources["heat_exchanger_voids"] = cite(rows, *HEAT_EXCHANGER_VOIDS)
+        voids = ", ".join(f"{value(rows, row) * 1e-6:.4e}" for row in HEAT_EXCHANGER_VOIDS)
+        lines.append(f"heat_exchanger_voids = [{voids}]  # m^3, stage 1 and stage 2")
     for section, (tube, layers) in REGENERATORS.items():
         sources[section] = cite(
             rows, f"{tube}_outer_radius", f"{tube}_length", *tube_rows, *(row for layer in layers for row in layer[::2])

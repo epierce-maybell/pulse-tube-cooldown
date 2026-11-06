@@ -1,14 +1,15 @@
 """One pulse-tube head's gas inventory, mass swing, and heat flows, from `docs/adrs/03-coupled-capacity-maps.md`.
 
 A head's temperatures run along its chain: the warm flange, the stage-1 section's nodes from its warm end, stage 1, the
-stage-2 section's nodes, and stage 2. Each node's pore gas is at the node's temperature, each pulse tube's gas along a
-linear profile from the warm flange to its stage, and the dead volume and reservoirs at the warm flange's. Values along
-the chain place the dead volume at the warm flange and each pulse tube and its reservoir at its stage.
+stage-2 section's nodes, and stage 2. Each node's pore gas is at the node's temperature, each stage's heat-exchanger
+void at the stage's, each pulse tube's gas along a linear profile from the warm flange to its stage, and the dead volume
+and reservoirs at the warm flange's. Values along the chain place the dead volume at the warm flange and each pulse
+tube, its reservoir, and its heat-exchanger void at its stage.
 
-Over a cycle the pressure swings by dP about the mean pressure P. Pore gas swings at its node's temperature. The other
-gas swings at constant entropy from its temperature at P, each reservoir by dP / sqrt(1 + (omega R B)^2) for the angular
-valve frequency omega, its valve resistance R, and its pressure response B = V_r / (gamma P), with V_r its volume and
-gamma helium's heat capacity ratio at the warm flange's temperature and P.
+Over a cycle the pressure swings by dP about the mean pressure P. Pore gas swings at its node's temperature and void
+gas at its stage's. The other gas swings at constant entropy from its temperature at P, each reservoir by
+dP / sqrt(1 + (omega R B)^2) for the angular valve frequency omega, its valve resistance R, and its pressure response
+B = V_r / (gamma P), with V_r its volume and gamma helium's heat capacity ratio at the warm flange's temperature and P.
 
 Each pulse tube draws acoustic power E = e P_a^2 at its cold end, with pressure amplitude P_a = kappa dP / 2 and
 e = omega^2 R B^2 / (2 [1 + (omega R B)^2]).
@@ -94,17 +95,19 @@ def calc_gas_mass(
         Helium mass in kg.
     """
     warm = temperature[0]
-    pores = _pore_volume_along_chain(model) @ helium.density(temperature, pressure)
+    isothermal = _isothermal_volume_along_chain(model) @ helium.density(temperature, pressure)
     tubes = sum(
         _tube_gas_mass(tube, warm, temperature[stage], pressure, quadrature_points)
         for tube, stage in zip(model.pulse_tubes, _stages(model), strict=True)
     )
     warm_volume = model.dead_volume + sum(tube.reservoir_volume for tube in model.pulse_tubes)
-    return float(pores + tubes + warm_volume * helium.density(warm, pressure))
+    return float(isothermal + tubes + warm_volume * helium.density(warm, pressure))
 
 
 def calc_pore_heat_capacity(model: HeadModel, temperature: NDArray[np.float64], pressure: float) -> NDArray[np.float64]:
-    """Calculates the heat capacity of the pore gas at each element of a head's chain.
+    """Calculates the heat capacity of the gas at each element's temperature along a head's chain.
+
+    That gas is the pore gas at each node and the heat-exchanger void at each stage.
 
     Args:
         model: The head's design.
@@ -112,10 +115,10 @@ def calc_pore_heat_capacity(model: HeadModel, temperature: NDArray[np.float64], 
         pressure: Pressure in Pa throughout the head.
 
     Returns:
-        Heat capacity in J/K at each element of the chain, zero at the warm flange and stages.
+        Heat capacity in J/K at each element of the chain, zero at the warm flange.
     """
     return (
-        _pore_volume_along_chain(model)
+        _isothermal_volume_along_chain(model)
         * helium.density(temperature, pressure)
         * helium.isobaric_specific_heat(temperature, pressure)
     )
@@ -147,7 +150,7 @@ def calc_mass_swing(
 
     model = head.model
     warm = temperature[0]
-    mass = _pore_volume_along_chain(model) * (
+    mass = _isothermal_volume_along_chain(model) * (
         helium.density(temperature, mean_pressure + pressure_swing / 2)
         - helium.density(temperature, mean_pressure - pressure_swing / 2)
     )
@@ -387,13 +390,14 @@ def _node_count(model: HeadModel, section: int) -> int:
     return sum(layer.node_count for layer in model.regenerators[section].layers)
 
 
-def _pore_volume_along_chain(model: HeadModel) -> NDArray[np.float64]:
-    """Pore gas volume in m^3 at each element of the chain, zero at the warm flange and stages."""
+def _isothermal_volume_along_chain(model: HeadModel) -> NDArray[np.float64]:
+    """Volume in m^3 of the gas at each element's temperature: pores at nodes, voids at stages, none at the flange."""
     first, second = (
         [layer.pore_volume / layer.node_count for layer in section.layers for _ in range(layer.node_count)]
         for section in model.regenerators
     )
-    return np.array([0.0, *first, 0.0, *second, 0.0])
+    stage_1_void, stage_2_void = model.heat_exchanger_voids
+    return np.array([0.0, *first, stage_1_void, *second, stage_2_void])
 
 
 def _tube_gas_mass(tube: PulseTube, warm: float, cold: float, pressure: float, points: int = 16) -> float:

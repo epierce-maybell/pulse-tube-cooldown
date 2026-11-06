@@ -17,6 +17,7 @@ from pulse_tube_cooldown.library.links.cooler.head import (
     calc_gas_mass,
     calc_heat_flow,
     calc_mass_swing,
+    calc_pore_heat_capacity,
 )
 
 _MOLAR_MASS = 4.002602e-3  # kg/mol
@@ -41,7 +42,7 @@ _WALL = Material(
 )
 
 
-def _model(reservoir_volume=5.0e-3):
+def _model(reservoir_volume=5.0e-3, heat_exchanger_voids=(0.0, 0.0)):
     """A head whose stage-2 section's second layer splits into two nodes, giving four nodes in all."""
 
     def section(*layers):
@@ -69,6 +70,7 @@ def _model(reservoir_volume=5.0e-3):
         waveform_factor=math.sqrt(2),
         buffer_fraction=0.5,
         stroke_spread=0.1,
+        heat_exchanger_voids=heat_exchanger_voids,
     )
 
 
@@ -76,6 +78,8 @@ def _model(reservoir_volume=5.0e-3):
 _COLD = np.array([300.0, 60.0, 40.0, 20.0, 10.0, 6.0, 4.0])
 _PORE = {1: 1.0e-4, 3: 3.0e-5, 4: 2.0e-5, 5: 2.0e-5}  # m^3 at each node's chain index
 _TUBE = {2: 6.0e-5, 6: 2.0e-4}  # m^3 at each stage's chain index
+_NO_VOIDS = (0.0, 0.0)
+_VOIDS = (4.0e-5, 1.0e-5)  # m^3 of the stage-1 and stage-2 heat exchangers
 _FREQUENCY = 1.2
 _STIFF = (1e10, 3e10)  # Pa s/m^3, holding each reservoir near the mean pressure
 _OPEN = (2e7, 6e7)  # Pa s/m^3, letting each reservoir swing
@@ -86,29 +90,54 @@ def _mean_over_tube(function, warm, cold):
     return quad(function, cold, warm, epsrel=1e-10, limit=200)[0] / (warm - cold)
 
 
-def test_gas_mass_at_uniform_temperature_fills_every_volume():
-    # HEPAK's density at 300 K and 1.7 MPa times the pores, tubes, reservoirs, and dead volume.
-    volume = 1.7e-4 + 2.6e-4 + 1.0e-2 + 4.5e-5
+@pytest.mark.parametrize("voids", [_NO_VOIDS, _VOIDS])
+def test_gas_mass_at_uniform_temperature_fills_every_volume(voids):
+    # HEPAK's density at 300 K and 1.7 MPa times the pores, tubes, reservoirs, dead volume, and heat-exchanger voids.
+    volume = 1.7e-4 + 2.6e-4 + 1.0e-2 + 4.5e-5 + sum(voids)
 
-    assert calc_gas_mass(_model(), np.full(7, 300.0), 1.7e6) == pytest.approx(2.7069548683 * volume, rel=1e-8)
+    assert calc_gas_mass(_model(heat_exchanger_voids=voids), np.full(7, 300.0), 1.7e6) == pytest.approx(
+        2.7069548683 * volume, rel=1e-8
+    )
 
 
-def test_gas_mass_places_each_volume_at_its_temperature():
+@pytest.mark.parametrize("voids", [_NO_VOIDS, _VOIDS])
+def test_gas_mass_places_each_volume_at_its_temperature(voids):
     pressure = 1.4e6
     pores = sum(volume * float(helium.density(_COLD[index], pressure)) for index, volume in _PORE.items())
     tubes = sum(
         volume * _mean_over_tube(lambda t: float(helium.density(t, pressure)), _COLD[0], _COLD[index])
         for index, volume in _TUBE.items()
     )
+    heat_exchangers = sum(
+        volume * float(helium.density(_COLD[index], pressure)) for index, volume in zip(_TUBE, voids, strict=True)
+    )
     warm = (1.0e-2 + 4.5e-5) * float(helium.density(_COLD[0], pressure))
 
-    assert calc_gas_mass(_model(), _COLD, pressure) == pytest.approx(pores + tubes + warm, rel=1e-5)
+    assert calc_gas_mass(_model(heat_exchanger_voids=voids), _COLD, pressure) == pytest.approx(
+        pores + tubes + heat_exchangers + warm, rel=1e-5
+    )
 
 
-def test_mass_swing_in_ideal_gas_limit():
-    # Uniform 300 K and 0.4 MPa, where helium is ideal to 0.3%. Pores swing isothermally with the second virial
-    # coefficient; the dead volume, tubes, and reservoirs swing adiabatically from the mean state as an ideal gas with
-    # gamma = 5/3, each reservoir by the swing reduced by sqrt(1 + (omega R B)^2) for B = V_r / (gamma P).
+def test_pore_heat_capacity_holds_pores_and_voids_at_their_temperatures():
+    # Pore gas at each node and each heat-exchanger void at its stage, V rho c_p, with none at the warm flange.
+    pressure = 1.4e6
+    volume = np.zeros(7)
+    volume[list(_PORE)] = list(_PORE.values())
+    volume[list(_TUBE)] = _VOIDS
+    expected = volume * helium.density(_COLD, pressure) * helium.isobaric_specific_heat(_COLD, pressure)
+
+    heat_capacity = calc_pore_heat_capacity(_model(heat_exchanger_voids=_VOIDS), _COLD, pressure)
+
+    np.testing.assert_allclose(heat_capacity, expected, rtol=1e-12)
+    assert heat_capacity[0] == 0.0
+
+
+@pytest.mark.parametrize("voids", [_NO_VOIDS, _VOIDS])
+def test_mass_swing_in_ideal_gas_limit(voids):
+    # Uniform 300 K and 0.4 MPa, where helium is ideal to 0.3%. Pores and heat-exchanger voids swing isothermally with
+    # the second virial coefficient; the dead volume, tubes, and reservoirs swing adiabatically from the mean state as
+    # an ideal gas with gamma = 5/3, each reservoir by the swing reduced by sqrt(1 + (omega R B)^2) for
+    # B = V_r / (gamma P).
     mean_pressure, swing = 0.4e6, 0.4e6
     resistance = (1.8e7, 3.6e7)  # Pa s/m^3, omega R B near 1 and 2
     mean_density = 0.6407114641  # HEPAK at 300 K and 0.4 MPa
@@ -128,24 +157,27 @@ def test_mass_swing_in_ideal_gas_limit():
     expected = [
         adiabatic(4.5e-5),
         isothermal(1.0e-4),
-        adiabatic(6.0e-5) + reservoir[0],
+        adiabatic(6.0e-5) + reservoir[0] + isothermal(voids[0]),
         isothermal(3.0e-5),
         isothermal(2.0e-5),
         isothermal(2.0e-5),
-        adiabatic(2.0e-4) + reservoir[1],
+        adiabatic(2.0e-4) + reservoir[1] + isothermal(voids[1]),
     ]
 
-    head = Head(model=_model(), packing=(0.0, 0.0), resistance=resistance, frequency=_FREQUENCY)
+    head = Head(
+        model=_model(heat_exchanger_voids=voids), packing=(0.0, 0.0), resistance=resistance, frequency=_FREQUENCY
+    )
 
     mass_swing = calc_mass_swing(head, np.full(7, 300.0), mean_pressure, swing)
 
     np.testing.assert_allclose(mass_swing, expected, rtol=3e-3)
 
 
-def test_mass_swing_with_cold_pores_and_tubes():
-    # Without reservoirs: pores swing at their node temperatures, and each tube's gas adiabatically from the mean
-    # state along a linear profile from the warm flange to its stage, averaged by the default quadrature to within
-    # 0.1% of adaptive quadrature.
+@pytest.mark.parametrize("voids", [_NO_VOIDS, _VOIDS])
+def test_mass_swing_with_cold_pores_tubes_and_voids(voids):
+    # Without reservoirs: pores swing at their node temperatures and heat-exchanger voids at their stage temperatures,
+    # and each tube's gas adiabatically from the mean state along a linear profile from the warm flange to its stage,
+    # averaged by the default quadrature to within 0.1% of adaptive quadrature.
     mean_pressure, swing = 1.4e6, 1.2e6
     upper, lower = mean_pressure + swing / 2, mean_pressure - swing / 2
 
@@ -158,10 +190,17 @@ def test_mass_swing_with_cold_pores_and_tubes():
     expected[0] = 4.5e-5 * adiabatic(300.0)
     for index, volume in _PORE.items():
         expected[index] = volume * float(helium.density(_COLD[index], upper) - helium.density(_COLD[index], lower))
-    for index, volume in _TUBE.items():
-        expected[index] = volume * _mean_over_tube(adiabatic, _COLD[0], _COLD[index])
+    for (index, volume), void in zip(_TUBE.items(), voids, strict=True):
+        expected[index] = volume * _mean_over_tube(adiabatic, _COLD[0], _COLD[index]) + void * float(
+            helium.density(_COLD[index], upper) - helium.density(_COLD[index], lower)
+        )
 
-    head = Head(model=_model(reservoir_volume=0.0), packing=(0.0, 0.0), resistance=(1e9, 1e9), frequency=_FREQUENCY)
+    head = Head(
+        model=_model(reservoir_volume=0.0, heat_exchanger_voids=voids),
+        packing=(0.0, 0.0),
+        resistance=(1e9, 1e9),
+        frequency=_FREQUENCY,
+    )
 
     mass_swing = calc_mass_swing(head, _COLD, mean_pressure, swing)
 
@@ -254,20 +293,53 @@ def test_heat_flow_at_uniform_temperature_is_pressure_transport():
     assert heat[6] == pytest.approx(-expansion * second / (1 + stage_2_cold), rel=1e-6)
 
 
-def test_regeneration_at_stage_2_follows_packing():
+def _isothermal_swing(volume, temperature, mean_pressure, swing):
+    """Mass in kg a volume at `temperature` takes in over the swing."""
+    return volume * float(
+        helium.density(temperature, mean_pressure + swing / 2) - helium.density(temperature, mean_pressure - swing / 2)
+    )
+
+
+@pytest.mark.parametrize("voids", [_NO_VOIDS, _VOIDS])
+def test_regeneration_at_stage_2_follows_packing(voids):
     # The packing coefficient adds a (m c_p)^2 / (f C'_m) dT/dx at the stage-2 boundary, with m the mass flow of tube
-    # 2 and reservoir 2, c_p at T_2, and C'_m the coldest node's matrix heat capacity per length: mass 0.5 kg at
-    # T J/(kg K) over 0.05 m. Its centre at 6 K lies 0.025 m from stage 2 at 4 K.
+    # 2, reservoir 2, and the stage-2 heat exchanger's void at 4 K, c_p at T_2, and C'_m the coldest node's matrix
+    # heat capacity per length: mass 0.5 kg at T J/(kg K) over 0.05 m. Its centre at 6 K lies 0.025 m from stage 2.
     mean_pressure, swing, packing = 1.4e6, 1.2e6, 0.3
-    loose = Head(model=_model(), packing=(0.1, 0.0), resistance=(2e7, 6e7), frequency=_FREQUENCY)
-    packed = Head(model=_model(), packing=(0.1, packing), resistance=(2e7, 6e7), frequency=_FREQUENCY)
-    mass_flow = _FREQUENCY * calc_mass_swing(loose, _COLD, mean_pressure, swing)[6]
+    bare = Head(model=_model(), packing=(0.1, 0.0), resistance=(2e7, 6e7), frequency=_FREQUENCY)
+    loose = dataclasses.replace(bare, model=_model(heat_exchanger_voids=voids))
+    packed = dataclasses.replace(loose, packing=(0.1, packing))
+    mass_flow = _FREQUENCY * (
+        calc_mass_swing(bare, _COLD, mean_pressure, swing)[6] + _isothermal_swing(voids[1], 4.0, mean_pressure, swing)
+    )
     capacity_rate = mass_flow * float(helium.isobaric_specific_heat(4.0, mean_pressure))
     expected = packing * capacity_rate**2 / (_FREQUENCY * 0.5 * 6.0 / 0.05) * (6.0 - 4.0) / 0.025
 
     change = calc_heat_flow(packed, _COLD, mean_pressure, swing) - calc_heat_flow(loose, _COLD, mean_pressure, swing)
 
     assert change[6] == pytest.approx(expected, rel=1e-9)
+
+
+@pytest.mark.parametrize("voids", [_NO_VOIDS, _VOIDS])
+def test_regeneration_at_stage_1_carries_every_cold_side_volume(voids):
+    # At the stage-1 boundary, m is the mass flow of everything from stage 1 down: the void-free head's swing there
+    # and beyond, plus both heat-exchanger voids at their stage temperatures. c_p is at T_1 = 40 K, and C'_m is half
+    # the stage-1 section's node, 1 kg at 60 J/(kg K), over the 0.1 m from its centre at 60 K to stage 1.
+    mean_pressure, swing, packing = 1.4e6, 1.2e6, 0.3
+    bare = Head(model=_model(), packing=(0.0, 0.1), resistance=(2e7, 6e7), frequency=_FREQUENCY)
+    loose = dataclasses.replace(bare, model=_model(heat_exchanger_voids=voids))
+    packed = dataclasses.replace(loose, packing=(packing, 0.1))
+    mass_flow = _FREQUENCY * (
+        calc_mass_swing(bare, _COLD, mean_pressure, swing)[2:].sum()
+        + _isothermal_swing(voids[0], 40.0, mean_pressure, swing)
+        + _isothermal_swing(voids[1], 4.0, mean_pressure, swing)
+    )
+    capacity_rate = mass_flow * float(helium.isobaric_specific_heat(40.0, mean_pressure))
+    expected = packing * capacity_rate**2 / (_FREQUENCY * 30.0 / 0.1) * (60.0 - 40.0) / 0.1
+
+    change = calc_heat_flow(packed, _COLD, mean_pressure, swing) - calc_heat_flow(loose, _COLD, mean_pressure, swing)
+
+    assert change[2] == pytest.approx(expected, rel=1e-9)
 
 
 def _tube_gas_mass(index, pressure):

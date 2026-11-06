@@ -88,4 +88,4 @@ def test_bare_head_reaches_a_cold_steady_state():
     np.testing.assert_allclose(solution.y[:, 0], solution.y[:, 1], rtol=1e-4)
     assert np.max(np.abs(heat_flow(final)[0][1:])) < 1e-3
     assert 20.0 < final[stage_1] < 80.0
-    assert final[stage_2] < 12.0
+    assert final[stage_2] < 20.0

@@ -121,9 +121,10 @@ def calc_pressure_swing(
 
 
 def _gas_volume(model: HeadModel) -> float:
-    """Gas volume in m^3 of a head's pores, pulse tubes, reservoirs, and dead volume."""
+    """Gas volume in m^3 of a head's pores, heat-exchanger voids, pulse tubes, reservoirs, and dead volume."""
     pores = sum(layer.pore_volume for section in model.regenerators for layer in section.layers)
-    return pores + sum(tube.volume + tube.reservoir_volume for tube in model.pulse_tubes) + model.dead_volume
+    tubes = sum(tube.volume + tube.reservoir_volume for tube in model.pulse_tubes)
+    return pores + sum(model.heat_exchanger_voids) + tubes + model.dead_volume
 
 
 def _softplus(x: float) -> float:

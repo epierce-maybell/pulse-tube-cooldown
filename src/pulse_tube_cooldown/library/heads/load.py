@@ -31,6 +31,7 @@ def load_head_model(name: str, /, *, directory: str | os.PathLike[str] = Path(__
         for section in ("stage_1_regenerator", "stage_2_regenerator")
     )
     pulse_tubes = tuple(_load_pulse_tube(data[tube]) for tube in ("stage_1_pulse_tube", "stage_2_pulse_tube"))
+    stage_1_void, stage_2_void = data.get("heat_exchanger_voids", (0.0, 0.0))
     return HeadModel(
         name=name,
         regenerators=(regenerators[0], regenerators[1]),
@@ -40,6 +41,7 @@ def load_head_model(name: str, /, *, directory: str | os.PathLike[str] = Path(__
         waveform_factor=float(data["waveform_factor"]),
         buffer_fraction=float(data["buffer_fraction"]),
         stroke_spread=float(data["stroke_spread"]),
+        heat_exchanger_voids=(float(stage_1_void), float(stage_2_void)),
     )
 
 

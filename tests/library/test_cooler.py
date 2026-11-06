@@ -37,6 +37,10 @@ _MATRIX_NAMES = [
 ]
 # Pore volume in m^3 of each matrix node, from pt1_5.toml, with Gd2O2S split into eight nodes.
 _PORE_VOLUME = [2.8459e-4, 6.0081e-5, 1.1956e-5, 2.3911e-5, 2.3911e-5, *[1.4945e-5 / 8] * 8]
+# Stage-1 and stage-2 heat-exchanger voids in m^3, from data/heads/pt1_5/geometry.csv.
+_VOID_VOLUME = [39.3e-6, 10.8e-6]
+# Volume in m^3 of the gas at each chain element's temperature: pores at nodes, voids at stages.
+_ISOTHERMAL_VOLUME = np.array([0.0, *_PORE_VOLUME[:2], _VOID_VOLUME[0], *_PORE_VOLUME[2:], _VOID_VOLUME[1]])
 
 
 def _write_drive(directory, *, compressors=1, warm_volume=_WARM_VOLUME, displacement_rate=_DISPLACEMENT_RATE):
@@ -160,9 +164,9 @@ def test_reads_head_parameters_and_drive_from_their_files(tmp_path):
     assert mounted.stages == ("Stage 1", "Stage 2")
     assert cooler.compressors == (Compressor(displacement_rate=_DISPLACEMENT_RATE, relief_swing=_RELIEF_SWING),) * 2
     assert cooler.warm_volume == _WARM_VOLUME
-    # HEPAK's density at 295 K and 1.70 MPa times the warm volume and the head's pores, tubes, reservoirs, and dead
-    # volume, from pt1_5.toml.
-    head_volume = sum(_PORE_VOLUME) + 2.5077e-4 + 2.0086e-4 + 2 * 5.2800e-3 + 4.5e-5
+    # HEPAK's density at 295 K and 1.70 MPa times the warm volume and the head's pores, tubes, reservoirs, dead
+    # volume, and heat-exchanger voids, from pt1_5.toml.
+    head_volume = sum(_PORE_VOLUME) + 2.5077e-4 + 2.0086e-4 + 2 * 5.2800e-3 + 4.5e-5 + sum(_VOID_VOLUME)
     assert cooler.charge == pytest.approx(2.7524272578 * (_WARM_VOLUME + head_volume), rel=1e-4)
 
 
@@ -234,14 +238,14 @@ def test_heads_sharing_stages_add_their_stage_heat_flows(tmp_path):
     np.testing.assert_allclose(flow[16:], single[b_nodes], rtol=1e-6)
 
 
-def test_heat_capacity_at_rest_is_pore_helium_at_fill_pressure(tmp_path):
+def test_heat_capacity_at_rest_is_pore_and_void_helium_at_fill_pressure(tmp_path):
     cooler = _cooler(tmp_path)
     temperature = np.full(len(cooler.nodes), _ROOM_TEMPERATURE)
     volumetric = float(
         helium.density(_ROOM_TEMPERATURE, _FILL_PRESSURE)
         * helium.isobaric_specific_heat(_ROOM_TEMPERATURE, _FILL_PRESSURE)
     )
-    expected = np.array([0.0, *_PORE_VOLUME[:2], 0.0, *_PORE_VOLUME[2:], 0.0]) * volumetric
+    expected = _ISOTHERMAL_VOLUME * volumetric
 
     np.testing.assert_allclose(cooler.calc_energy_balance_terms(temperature).heat_capacity, expected, rtol=1e-8)
 
@@ -259,9 +263,10 @@ def test_heat_capacity_takes_the_running_mean_pressure(tmp_path):
         warm_volume=_WARM_VOLUME,
         warm_temperature=_ROOM_TEMPERATURE,
     )
-    pore = np.array([0.0, *_PORE_VOLUME[:2], 0.0, *_PORE_VOLUME[2:], 0.0])
     expected = (
-        pore * helium.density(temperature, mean_pressure) * helium.isobaric_specific_heat(temperature, mean_pressure)
+        _ISOTHERMAL_VOLUME
+        * helium.density(temperature, mean_pressure)
+        * helium.isobaric_specific_heat(temperature, mean_pressure)
     )
 
     assert mean_pressure < 0.95 * _FILL_PRESSURE

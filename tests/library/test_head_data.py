@@ -14,7 +14,8 @@ _HEADS = Path(pulse_tube_cooldown.__file__).parent / "library/heads/data"
 
 # Hand-computed from data/heads/pt1_1/geometry.csv and data/heads/pt1_5/geometry.csv: bores and walls
 # from each tube's outer radius, length, and the 0.5 mm wall; reservoirs as tank plus hose; clamp fractions as the
-# clamp's distance from the stage-2 regenerator's top over the tube's length.
+# clamp's distance from the stage-2 regenerator's top over the tube's length; heat-exchanger voids as recorded, none for
+# PT1.1.
 _DESIGNS = {
     "PT1.1": {
         "clamp_fraction": 163.4 / 244.5,
@@ -25,6 +26,7 @@ _DESIGNS = {
         "pulse_tube_volume": (250.765e-6, 200.906e-6),
         "pulse_tube_wall_area": (6.6759e-5, 3.8485e-5),
         "reservoir_volume": (5292e-6, 5292e-6),
+        "heat_exchanger_voids": (0.0, 0.0),
         "layers": (
             (("304 SS", 0.9764, 2.8478e-4, 0.72), ("Pb", 1.1123, 6.0119e-5, 0.28)),
             (
@@ -44,6 +46,7 @@ _DESIGNS = {
         "pulse_tube_volume": (250.765e-6, 200.861e-6),
         "pulse_tube_wall_area": (6.6759e-5, 3.8485e-5),
         "reservoir_volume": (5280e-6, 5280e-6),
+        "heat_exchanger_voids": (39.3e-6, 10.8e-6),
         "layers": (
             (("304 SS", 0.9758, 2.8459e-4, 0.72), ("Pb", 1.1116, 6.0081e-5, 0.28)),
             (
@@ -66,6 +69,7 @@ def test_design_geometry_matches_hand_computed_values(name):
     assert model.name == name
     assert model.clamp_fraction == pytest.approx(expected["clamp_fraction"], abs=5e-4)
     assert model.dead_volume == pytest.approx(expected["dead_volume"])
+    assert model.heat_exchanger_voids == pytest.approx(expected["heat_exchanger_voids"])
     for stage in (0, 1):
         regenerator, tube = model.regenerators[stage], model.pulse_tubes[stage]
         assert regenerator.length == pytest.approx(expected["regenerator_length"][stage])
@@ -145,3 +149,9 @@ def test_layer_defaults_to_one_unnamed_node(tmp_path):
 
     assert layer.node_count == 1
     assert layer.name is None
+
+
+def test_design_without_voids_loads_them_as_zero(tmp_path):
+    _write_design(tmp_path, 'index = 0\nmaterial = "Pb"\nmass = 1.0\npore_volume = 1e-5\nlength_fraction = 1.0\n')
+
+    assert load_head_model("Test", directory=tmp_path).heat_exchanger_voids == (0.0, 0.0)
