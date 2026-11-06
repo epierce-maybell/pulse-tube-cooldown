@@ -73,6 +73,63 @@ Work the rest of the section in list order. The first slice runs from 2.5 throug
   Use the test stand cooldown data to validate the pulse tube model in a controlled setting.
   Context: `data/test_stand.md` "Use"; 2.10's model.
 
+## 3. Coupled head and canonical fit
+
+This section builds 2.3 and 2.4. ADR 03 as written cannot meet requirement 4, so the head gains the cold heat exchangers' gas voids and a stage-1 coupling term, `c E_2 x (1 - x)` with `x = beta T_2 / (1 + epsilon)` at the stage-2 boundary. 3.1 records the evidence. Out of scope: PT1.1's values (4.4), and `simulations/validation/test_stand_steady_state/` with 2.10's open sub-item.
+
+- [ ] **3.1 Findings and ADR 03 proposal** · Discuss
+  `simulations/validation/test_stand_head/findings.md`: the energy-budget argument, the void and parameter scans, the coupling gut check, and proposed ADR 03 wording for the voids, the coupling term, and requirement 4. The human edits ADR 03 from it.
+  Context: ADR 03; `simulations/exploration/loadmaps/summary.txt`; `data/heads/pt1_5/geometry.csv`.
+  Verified by: the human's ADR 03 edit.
+
+- [ ] **3.2 Specific-heat integral** · Build
+  Each material's specific-heat integral over temperature, alongside `conductivity_integral`, for every fit form.
+  Context: `library/materials/load.py`, `library/property_fits.py`.
+  Verified by: agreement with quadrature for each fit form.
+
+- [ ] **3.3 Matrix heat capacity at node boundaries** · Build, after 3.2
+  In the regenerator energy flow, the matrix heat capacity at a node boundary is the mean specific heat between the neighbouring temperatures, `(H(Ta) - H(Tb)) / (Ta - Tb)`.
+  Context: `library/links/cooler/head.py` (`_energy_flow`); `simulations/validation/test_stand_steady_state/report.txt`.
+  Verified by: unchanged results for a constant specific heat, and a stable cold root where `report.txt` found an unstable one.
+
+- [ ] **3.4 Heat-exchanger voids** · Build, after 3.1
+  Each stage's cold heat-exchanger void, read from `data/heads/pt1_5/geometry.csv` through `data/scripts/derive_head_model.py` into `library/heads/data/pt1_5.toml`. The void's gas is isothermal at its stage temperature. It enters the gas inventory, the mass swing, the boundary mass flows, and the stage's pore heat capacity. A design file without voids loads them as zero.
+  Context: ADR 03 as edited in 3.1; `library/heads/`, `library/links/cooler/head.py`, `drive.py`.
+  Verified by: zero voids reproduce today's heat flows, and a hand-computed void mass swing.
+
+- [ ] **3.5 Stage-coupling term** · Build, after 3.1
+  The design's coupling coefficient `c` in `HeadModel` and its TOML, zero when absent, and `c E_2 x (1 - x)` in stage 1's heat flow.
+  Context: ADR 03 as edited in 3.1; `library/heads/`, `library/links/cooler/head.py`.
+  Verified by: `c = 0` reproduces today's heat flows, and a hand-computed term.
+
+- [ ] **3.6 Stage-2 gate** · Discuss, after 3.3 and 3.4
+  With the voids and 3.3, at T1 = 50 K and T2 = 3.4 K over a2 and R2: can dQ2/dT2 reach -0.4 to -0.7 W/K, with heat into the node positive, on a stable state? If not, the result goes to the human before 3.8.
+  Context: 3.1's findings; `simulations/validation/test_stand_steady_state/coupling.py` for the derivative method.
+
+- [ ] **3.7 Robust steady state** · Build
+  `solve_steady_state` relaxes in log temperature and finishes with Newton. Its temperature floor is an argument defaulting to 2.1 K, the helium-property limit, and a state pinned there raises promptly. Callers continue between points by passing the previous solution.
+  Context: `engine/steady_state.py`, `tests/engine/test_steady_state.py`.
+  Verified by: the analytic steady states, a prompt failure where no state exists above the floor, and the template converging at a load-map point.
+
+- [ ] **3.8 Canonical PT1.5 fit** · Build, after 3.5, 3.6, and 3.7
+  a1, a2, R1, R2, and `c` fitted jointly to every map in `data/test_stand/fit_set.csv`, with equal weight per map and each run at its own compressor count and valve frequency. At each point the stages are held at the measured T1 and T2, the matrix is solved, and the stage heat flows are compared with the applied heater powers. Every run uses the template's bare-shield radiation link. a, R, and the frequency go to `data/heads/pt1_5/parameters.toml`, `c` to `pt1_5.toml`, and the test-stand template points at both.
+  Context: `simulations/validation/test_stand_head/`; `simulations/exploration/loadmaps/characterization.md`.
+  Verified by: each run's residual, with S0028 reported separately, and the four couplings against figure 07's grid cells.
+
+- [ ] **3.9 Stand cooldown set** · Build
+  `read_cooldown` accepts ISO timestamps, as in S0007's April log. `data/test_stand/cooldown_set.csv` lists the stand cooldowns, with trimmed verbatim copies under `data/test_stand/<serial>/`: S0007, S0009, S0019, S0035, and S0038 on one compressor, and S0028 on two. The experiment reads the list with `csv`; there is no library reader.
+  Context: `measurements/`; `data/test_stand.md`; the archive at `../../data/test_stand/`.
+  Verified by: an ISO-timestamp test, and each copy traced to its archive log.
+
+- [ ] **3.10 Stand cooldowns** · Build, after 3.8 and 3.9
+  The fitted template's cooldown on one and on two compressors, scored on T1 below 219 K and on T2 throughout. If the transient solver fails, the remedy goes to the human.
+  Context: `data/test_stand.md` "Use"; `simulations/validation/test_stand_head/`.
+  Verified by: each simulated cooldown's score against the six measured cooldowns.
+
+- [ ] **3.11 Fit and cooldown figures** · Build, after 3.8 and 3.10
+  PNG and PDF in `simulations/validation/test_stand_head/`: the model's standard points against every PT1.5 run's spread on one and two compressors; the four couplings over figure 07's cells; each run's heater-power residuals; and T1 and T2 cooldowns over the six stand cooldowns.
+  Context: `simulations/exploration/loadmaps/figures/02_standard_points.png` and `07_capacity_partials.png`.
+
 ## 4. Validation
 
 Each system's records, procedure, and inventory are in `data/systems.md`.
@@ -101,6 +158,7 @@ Each system's records, procedure, and inventory are in `data/systems.md`.
 
 - [ ] **4.4 Validation-system configurations** · Build, after section 2
   Each system's fridge template, `data/<system>/fridge.toml`, from its inventory, geometry, `data/systems.md`, procedure, and cooler data, porting any materials the library lacks. Its validation run directory, such as `simulations/validation/sn09_cooldown/`, holds a copy of the template as its config and a runner that sets initial temperatures and `max_time` from `simulations/validation/measurements.py`.
+  PT1.1 needs its own coupling coefficient `c` and cold heat-exchanger void volumes. The head-model loader treats them as zero until `library/heads/data/pt1_1.toml` states them.
 
 - [ ] **4.5 Full cooldowns and comparison** · Build, after 4.3 and 4.4
   Each system run through its cooldown and scored against the measurements and the legacy baseline, with overlays.
