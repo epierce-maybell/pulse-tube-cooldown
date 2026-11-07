@@ -119,10 +119,11 @@ This section builds 2.3 and 2.4. ADR 03 as written cannot meet requirement 4, so
   Verified by: each run's residual, with S0028 reported separately, and the four couplings against figure 07's grid cells.
   Result, `simulations/validation/test_stand_head/fit.txt`: a = (0.101, 0.0184), R = (7.98e9, 5.07e10) Pa s/m^3, and c = 3.69, with each stage's residual weighted by 1 / (T dQ/dT) and c solved in closed form at each a and R. Single-compressor runs leave 0.7 to 3.0 W rms on stage 1 and 0.04 to 0.15 W on stage 2; S0028 leaves 3.6 and 0.26 W. S0007's 0 W, 0 W point has no matrix steady state above the 2.1 K floor and is left out. On one compressor the couplings follow figure 07's cells up to 4.5 K; on two, dQ1/dT1 is -2.2 W/K against -1.6 measured.
 
-- [ ] **3.9 Stand cooldown set** · Build
+- [x] **3.9 Stand cooldown set** · Build
   `read_cooldown` accepts ISO timestamps, as in S0007's April log. `data/test_stand/cooldown_set.csv` lists the stand cooldowns, with trimmed verbatim copies under `data/test_stand/<serial>/`: S0007, S0009, S0019, S0035, and S0038 on one compressor, and S0028 on two. The experiment reads the list with `csv`; there is no library reader.
   Context: `measurements/`; `data/test_stand.md`; the archive at `../../data/test_stand/`.
   Verified by: an ISO-timestamp test, and each copy traced to its archive log.
+  Result: `data/test_stand.md` "Cooldown set". S0038's is run 5, the standard setup; each copy ends at the first heater step or 4 h after the compressor starts. The set carries no MLI state.
 
 - [ ] **3.10 Stand cooldowns** · Build, after 3.8 and 3.9
   The fitted template's cooldown on one and on two compressors, scored on T1 below 219 K and on T2 throughout. If the transient solver fails, the remedy goes to the human.

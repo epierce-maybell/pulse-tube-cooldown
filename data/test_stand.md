@@ -10,11 +10,11 @@ The human confirmed T3's mounting on 2026-11-02: on the main pulse tube reaching
 
 Supplied by the human. Stage 1: the head's upper cold-end heat exchanger, 392.8 g of copper (43.82 cm^3); the flange, 453.6 g of aluminum, taken as 6061-T6; the radiation shield, 1.191 kg of copper; and 70.9 g of mounting hardware, taken as stainless fasteners. Stage 2: the head's lower cold-end heat exchanger, 421.8 g of 304 stainless (52.55 cm^3, as assigned in CAD 350-000162); and 39.7 g of copper mounting hardware. T3's mass is negligible.
 
-MLI wraps the two regenerators, pulse tube 1, and both stages in 4 to 12 layers each, varying per run. S0009's Münster run had 7 on each regenerator and pulse tube 1, 4 on stage 1, and 5 on stage 2; the Denver runs are assumed the same. Layer density is unmeasured and assumed 2000 layers/m, the low end of the 20 to 30 layers/cm typical of installed blankets. Across 10 to 30 layers/cm, the flux through 4 layers from 300 K to 45 K changes by about a factor of 3.5.
+MLI wraps the two regenerators, pulse tube 1, and both stages in 4 to 12 layers each, varying per run. S0009's Münster run had 7 on each regenerator and pulse tube 1, 4 on stage 1, and 5 on stage 2; the Denver runs are assumed the same. Layer density is unmeasured and assumed 2000 layers/m, the low end of the 20 to 30 layers/cm typical of installed blankets. Across 10 to 30 layers/cm, the flux through 4 layers from 300 K to 45 K changes by about a factor of 3.5. The wrapping is looser than a true MLI blanket; per the human on 2026-11-07, it has changed the stage loads at base by only about 0.1 W.
 
 ## Format
 
-A cooldown file opens with the calibration curve for each channel, T2 through Z1512 and T1 and T3 (`T3/Taux` in the header) both through Z1518, then a column line. These are the header's recorded assignments; matching curves to the installed sensor serials remains unverified. Each row holds the timestamp, elapsed minutes, T1, TPR, T2, two copies of T1 (`Taux` and `Taux2`), and unused fields. Rows come every 2 s, and T3 updates about every 15 s. The elapsed column can restart within a file, so the timestamp is the clock. `test_stand/s0009/cooldown_2026-05-14.dat` has a second short run appended from 14:19:17.
+A cooldown file opens with the calibration curve for each channel, T2 through Z1512 and T1 and T3 (`T3/Taux` in the header) both through Z1518, then a column line. These are the header's recorded assignments; matching curves to the installed sensor serials remains unverified. Each row holds the timestamp, elapsed minutes, T1, TPR, T2, two copies of T1 (`Taux` and `Taux2`), and unused fields. Rows come every 2 s, and T3 updates about every 15 s. The elapsed column can restart within a file, so the timestamp is the clock. `test_stand/s0009/cooldown_2026-05-14.dat` has a second short run appended from 14:19:17. The 2026-03-27 10:01:05 and 2026-04-13 09:12:23 logs write the timestamp as ISO 8601 (`2026-04-13T09:12:23`) under a `Date TimeElapsed(m) ...` column line. The archive's day splits (`..._Day_1.dat`) and S0019's 2026-08-06 log have no header.
 
 A load map opens with the valve settings, the valve frequency (`f:1.1`), and the applied powers, then holds one row per steady state: stage-1 and stage-2 heater power in W, elapsed minutes, T1, TPR, T2, `Taux`, and `Taux2`. The operator types in the `f:` field: S0007's header matches its shipped setting, and S0009's and S0034's do not. A run's valve frequency is the one the index states for it, otherwise its head's shipped setting in `docs/pt_performance_overview_2026-10-30.pdf`, tabulated in `test_stand/valve_settings.csv`.
 
@@ -25,6 +25,21 @@ Some load maps exist only as steady plateaus in a continuous log, about 2 h per 
 `test_stand/fit_set.csv` lists the canonical head's load maps, read by `measurements.read_load_map_set`. It holds one Denver map per PT1.5 head whose load-map file is in the archive's `loadmap_data/`, in the standard setup: no elbow or compressor filter, and the head's own rotary valve and compressor hoses. Among a head's repeats it holds the more standard run by the index's notes, otherwise the more recent. Each map is a copy of its archive file, named in `source`. A run has two compressors where the index notes two, otherwise one. Its MLI state is the index's, or `unrecorded` where the index gives none.
 
 Two archive files carry other names than the index's. `LoadMap-SN023-06-20-2026.dat` is S0023's 2026-06-19 map, `dataLoadMap Fri Jun 19 10_52_14 2026.dat`: its first point matches the plateau at 13:16 in that day's continuous log. `dataLoadMap Mon Sep 21 16_36_05 2026.dat` is S0035's 2026-09-21 map. The index lists no raw data for S0019's, S0034's, and S0035's selected maps; the archive holds each one's stand file.
+
+## Cooldown set
+
+`test_stand/cooldown_set.csv` lists the stand cooldowns that test the canonical head, one per head, with the fit set's columns other than `mli`. S0007, S0009, S0019, S0035, and S0038 run on one compressor and S0028 on two. S0038's is run 5 on 2026-10-12, its standard-setup cooldown after cleaning. The cooldowns have no index rows of their own; each run's valve frequency is that of the index's load map that follows it.
+
+Each copy holds its archive log's header and one contiguous run of its rows, unchanged. The compressor starts at the first row where T2 falls more than 1 K from the row before. A copy starts at the log's first row, except S0038's, which starts 10 min before its compressor starts since its log holds earlier runs. It ends at the last row before the first heater step, or 4 h after the compressor starts, whichever comes first. S0009's copy is the whole log and so ends with 1 min of the next load map's first heater step, from 14:20:39.
+
+| Serial | Compressor start | Copy ends | Archive lines |
+|---|---|---|---|
+| S0007 | 09:12:52 | 11:56:33, the log's end | all 4919 |
+| S0009 | 10:25:21 | 14:21:51, the log's end | all 7349 |
+| S0019 | 16:17:15 | 20:17:15, at 4 h | 1 to 7232 |
+| S0028 | 17:12:03 | 21:12:02, at 4 h | 1 to 8213 |
+| S0035 | 11:24:06 | 14:00:02, before the heater step at 14:00:04 | 1 to 5073 |
+| S0038 | 14:44:33 | 17:00:02, before the heater step at 17:00:04 | 1 to 4, and 127186 to 131535 |
 
 ## Channel behavior
 

@@ -19,14 +19,16 @@ def read_cooldown(path: str | os.PathLike[str]) -> xr.Dataset:
     """Reads a cooldown trace.
 
     Args:
-        path: A `cooldown_<date>.dat` file.
+        path: A `cooldown_<date>.dat` file. Its header, where present, ends at the column line, which starts with
+            `T1` or `Date`. Each row starts with its timestamp, as `Thu May 14 10:16:45 2026` or as ISO 8601.
 
     Returns:
         T1, TPR, and T2 in K over the `time` of each row, from its timestamp.
     """
-    rows = [line.split() for line in Path(path).read_text(encoding="utf-8").splitlines()[4:]]
-    time = [datetime.strptime(" ".join(row[:5]), "%a %b %d %H:%M:%S %Y") for row in rows]
-    temperature = np.array([row[6:9] for row in rows], dtype=np.float64)
+    lines = Path(path).read_text(encoding="utf-8").splitlines()
+    start = next((number + 1 for number, line in enumerate(lines) if line.startswith(("T1 ", "Date "))), 0)
+    time, readings = zip(*(_split_timestamp(line.split()) for line in lines[start:]), strict=True)
+    temperature = np.array([reading[1:4] for reading in readings], dtype=np.float64)
     return xr.Dataset(
         {
             name: ("time", column, {"units": "K"})
@@ -34,6 +36,13 @@ def read_cooldown(path: str | os.PathLike[str]) -> xr.Dataset:
         },
         coords={"time": np.array(time, dtype="datetime64[s]")},
     )
+
+
+def _split_timestamp(fields: list[str]) -> tuple[datetime, list[str]]:
+    """Splits a cooldown row into its timestamp and the fields after it: elapsed minutes, T1, TPR, T2, and so on."""
+    if fields[0][0].isdigit():
+        return datetime.fromisoformat(fields[0]), fields[1:]
+    return datetime.strptime(" ".join(fields[:5]), "%a %b %d %H:%M:%S %Y"), fields[5:]
 
 
 def read_load_map(path: str | os.PathLike[str]) -> xr.Dataset:

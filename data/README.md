@@ -13,6 +13,7 @@ under `simulations/`. Published documents and diagrams live under `docs/`.
 | `test_stand/<serial>/` | Measured cooldowns and load maps, grouped by cold-head serial. |
 | `test_stand/fridge.toml`, `test_stand/pulse_tube/` | The test stand's fridge template, running the canonical PT1.5 head, with its one- and two-compressor drives. |
 | `test_stand/fit_set.csv` | The canonical head's load-map fit set, one map per head, with each run's compressors, valve frequency, and MLI state. |
+| `test_stand/cooldown_set.csv` | The stand cooldowns that test the canonical head, one per head, with each run's compressors and valve frequency. |
 | `test_stand/load_map_index_2026-11-05.csv` | Supplied November 5, 2026 draft index of load-map tests and setup changes. |
 | `test_stand/runs.csv` | Catalog of the datasets used in the load-map characterization, with provenance and assumptions. |
 | `test_stand/muenster_maps.csv` | Digitized manufacturer load maps, with source page and image names. |

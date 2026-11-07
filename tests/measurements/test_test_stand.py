@@ -54,6 +54,47 @@ def test_cooldown_temperatures_are_in_kelvin(cooldown):
         assert cooldown[channel].attrs["units"] == "K"
 
 
+def test_cooldown_reads_iso_timestamps(tmp_path):
+    # The header and first two rows of S0007's 2026-04-13 log.
+    path = tmp_path / "cooldown.dat"
+    path.write_text(
+        "T2: C:\\Experiments\\S0007\\Z1512_CernoxFormat.cof\n"
+        "T1/Taux: C:\\Experiments\\S0007\\Z1518_CernoxFormat.cof\n"
+        "T3/Taux: C:\\Experiments\\S0007\\Z1518_CernoxFormat.cof\n"
+        "Date TimeElapsed(m) T1 TPR T2 Taux Taux2 Preturn ORV1 DIV1A DIV1B ORV2 DIV2A DIV2B Frequency/Hz\n"
+        "2026-04-13T09:12:23   0.04   292.3613868610032   291.5836146927791   307.8949991490293   "
+        "292.3613868610032    292.3613868610032    -1 - - - - - - 1.1 0 0\n"
+        "2026-04-13T09:12:25   0.07   292.3613868610032   291.5836146927791   307.88376721037844   "
+        "292.3613868610032    292.3613868610032    -1 - - - - - - 1.1 0 0\n"
+    )
+
+    cooldown = read_cooldown(path)
+
+    np.testing.assert_array_equal(
+        cooldown.time, np.array(["2026-04-13T09:12:23", "2026-04-13T09:12:25"], dtype="datetime64[s]")
+    )
+    np.testing.assert_array_equal(cooldown.T1, [292.3613868610032, 292.3613868610032])
+    np.testing.assert_array_equal(cooldown.TPR, [291.5836146927791, 291.5836146927791])
+    np.testing.assert_array_equal(cooldown.T2, [307.8949991490293, 307.88376721037844])
+
+
+def test_cooldown_without_a_header_keeps_its_first_row(tmp_path):
+    # The archive's day-split logs, such as S0019's 2026-08-06 log, start with data.
+    path = tmp_path / "cooldown.dat"
+    path.write_text(
+        "Thu Aug  6 16:15:29 2026   0.03   276.7936670406888   292.92669955830337   309.32917943606117   "
+        "276.7936670406888   276.7936670406888\n"
+        "Thu Aug  6 16:15:31 2026   0.07   276.7936670406888   292.92669955830337   309.32917943606117   "
+        "276.7936670406888   276.7936670406888\n"
+    )
+
+    cooldown = read_cooldown(path)
+
+    assert cooldown.sizes["time"] == 2
+    assert cooldown.time.values[0] == np.datetime64("2026-08-06T16:15:29")
+    assert float(cooldown.T2[0]) == 309.32917943606117
+
+
 def test_load_map_holds_each_point(load_map):
     np.testing.assert_array_equal(load_map.Q1, [20.0, 20.0, 20.0, 0.0, 0.0, 0.0])
     np.testing.assert_array_equal(load_map.Q2, [1.0, 0.5, 0.0, 1.0, 0.5, 0.0])
