@@ -113,10 +113,11 @@ This section builds 2.3 and 2.4. ADR 03 as written cannot meet requirement 4, so
   Context: `engine/steady_state.py`, `tests/engine/test_steady_state.py`.
   Verified by: the analytic steady states, a prompt failure where no state exists above the floor, and the template converging at a load-map point.
 
-- [ ] **3.8 Canonical PT1.5 fit** · Build, after 3.5, 3.6, and 3.7
+- [x] **3.8 Canonical PT1.5 fit** · Build, after 3.5, 3.6, and 3.7
   a1, a2, R1, R2, and `c` fitted jointly to every map in `data/test_stand/fit_set.csv`, with equal weight per map and each run at its own compressor count and valve frequency. At each point the stages are held at the measured T1 and T2, the matrix is solved, and the stage heat flows are compared with the applied heater powers. Every run uses the template's bare-shield radiation link. a, R, and the frequency go to `data/heads/pt1_5/parameters.toml`, `c` to `pt1_5.toml`, and the test-stand template points at both. `data/scripts/derive_head_model.py` writes `c` and its source into `pt1_5.toml`.
   Context: `simulations/validation/test_stand_head/`; `simulations/exploration/loadmaps/characterization.md`.
   Verified by: each run's residual, with S0028 reported separately, and the four couplings against figure 07's grid cells.
+  Result, `simulations/validation/test_stand_head/fit.txt`: a = (0.101, 0.0184), R = (7.98e9, 5.07e10) Pa s/m^3, and c = 3.69, with each stage's residual weighted by 1 / (T dQ/dT) and c solved in closed form at each a and R. Single-compressor runs leave 0.7 to 3.0 W rms on stage 1 and 0.04 to 0.15 W on stage 2; S0028 leaves 3.6 and 0.26 W. S0007's 0 W, 0 W point has no matrix steady state above the 2.1 K floor and is left out. On one compressor the couplings follow figure 07's cells up to 4.5 K; on two, dQ1/dT1 is -2.2 W/K against -1.6 measured.
 
 - [ ] **3.9 Stand cooldown set** · Build
   `read_cooldown` accepts ISO timestamps, as in S0007's April log. `data/test_stand/cooldown_set.csv` lists the stand cooldowns, with trimmed verbatim copies under `data/test_stand/<serial>/`: S0007, S0009, S0019, S0035, and S0038 on one compressor, and S0028 on two. The experiment reads the list with `csv`; there is no library reader.

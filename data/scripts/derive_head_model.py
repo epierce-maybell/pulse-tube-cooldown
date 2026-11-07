@@ -53,6 +53,15 @@ SNODGRASS_2024 = {
 }
 
 
+# Each design's stage-coupling coefficient c, with its source.
+STAGE_COUPLING = {
+    "PT1.5": (
+        3.694,
+        "simulations/validation/test_stand_head/fit.txt: fitted with a and R to data/test_stand/fit_set.csv",
+    ),
+}
+
+
 def read_geometry(path):
     """Returns a geometry record's rows keyed by quantity, each with the record's path."""
     with open(ROOT / path, newline="", encoding="utf-8") as file:
@@ -113,6 +122,9 @@ def render(name, rows):
         sources["heat_exchanger_voids"] = cite(rows, *HEAT_EXCHANGER_VOIDS)
         voids = ", ".join(f"{value(rows, row) * 1e-6:.4e}" for row in HEAT_EXCHANGER_VOIDS)
         lines.append(f"heat_exchanger_voids = [{voids}]  # m^3, stage 1 and stage 2")
+    if name in STAGE_COUPLING:
+        coupling, sources["stage_coupling"] = STAGE_COUPLING[name]
+        lines.append(f"stage_coupling = {coupling:.4g}")
     for section, (tube, layers) in REGENERATORS.items():
         sources[section] = cite(
             rows, f"{tube}_outer_radius", f"{tube}_length", *tube_rows, *(row for layer in layers for row in layer[::2])

@@ -34,7 +34,7 @@ drive = "data/test_stand/pulse_tube/drive_one_compressor.toml"
 name = "PT"
 stages = ["Stage 1", "Stage 2"]
 model = "PT1.5"
-parameters = "data/test_stand/pulse_tube/parameters.toml"
+parameters = "data/heads/pt1_5/parameters.toml"
 
 # The bare shield facing the can. Shield area: 1.191 kg of copper as 1/16 in (1.6 mm) sheet, an assumed gauge.
 # Can area: assumed, much larger than the shield's, where the load is insensitive to it. Surfaces: polished copper and

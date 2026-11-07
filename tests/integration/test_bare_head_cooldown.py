@@ -16,12 +16,19 @@ from pulse_tube_cooldown.library.links.cooler import (
     calc_pressure_swing,
 )
 from pulse_tube_cooldown.library.materials.load import load_material
+from pulse_tube_cooldown.library.toml_files import read_toml
 
 _ROOM_TEMPERATURE = 295.0
 _WARM_VOLUME = 19.6e-3  # m^3, data/compressors.md
 
-# Placeholder packing coefficients and valve resistances pending task 2.3's fit.
-_HEAD = Head(model=load_head_model("PT1.5"), packing=(0.15, 0.05), resistance=(1e10, 3e10), frequency=1.4)
+# The canonical PT1.5 head: its fitted packing coefficients, resistances, and valve frequency.
+_PARAMETERS = read_toml("data/heads/pt1_5/parameters.toml")
+_HEAD = Head(
+    model=load_head_model("PT1.5"),
+    packing=tuple(_PARAMETERS["packing"]),
+    resistance=tuple(_PARAMETERS["resistance"]),
+    frequency=_PARAMETERS["frequency"],
+)
 
 
 def _stage_heat_capacity(stage_1, stage_2):
