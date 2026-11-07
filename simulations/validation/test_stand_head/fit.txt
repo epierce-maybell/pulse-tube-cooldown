@@ -106,3 +106,17 @@ T2 (K)    cells         dQ1/dT1         dQ1/dT2         dQ2/dT1         dQ2/dT2
 3.0-3.5       6  -1.564/ -2.215  +3.239/ +2.779  +0.003/ -0.004  -1.036/ -0.852
 3.5-4.0      11  -1.570/ -2.252  +2.432/ +3.252  +0.004/ -0.005  -1.199/ -1.058
 4.0-4.5       9  -1.638/ -2.087  +3.046/ +3.944  +0.007/ -0.003  -1.444/ -1.348
+
+Physical reading of the fitted head, at S0009's 0 W, 0 W and 20 W, 1 W points on one compressor, with the matrix
+solved. Added by hand; a rerun of fit.py overwrites it.
+
+- R1 and R2 give acoustic powers of 67 to 73 W and 10.5 to 11.5 W. With omega R B of about 115 and 730, each
+  reservoir's pressure swing is 0.9% and 0.14% of the tube's, and the breakthrough strokes, 0.05 and 0.005, sit far
+  below the 0.5 buffer, so breakthrough loss is inactive. R acts as an effective impedance that sets each tube's
+  acoustic power, not as a needle-valve setting.
+- a1's regeneration term carries 51 to 65 W to stage 1 against 67 to 73 W of stage-1 acoustic power. It holds every
+  stage-1 loss the model lacks, not only regenerator ineffectiveness.
+- a2's regeneration term is near zero at the stage-2 boundary, where the Gd2O2S nodes sit at T2; a2 shapes the
+  stage-2 profile higher up. Low a2 also extends the cold matrix branch to the loaded points.
+- c's term adds 0.8 W to stage 1 at 0 W, 0 W and 3.8 W at 20 W, 1 W. Its factor x (1 - x) peaks mid-cooldown: on
+  assumed, unsolved matrix profiles it adds 9 to 15 W at T2 of 12 to 30 K, outside the maps' range.
