@@ -51,6 +51,8 @@ name = "cooldown"
 
 [simulation]
 solver = "Radau"
+rtol = 1e-5
+atol = 1e-6  # K
 max_time = 20000.0  # s
 save_every = 60.0  # s
 initial_temperature = 295.0  # K
