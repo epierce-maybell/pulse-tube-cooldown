@@ -125,7 +125,7 @@ This section builds 2.3 and 2.4. ADR 03 as written cannot meet requirement 4, so
   Verified by: an ISO-timestamp test, and each copy traced to its archive log.
   Result: `data/test_stand.md` "Cooldown set". S0038's is run 5, the standard setup; each copy ends at the first heater step or 4 h after the compressor starts. The set carries no MLI state.
 
-- [ ] **3.10 Stand cooldowns** · Build, after 3.8 and 3.9
+- [o] **3.10 Stand cooldowns** · Build, after 3.8 and 3.9
   The fitted template's cooldown on one and on two compressors, scored on T1 below 219 K and on T2 throughout. If the transient solver fails, the remedy goes to the human.
   Context: `data/test_stand.md` "Use"; `simulations/validation/test_stand_head/`.
   Verified by: each simulated cooldown's score against the six measured cooldowns.
