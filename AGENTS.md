@@ -3,31 +3,28 @@
 *Your job is to care deeply about the code. Treat design and architecture as fundamental to correctness, not optional polish. Prioritize clarity, simplicity, and maintainability. Make thoughtful decisions, build coherent abstractions, and leave the codebase better than you found it.*
 
 ## Start here
-1. Before writing code or proposing structure, read your task's entry in `TASKS.md` (the entry, not the whole list), the sections of `docs/DESIGN.md` it touches, and any applicable ADRs in `docs/adrs/`. `CONTEXT.md` maps each work area to its specification, code, tests, and data. Read further when the work crosses into another area or raises a specific question. `CONTEXT.md` is navigation only; where it disagrees with those files, they are current.
-2. When sources disagree: specific ADRs, then DESIGN.md, then the task entry, then the code and its tests. Where all are silent, the code and its tests are the record.
-3. Other sessions are working this checkout at the same time. Claim your task in `TASKS.md` with `[o]` before starting; mark it `[x]` only when it lands. 
-4. One task per session. When it lands, hand off: the next session starts from the repository, not from this chat.
+1. Before writing code or proposing structure, read your task's entry in `TASKS.md`, the sections of `docs/DESIGN.md` it touches, and any applicable ADRs in `docs/adrs/`. `CONTEXT.md` maps each work area to its specification, code, tests, and data. Read further when the work crosses into another area or raises a specific question. `CONTEXT.md` is navigation only; where it disagrees with those files, they are current.
 
 ## Design authority
-5. In general, only the human edits `docs/DESIGN.md` and ADRs. Linting is allowed. Editing is allowed when given explicit permission.
-6. Recorded decisions can be challenged, not bypassed. If logic, elegance, or pragmatism contradict DESIGN.md or an ADR, say so and propose the replacement wording; until the human records the change, build to the decision as written.
-7. A decision made in chat is not recorded until it is in DESIGN.md, an ADR, or the task entry. Before a handoff, say what is still unrecorded and supply the proposed text. ADRs are for significant or controversial decisions only.
+2. In general, only the human edits markdown files. Linting is allowed. Editing is allowed when given explicit permission.
+3. Recorded decisions can be challenged, not bypassed. If work on a task raises new information or if the logical, elegant approach would contradict DESIGN.md or an ADR, raise that as a discussion with the human.
+4. A decision made in chat is not finalized until it is recorded in a markdown file. Before a handoff, state what is still unrecorded and supply the proposed text. ADRs are for significant or controversial decisions only.
 
 ## Code
-8. An `__init__.py` holds only a docstring and re-exports. Definitions live in named modules, such as `library/materials/load.py`, even where a task or DESIGN names an `__init__.py`.
-9. Keep the directories organized. Caring about the codebase extends to caring about the repository structure. That is the entry-point and logical map for both humans and agents, so it needs to stay organized.
-10. Values that could change between systems, materials, or runs live in configuration or library data files, with their sources. Values that define a formula live in the code at their point of use. Physical values are SI.
-11. Expose choices callers reasonably need to vary as arguments with useful defaults. Prefer function arguments or local values over module-level constants; introduce a module-level constant only when sharing it across functions serves a concrete purpose. Do not treat a chosen default as an invariant.
-12. Handle an error only when it could reasonably happen, would corrupt something downstream, and needs handling beyond what Python already raises. Parse at the boundary rather than validate throughout, and only where parsing solves a real problem.
-13. Comments and documentation say what is, not what isn't and not why a choice was made. Defensive comments, guards against hypothetical misuse, and explanations aimed at future agents are code smells; assume later agents are as capable as you.
-14. Define every symbol in a way a human can read. There are no standard conventions for physics notation.
-15. Follow the Google style guides for [Python](https://google.github.io/styleguide/pyguide.html) and [documentation](https://google.github.io/styleguide/docguide/best_practices.html).
+5. An `__init__.py` holds only a docstring and re-exports. Definitions live in named modules, not `__init__.py` files.
+6. Keep the directories organized. Caring about the codebase extends to caring about the repository structure. That is the entry-point and logical map for both humans and agents, so it needs to be clear and simple to navigate.
+7. Values that could change between systems, materials, or runs live in configuration or library data files, not in magic numbers or module-level CONSTANTS. Sources should be recorded in a logical place, near the value if possible. Do not treat a chosen default as an invariant. Physical values are always in SI units.
+8. Handle an error only when it could reasonably happen, would corrupt something downstream, and needs handling beyond what Python already raises. Parse at the boundary rather than validate throughout, and only where parsing solves a real problem.
+9. Comments and documentation say what is, not what isn't, and not why a choice was made. Defensive comments, guards against hypothetical misuse, and explanations aimed at future agents are code smells. Assume later agents are as capable as you.
+10. Follow the Google style guides for [Python](https://google.github.io/styleguide/pyguide.html) and [documentation](https://google.github.io/styleguide/docguide/best_practices.html).
+11. Use modern Python idioms and syntax. The code you were trained on is the median quality of what is publicly available; we strive for far higher quality than the median. 
 
 ## Git
-16. Commit only the files you changed in this session. Reviews and commits exclude other sessions' uncommitted work.
-17. Commit messages are short, imperative, and not co-signed.
+12. Commit only the files you changed in this session. Reviews and commits should exclude other sessions' uncommitted work.
+13. Commit messages are short, imperative, and not co-signed.
 
 ## Working with the human
-18. Accept ambiguity where a human interacts with the repository; reserve rigor for agent-only surfaces.
-19. Work with what you have. If a problem can be worked without a missing fact, do so and say what you assumed. If a missing fact blocks a foundational assumption, name the blocker.
-20. Don't waste time and tokens verifying results from other sessions, unless you have a specific reason to question their validity.
+14. Define every symbol in a way a human can read. There are no standard conventions for physics notation.
+15. Accept ambiguity where a human interacts with the repository; reserve rigor for agent-only surfaces.
+16. State assumptions up front, so that the human has an opportunity to discuss and revise the mental model with you.
+17. Be economical. Use cheap sub-agents when sub-agents are called for. Trust results from other sessions, rather than wasting tokens verifying statements from the human or other agents. Never start parallel processes on the machine without asking the human how many cores you may use.
