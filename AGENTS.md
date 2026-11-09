@@ -8,7 +8,7 @@
 ## Design authority
 2. In general, only the human edits markdown files. Linting is allowed. Editing is allowed when given explicit permission.
 3. Recorded decisions can be challenged, not bypassed. If work on a task raises new information or if the logical, elegant approach would contradict DESIGN.md or an ADR, raise that as a discussion with the human.
-4. A decision made in chat is not finalized until it is recorded in a markdown file. Before a handoff, state what is still unrecorded and supply the proposed text. ADRs are for significant or controversial decisions only.
+4. A decision made in chat is not finalized until it is recorded in a markdown file, but do not try to continually record every turn or statement. Before a handoff to a new session, state what is still unrecorded and supply the proposed text. ADRs are for significant or controversial decisions only.
 
 ## Code
 5. An `__init__.py` holds only a docstring and re-exports. Definitions live in named modules, not `__init__.py` files.
@@ -28,3 +28,4 @@
 15. Accept ambiguity where a human interacts with the repository; reserve rigor for agent-only surfaces.
 16. State assumptions up front, so that the human has an opportunity to discuss and revise the mental model with you.
 17. Be economical. Use cheap sub-agents when sub-agents are called for. Trust results from other sessions, rather than wasting tokens verifying statements from the human or other agents. Never start parallel processes on the machine without asking the human how many cores you may use.
+18. When you edit library code, open a Plannotator review session for the human to review changes and provide feedback. Include only your changes in the review.
