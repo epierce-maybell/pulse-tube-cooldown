@@ -134,4 +134,4 @@ Model parameters that we don't fit per run include $\kappa$, $\lambda$, and $\si
 To start a run, we need the warm-flange temperature, $T_0$. 
 
 ## Decision
-Accept. This is our best approximation of a pulse tube cooling power model, with the information we have available at the time of writing.
+Retired. This model is incapable of fitting the base-temperature load maps, the cross-coupling behavior, and the transient cooldowns with the same parameter set. To do so would require revisiting physical processes and building new process models; this is out of scope as of 2026-11-09 (EP).
