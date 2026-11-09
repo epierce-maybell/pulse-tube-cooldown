@@ -12,10 +12,12 @@ from pulse_tube_cooldown.core.types import EnergyBalanceTerms, Material, Model, 
 
 @pytest.fixture
 def config_path():
+    """Return the configuration path for interface tests."""
     return Path(__file__).parent / "fixtures" / "config_for_interface_tests.toml"
 
 @pytest.fixture
 def result(config_path):
+    """Return the simulation result for the interface test configuration."""
     model = ptc.configure_model(config_path)
     return ptc.simulate_cooldown(model)
 
@@ -27,11 +29,13 @@ class CustomLink:
     conductance: float
 
     def calc_energy_balance_terms(self, temperature):
+        """Return conductive heat flows into the two linked nodes."""
         flow = self.conductance * (temperature[1] - temperature[0])
         return EnergyBalanceTerms(heat_flow=np.array([flow, -flow]))
 
 
 def test_run_from_command_line_interface(config_path, tmp_path):
+    """Verify that the CLI runs a configured model and writes an output file."""
     output_path = tmp_path / "result.nc"
 
     result = subprocess.run(
@@ -43,6 +47,7 @@ def test_run_from_command_line_interface(config_path, tmp_path):
 
 
 def test_run_from_config_file(config_path, tmp_path):
+    """Verify that the public API runs a configured model and saves its result."""
     output_path = tmp_path / "result.nc"
 
     model = ptc.configure_model(config_path)
@@ -53,6 +58,7 @@ def test_run_from_config_file(config_path, tmp_path):
 
 
 def test_run_from_user_defined_objects(tmp_path):
+    """Verify that a model built from user-defined objects can run and save."""
     custom_material = Material(
         name="Constant heat capacity",
         density=1000.0,
@@ -88,6 +94,7 @@ def test_run_from_user_defined_objects(tmp_path):
 
 
 def test_result_object_contract(result):
+    """Verify result data, units, phase-dependent heat flows, and metadata."""
     data = result.data
 
     plate_temperature = data["temperature"].sel(node="Plate")
@@ -115,6 +122,7 @@ def test_result_object_contract(result):
         assert data.attrs[name] == value
 
 def test_saved_data_roundtrips(result, tmp_path):
+    """Verify that saving and loading preserves the result dataset exactly."""
     output_path = tmp_path / "result.nc"
 
     ptc.save_output(result, output_path)
