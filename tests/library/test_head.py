@@ -535,7 +535,7 @@ def test_stage_coupling_loads_stage_1_with_stage_2s_gross_cooling():
     np.testing.assert_allclose(change, expected, rtol=1e-9, atol=1e-12 * abs(expected[2]))
 
 
-# PT1.5 with placeholder packing coefficients and valve resistances pending task 2.3's fit, its matrix given a smooth
+# PT1.5 with placeholder packing coefficients and valve resistances, its matrix given a smooth
 # specific heat of 0.1 T^3 + 20 J/(kg K).
 _SMOOTH_MATRIX = dataclasses.replace(
     _MATRIX,

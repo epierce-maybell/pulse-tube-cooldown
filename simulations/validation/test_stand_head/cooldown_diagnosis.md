@@ -1,7 +1,7 @@
 # Stand cooldown diagnosis, 2026-11-07
 
-Why the fitted test-stand template's cooldown misses the stand cooldowns, for task 3.10. Every run used
-`data/test_stand/fridge.toml` at commit 32a7992, with the PT1.5 head of 3.8. Variants changed one input in a scratch
+Why the fitted test-stand template's cooldown misses the stand cooldowns. Every run used
+`data/test_stand/fridge.toml` at commit 32a7992, with the PT1.5 head fitted by `fit.py`. Variants changed one input in a scratch
 copy: the head's `stage_coupling` or `node_count` in `pt1_5.toml`, the drive's `relief_swing`, or a1 and R1 in the
 parameter file. The scratch scripts were not kept. Heat into a node is positive throughout.
 
@@ -94,7 +94,7 @@ T1 / T2 in K on one compressor unless noted.
 
 ## Load maps at R1 x1.5
 
-The single-compressor points of `data/test_stand/fit_set.csv`, solved as 3.8 solves them, at a1 = 0.065,
+The single-compressor points of `data/test_stand/fit_set.csv`, solved as `fit.py` solves them, at a1 = 0.065,
 R1 = 1.2e10 Pa s/m^3, and the fitted a2 and R2, with c re-solved in closed form: c = 0.29. S0007's 0 W, 0 W point has
 no matrix steady state, as in the fit. RMS residual in W, against `fit.txt`:
 
@@ -123,5 +123,5 @@ warm, about 7.3 bar mid-cooldown, and 7.67 bar at base, and the swing is smalles
 - In ADR 03 the only stage-1 term steep in T1 at base is the regeneration loss. A stage-1 loss that is steep at base
   and vanishes while warm would let E1 fall. The breakthrough loss has that form, since it scales with
   h(T0) - h(T1), but it is inactive: the stroke from the reservoir's mass swing is about 0.05 against a buffer of
-  0.5. Waking it on stage 2 in 3.1 gave dL2/dT2 the wrong sign; stage 1 is untested.
+  0.5. Waking it on stage 2 in `findings.md` gave dL2/dT2 the wrong sign; stage 1 is untested.
 - Whether stand cooldowns may constrain the canonical fit. ADR 03 requirement 2 prefers them for validation only.

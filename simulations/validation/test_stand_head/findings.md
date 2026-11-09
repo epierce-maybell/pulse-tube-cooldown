@@ -1,6 +1,6 @@
 # Stage coupling in the ADR 03 head: findings, 2026-11-06
 
-Evidence for `TASKS.md` section 3 and the proposed ADR 03 wording. Heat flow into a node is positive throughout. The
+Evidence for the proposed ADR 03 wording. Heat flow into a node is positive throughout. The
 measured values are the one-compressor partials in `simulations/exploration/loadmaps/summary.txt`, converted from
 heater power to heat into the node by a change of sign. Model values are for the test-stand template,
 `data/test_stand/fridge.toml`, on one compressor at 1 Hz, with unfitted head parameters. The placeholder parameters
@@ -26,7 +26,7 @@ at fixed T1. Let r = (dQ1/dT2) / (-dQ2/dT2) be the stage-1 capacity lost per wat
 
 ## ADR 03 as written
 
-Model couplings at T1 = 58 K and T2 = 3.4 K, from the 2.10 diagnostics:
+Model couplings at T1 = 58 K and T2 = 3.4 K, from the diagnostics in `simulations/validation/test_stand_steady_state/`:
 
 | Parameters | dQ1/dT1 | dQ1/dT2 | dQ2/dT1 | dQ2/dT2 | r |
 |---|---|---|---|---|---|
@@ -94,8 +94,8 @@ Continuation with CAD voids at T1 = 50 K, T2 = 3.4 K, a = (0.15, 0.05), R1 = 1e1
 Lowering a2 from 0.05 behaves the same way, losing the steady state at a2 = 0.037. Every combination of a1 in
 {0.02, 0.15} and R1 in {1e10, 3e10} reached those same limits. On the stable side, dQ1/dT2 falls toward 0 W/K as stage
 2's slope approaches the data. Stage 2's slope reaches the data's range only on the unstable side. That instability
-resembles the one 2.10's diagnosis traced to the point-sampled Gd2O2S heat capacity in the regeneration term; 3.3
-and the 3.6 gate test whether it moves.
+resembles the one `test_stand_steady_state/report.txt` traced to the point-sampled Gd2O2S heat capacity in the regeneration term; the mean-specific-heat boundary capacity
+and the stage-2 gate (`stage2_gate.txt`) test whether it moves.
 
 ## Stage-coupling term
 

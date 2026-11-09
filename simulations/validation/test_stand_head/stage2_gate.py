@@ -1,13 +1,14 @@
-"""Stage 2's slope at T1 = 50 K and T2 = 3.4 K on the cold matrix branch, for task 3.6.
+"""Stage 2's slope at T1 = 50 K and T2 = 3.4 K on the cold matrix branch.
 
 Run from the repository root with `python simulations/validation/test_stand_head/stage2_gate.py`.
 It writes `stage2_gate.txt` beside this file.
 
-The run uses the test-stand template, `data/test_stand/fridge.toml`, with PT1.5's heat-exchanger voids and the matrix
-capacity at node boundaries from task 3.3, at a1 = 0.15, R1 = 1e10 Pa s/m^3, and c = 0. The stages are held and the
-matrix nodes are solved. From the template's a2 = 0.05 and R2 = 3e10 Pa s/m^3, each path moves a2 to its value and
-then raises R2, starting each solve from the previous state, which keeps the matrix on its cold branch. The couplings
-and growth rates are those of `analyze_coupling` in `simulations/validation/test_stand_steady_state/coupling.py`.
+The run uses the test-stand template, `data/test_stand/fridge.toml`, with PT1.5's heat-exchanger voids and the
+mean-specific-heat matrix capacity at node boundaries, at a1 = 0.15, R1 = 1e10 Pa s/m^3, and c = 0. The stages are
+held and the matrix nodes are solved. From the template's a2 = 0.05 and R2 = 3e10 Pa s/m^3, each path moves a2 to
+its value and then raises R2, starting each solve from the previous state, which keeps the matrix on its cold branch.
+The couplings and growth rates are those of `analyze_coupling` in
+`simulations/validation/test_stand_steady_state/coupling.py`.
 """
 
 import dataclasses
@@ -81,8 +82,8 @@ def main(
 
     origin = solve(0.05, 3e10, start)
     lines = [
-        f"Stage 2's slope on the cold matrix branch at T1 = {stage_temperature[0]} K, T2 = {stage_temperature[1]} K",
-        "(task 3.6). a1 = 0.15, R1 = 1e10 Pa s/m^3, c = 0. P1 and P2 are the stage heater powers in W. The couplings",
+        f"Stage 2's slope on the cold matrix branch at T1 = {stage_temperature[0]} K, T2 = {stage_temperature[1]} K.",
+        "a1 = 0.15, R1 = 1e10 Pa s/m^3, c = 0. P1 and P2 are the stage heater powers in W. The couplings",
         "are in W/K with heat into the node positive. The growth rates in 1/s are with the stages held (matrix) and",
         "with the heater powers held (free).",
         "",

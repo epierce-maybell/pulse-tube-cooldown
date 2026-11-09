@@ -25,7 +25,7 @@ _FILL_PRESSURE = 1.70e6
 _ROOM_TEMPERATURE = 295.0
 _RELIEF_WIDTH = 5e4
 
-# Placeholder valve resistances in Pa s/m^3 and a 1.0 Hz valve frequency, pending the fit of task 2.3.
+# Placeholder valve resistances in Pa s/m^3 and a 1.0 Hz valve frequency.
 _RESISTANCE = (1e10, 4e10)
 _FREQUENCY = 1.0
 

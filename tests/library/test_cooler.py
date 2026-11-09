@@ -17,7 +17,7 @@ from pulse_tube_cooldown.library.links.cooler import (
 from pulse_tube_cooldown.library.links.cooler.link import load_cooler, load_matrix_nodes
 from pulse_tube_cooldown.library.links.load import LINK_TYPES, load_link_nodes
 
-# Drive inputs from data/compressors.md; placeholder head parameters pending task 2.3's fit.
+# Drive inputs from data/compressors.md; placeholder head parameters.
 _ROOM_TEMPERATURE = 295.0
 _WARM_VOLUME = 19.6e-3
 _FILL_PRESSURE = 1.70e6

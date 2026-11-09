@@ -1,11 +1,11 @@
-SN09 bare-head cooldown: provisional first pass for task 2.5
+SN09 bare-head cooldown: provisional first pass
 
 Outcome
 
 The experiment is implemented. The frozen candidate May fit does not reproduce
 either cooldown from a uniform room-temperature initial state. Both integrations
 reach a warm equilibrium with stage 2 near 12.6 K. The measured cold states are
-not reached, so this is not a passing validation of task 2.5 or a basis for 2.6.
+not reached, so this is not a passing bare-head validation or a basis for the cooler configuration.
 
 Run from the repository root:
     .venv/Scripts/python simulations/validation/sn09_bare_head/run.py
@@ -14,11 +14,11 @@ Inputs and assumptions
 
 parameters.toml freezes the candidate joint May fit available on 2026-11-02.
 may_fit_snapshot.json preserves that fit's diagnostics and source hashes. These
-files are separate from the ongoing task 2.3 investigation. No fit is performed
+files are separate from the ongoing load-map fit investigation. No fit is performed
 by this runner. Both runs use the same four head parameters and 1.0 Hz frequency.
 
 The network uses the existing PulseTubeCooler and engine, the two stage
-inventories in TASKS 5.1, and each model layer's matrix Node. The clamp is the
+inventories in data/test_stand.md, and each model layer's matrix Node. The clamp is the
 HoCu2 layer, carrying only its matrix mass. All four tube walls use geometry.csv
 and the fit's endpoint conventions. The stand links are tube walls only, matching
 the fit; including chamber radiation through the MLI requires a matching refit.
@@ -120,5 +120,5 @@ The human waived Plannotator review for this task and put further work on hold
 pending the improved load-map fit. Preserve these first-pass results as a
 baseline, then rerun with the improved fit when work resumes. No further model
 changes or investigations are planned during the hold. Physical validation
-remains unsuccessful; task 2.5 is incomplete and cooler TOML registration
+remains unsuccessful; the bare-head cooldown test is incomplete and cooler TOML registration
 remains deferred. The first-pass files are uncommitted.

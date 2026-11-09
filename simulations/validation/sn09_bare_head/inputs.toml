@@ -31,11 +31,11 @@ compressors = 2
 
 [sources]
 parameters = "Snapshot of ../sn09_load_map/candidate_parameters.toml on 2026-11-02; May map only; may_fit_snapshot.json"
-drive = "Snapshot of ../sn09_load_map/inputs.toml; TASKS 5.4; waveform factor absorbed into conductances"
-inventory = "TASKS 5.1; copper 0.3928 + 1.191 kg on stage 1; Al alloy assumption in TASKS 2.13"
+drive = "Snapshot of ../sn09_load_map/inputs.toml; waveform factor absorbed into conductances"
+inventory = "data/test_stand.md; copper 0.3928 + 1.191 kg on stage 1; aluminum taken as 6061-T6"
 wall_material = "geometry.csv; Falter 2024; 304 grade and 0.5 mm wall estimated"
-stand_links = "TASKS 2.5: tube walls only to match May fit; adding MLI radiation requires refitting"
+stand_links = "Tube walls only to match May fit; adding MLI radiation requires refitting"
 initial_state = "First T3 reading (logged TPR) as assumed room-temperature proxy for uniform initial state and fixed warm flange, matching the fit's convention; T3 is mounted on the pulse tube"
 time_origin = "First logged timestamp; no fitted time shift; May appended run excluded per data/test_stand.md"
-august_drive = "TASKS 2.5: two compressors assumed; same lines, buffers, and fill convention as May"
+august_drive = "Two compressors assumed; same lines, buffers, and fill convention as May"
 comparison = "data/test_stand.md: finite T1 below 219 K, all finite T2, T3 (logged TPR) an unscored pulse-tube diagnostic; uniform 2 s measurement cadence"

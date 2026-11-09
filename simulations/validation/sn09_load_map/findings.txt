@@ -36,7 +36,7 @@ Diagnosis of the initial failed fitting procedure
    finite differences multiplied that expense. The original solid-phase crash was
    not traced to a verified offending state; its precise cause remains unresolved.
 
-5. Small fitted packing constants alone do not establish a model failure. Task 2.3
+5. Small fitted packing constants alone do not establish a model failure. The load-map fit
    explicitly accounts for bypass flow in those constants. A scan that reduces
    a_2 while holding C_2 fixed also changes the relative strengths of passive loss
    and active real-gas transport; failure along that scan is not proof that no fit
@@ -109,8 +109,7 @@ The fit uses the May map only, one compressor, 1.0 Hz, gauge-assumed fill pressu
 the paired cooldown's initial TPR as warm-flange temperature, and tube-wall
 conduction without MLI radiation. inputs.toml records values and their sources.
 The August map and full cooldown predictions have not been tested here. Adding
-MLI radiation to a subsequent stand model requires refitting with matching links,
-as TASKS 2.5 records.
+MLI radiation to a subsequent stand model requires refitting with matching links.
 
 All changes in this investigation were confined to this experiment directory.
 The existing library equations and recorded physics were used. The parameter file

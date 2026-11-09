@@ -6,7 +6,7 @@ The human identifies coupling as the next investigation and observes that the
 modeled stage-2 map curves upward more strongly than the measured map. The ability
 to fit either stage independently is established by the preceding session and was
 not rechecked here. No library equations, existing fit outputs, or recorded physics
-decisions were changed. Task 2.3 remains in progress.
+decisions were changed.
 
 Reproduce the diagnostic with:
   .venv/Scripts/python simulations/validation/sn09_load_map/diagnose.py

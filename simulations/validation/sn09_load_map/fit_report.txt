@@ -24,7 +24,7 @@ These checks establish local stability, rather than reachability from room tempe
 
 Baseline and contribution comparison: comparison.txt.
 The candidate remains in this experiment directory; production parameters have not been written.
-Historical branch scans in this directory predate tasks 6.2 and 6.4; baseline/ preserves that fit.
+Older branch scans here predate the finite-capacity terms and exchanger coupling; baseline/ keeps that fit.
 Zero-a_2 fits are degenerate: their stage-2 matrix has no thermal restoring rate.
 
 Reproduce from the repository root:

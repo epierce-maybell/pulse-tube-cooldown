@@ -284,7 +284,7 @@ def calc_uncoupled_heat_flow(
     mean_pressure,
     frequency,
 ):
-    """Task 6.2 control: the column ends on the plate, with finite-capacity terms."""
+    """Finite-capacity control: the column ends on the plate, with finite-capacity terms."""
     stage_1 = len(heat_capacity[0]) + 1
     capacity = np.r_[0, heat_capacity[0], 0, heat_capacity[1], 0]
     midpoint = (temperature[:-1] + temperature[1:]) / 2
@@ -782,7 +782,7 @@ def write_results(
     sources["exchanger_effectiveness"] = (
         "May map; eta / a_2 and C_2 / a_2 jointly fitted"
         if head.cold_exchanger_coupling
-        else "Uncoupled task 6.2 control"
+        else "Uncoupled finite-capacity control"
     )
     _write_parameters(folder / "candidate_parameters.toml", parameters, sources)
     lines = [
@@ -816,7 +816,7 @@ def write_results(
         "",
         "Baseline and contribution comparison: comparison.txt.",
         "The candidate remains in this experiment directory; production parameters have not been written.",
-        "Historical branch scans in this directory predate tasks 6.2 and 6.4; baseline/ preserves that fit.",
+        "Older branch scans here predate the finite-capacity terms and exchanger coupling; baseline/ keeps that fit.",
         "Zero-a_2 fits are degenerate: their stage-2 matrix has no thermal restoring rate.",
         "",
         "Reproduce from the repository root:",
@@ -860,7 +860,7 @@ def main() -> None:
     inputs, load_map, warm, drive = read_experiment()
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--uncoupled", action="store_true", help="Fit the task 6.2 control with the column ending on the plate."
+        "--uncoupled", action="store_true", help="Fit the uncoupled control, with the column ending on the plate."
     )
     args = parser.parse_args()
     head = replace(read_head(inputs["head"]), cold_exchanger_coupling=not args.uncoupled)

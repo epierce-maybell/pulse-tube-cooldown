@@ -1,4 +1,4 @@
-The canonical PT1.5 head fitted to data/test_stand/fit_set.csv (task 3.8), written by fit.py beside this
+The canonical PT1.5 head fitted to data/test_stand/fit_set.csv, written by fit.py beside this
 file. Residuals are the net heat flow into each stage in W, heater power included, with the matrix at steady
 state and the stages held at the measured T1 and T2. Weighted residuals divide each by T dQ/dT, the heat that
 moves the stage's log temperature by one.

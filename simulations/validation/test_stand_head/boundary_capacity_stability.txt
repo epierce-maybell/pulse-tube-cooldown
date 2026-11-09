@@ -1,4 +1,4 @@
-Test-stand cold root with mean-specific-heat boundary capacity (task 3.3)
+Test-stand cold root with mean-specific-heat boundary capacity
 
 Voids zeroed: growth rate -0.00254 +0.00000j /s
   Warm flange             295.0000 K

@@ -1,4 +1,4 @@
-"""The test-stand template's cold root with the matrix capacity at node boundaries from task 3.3.
+"""The test-stand template's cold root with the mean-specific-heat matrix capacity at node boundaries.
 
 Run from the repository root with
 `python simulations/validation/test_stand_head/boundary_capacity_stability.py`.
@@ -85,7 +85,7 @@ def main() -> None:
     model = ptc.configure_model("data/test_stand/fridge.toml")
     fixed = model.fixed_boundary_nodes
     names = [node.name for node in model.nodes]
-    lines = ["Test-stand cold root with mean-specific-heat boundary capacity (task 3.3)", ""]
+    lines = ["Test-stand cold root with mean-specific-heat boundary capacity", ""]
     for label, graph in (("Voids zeroed", without_voids(model.graphs[0])), ("PT1.5 voids", model.graphs[0])):
         settled = settle(graph, REPORT_ROOT, fixed, duration=3e5)
         root = solve_steady_state(graph, settled, fixed_boundary_nodes=fixed)

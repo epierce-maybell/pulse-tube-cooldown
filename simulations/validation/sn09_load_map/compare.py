@@ -26,7 +26,7 @@ def main():
     base, control, coupled = saved
     improvement = 100 * (1 - coupled["rms_residual_W"][1] / base["rms_residual_W"][1])
     lines = [
-        "SN09 May map: task 6.3",
+        "SN09 May map refit",
         "",
         f"Stage-2 RMS falls by {improvement:.2f}% relative to the preserved baseline.",
         "RMS is sqrt(mean(residual^2)) over the same six heater points, in W.",
@@ -130,9 +130,9 @@ def main():
         "  .venv/Scripts/python simulations/validation/sn09_load_map/explore.py mesh --gos-warm-guess 5.1",
         "  .venv/Scripts/python simulations/validation/sn09_load_map/compare.py",
         "",
-        "The baseline is copied unchanged from the pre-6.2 results at commit 5d6f250.",
-        "Historical exploratory scans outside baseline/ also predate tasks 6.2 and 6.4.",
-        "The candidate remains in this experiment; the August prediction belongs to 2.5.",
+        "The baseline is copied unchanged from commit 5d6f250, before the finite-capacity terms.",
+        "Historical exploratory scans outside baseline/ also predate the finite-capacity terms and exchanger coupling.",
+        "The candidate remains in this experiment; the August prediction belongs to the bare-head cooldown test.",
     ]
     report = "\n".join(lines) + "\n"
     (fit.HERE / "comparison.txt").write_text(report)

@@ -1,6 +1,6 @@
 # Proposal: Toy run configuration
 
-A complete configuration for the first-slice toy run (task 7.4). It exercises conduction, a fixed boundary node, and a phase switch, using the activation and run-input decisions from tasks 5.1 and 5.2.
+A complete configuration for the first-slice toy run. It exercises conduction, a fixed boundary node, and a phase switch, using the phase-activation and run-input decisions.
 
 ```toml
 [meta]
@@ -48,4 +48,4 @@ fixed_boundary_nodes = ["Bath"]
 
 The Plate cools through Rod A toward the Bath, held at 4 K. When the Plate reaches 100 K, Rod B activates and the Plate cools faster. The run has no stop condition, so it ends at `max_time` with the time-limit status.
 
-The conduction parameter names (`material`, `area`, `length`) are placeholders until task 8.1 defines the conduction Link. `gas_pushing_start` serves as a generic temperature threshold because it is the only condition registered in the first slice.
+The conduction parameter names (`material`, `area`, `length`) are placeholders until the conduction Link is defined. `gas_pushing_start` serves as a generic temperature threshold because it is the only condition registered in the first slice.

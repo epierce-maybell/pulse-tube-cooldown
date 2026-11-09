@@ -1,4 +1,4 @@
-"""The canonical PT1.5 head fitted to the test-stand load maps, for task 3.8.
+"""The canonical PT1.5 head fitted to the test-stand load maps.
 
 Run from the repository root with `python -m simulations.validation.test_stand_head.fit`. It writes `fit.txt` beside
 this file and `data/heads/pt1_5/parameters.toml`.
@@ -429,7 +429,7 @@ def _report(
     solved = ~np.isnan(stage_residual).any(axis=1)
     names = ("a1", "a2", "R1 (Pa s/m^3)", "R2 (Pa s/m^3)", "c")
     lines = [
-        "The canonical PT1.5 head fitted to data/test_stand/fit_set.csv (task 3.8), written by fit.py beside this",
+        "The canonical PT1.5 head fitted to data/test_stand/fit_set.csv, written by fit.py beside this",
         "file. Residuals are the net heat flow into each stage in W, heater power included, with the matrix at steady",
         "state and the stages held at the measured T1 and T2. Weighted residuals divide each by T dQ/dT, the heat that",
         "moves the stage's log temperature by one.",
