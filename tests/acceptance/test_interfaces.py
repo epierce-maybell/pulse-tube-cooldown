@@ -1,3 +1,5 @@
+"Test top-level interfaces, including the CLI, core modeling loop, and output file."
+
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
