@@ -3,7 +3,7 @@
 *Your job is to care deeply about the code. Treat design and architecture as fundamental to correctness, not optional polish. Prioritize clarity, simplicity, and maintainability. Make thoughtful decisions, build coherent abstractions, and leave the codebase better than you found it.*
 
 ## Start here
-1. Before writing code or proposing structure, read your task's entry in `TASKS.md`, the sections of `docs/DESIGN.md` it touches, and any applicable ADRs in `docs/adrs/`. `CONTEXT.md` maps each work area to its specification, code, tests, and data. Read further when the work crosses into another area or raises a specific question. `CONTEXT.md` is navigation only; where it disagrees with those files, they are current.
+1. Before writing code or proposing structure, read your task's entry in `TASKS.md`, the sections of `docs/DESIGN.md` it touches, and any applicable ADRs in `docs/adrs/`. Read `GLOSSARY.md` for shared terminology and follow its interaction rules. `CONTEXT.md` maps each work area to its specification, code, tests, and data. Read further when the work crosses into another area or raises a specific question. `CONTEXT.md` is navigation only; where it disagrees with those files, they are current.
 
 ## Design authority
 2. In general, only the human edits markdown files. Linting is allowed. Editing is allowed when given explicit permission.

@@ -1,6 +1,6 @@
 # Pulse-Tube Cooldown Simulator
 
-Navigation and vocabulary for a newcomer. Specifications and decisions live in `docs/`, and the work list is `TASKS.md`. Where this file disagrees with those, they are current.
+Navigation for a newcomer. Shared terminology and rules for using it live in `GLOSSARY.md`. Specifications and decisions live in `docs/`, and the work list is `TASKS.md`. Where this file disagrees with those, they are current.
 
 ## The problem
 
@@ -13,21 +13,6 @@ The project rebuilds an earlier model, `../pulse_tube_cooldown_simulation` (bran
 The reference system is a 6-plate fridge: PRP, RGP, CFP, STP, ICP and MXP, plus masses linked to those plates, inside a vacuum can at room temperature. Validation systems are SN09 (one PT1.1 head) and FP1 (two PT1.5 heads). The cooler removes heat at its first stage, second stage, and regenerator clamp, each with a capacity that depends on temperature. Heat also moves through gas-gap switches, exchange gas, radiation (reduced by multi-layer insulation, MLI), support struts, bolted joints, and heaters.
 
 Physics lives in `docs/DESIGN.md` and the ADRs, not here.
-
-## Language
-
-- **Material**: a named substance with temperature-dependent specific heat and thermal conductivity.
-- **Node**: a thermal mass with a temperature, made of materials, each with a mass. A **boundary node** is held at its initial temperature.
-- **Link**: anything that transfers heat between nodes, several nodes sharing a medium, or sources and sinks at nodes. Given node temperatures, it returns the heat flow into each.
-- **Graph**: the nodes, the links, and which nodes each link touches.
-- **Model**: a graph plus the conditions of a run: initial temperatures, boundary nodes, a stop condition, and solver options.
-- **State**: the quantities the solver integrates, chiefly node temperatures.
-- **Result**: node temperatures and link heat flows over time.
-- **Engine**: the generic numerical layer. It knows components, states, and equations.
-- **DR library**: the physics layer: component types and the data that parameterizes them. It builds on the engine.
-- **Head**: one pulse-tube cold head. A **manifold** is the set of compressors and heads sharing one gas supply.
-- **Stage 1, stage 2, clamp**: the cooler's two cold stages and its regenerator clamp.
-- **Load map**: a cooler's measured stage temperatures against stage heater powers.
 
 ## Where to work
 

@@ -15,7 +15,7 @@ There are three kinds of entry. If a task does not specify, default to **Discuss
 
 Claim tasks with [o], mark finished tasks with [x], and update each section to have a running count of open vs. completed items, like (5/10). If a task was started and then later put on hold, mark it as [-] with a note for the blocker and do not update progress. If a task is unclear or has unsettled decisions, interview the user relentlessly until you are aligned on all decisions, before doing the work. Do not use this file as a dumping-ground for notes or reporting.
 
-## Progress `[####--------------------------------]` 11.1% (4/36)
+## Progress `[#####-------------------------------]` 13.9% (5/36)
 
 ## 1. Rebuild test suite (3/14)
 #### [x] 1.1 Public/user interface tests
@@ -35,8 +35,8 @@ Claim tasks with [o], mark finished tasks with [x], and update each section to h
 #### [ ] 1.13 Test policy doc, guardrails to protect tests from agents
 #### [ ] 1.14 Prune existing test suite
 
-## 2. Reconcile public documentation (0/5)
-#### [ ] 2.1 Add GLOSSARY.md
+## 2. Reconcile public documentation (1/5)
+#### [x] 2.1 Add GLOSSARY.md
 #### [ ] 2.2 Revise DESIGN.md
 #### [ ] 2.3 Clean up directory structure
 #### [ ] 2.4 Prune data/, docs/, and simulations/
