@@ -58,18 +58,22 @@ Work the rest of the section in list order. The first slice runs from 2.5 throug
   The test stand as a fridge template, `data/test_stand/fridge.toml`: one head on one or two compressors, with the stage masses and radiation shield of `data/test_stand.md`; foil on the tubes is omitted for lack of geometry. An engine steady-state solver, with heater powers as its input, solves it at a load map's points.
   Context: `data/test_stand.md`, `data/compressors.md`; `simulations/validation/sn09_bare_head/` for the earlier version.
   Verified by: the solver's analytic steady states, and the template building.
+  - [x] Diagnose why the test-stand template fails to find a steady state: `simulations/validation/test_stand_steady_state/report.txt`. The warm-start root search stalls; a cold root exists but has destabilizing Gd2O2S heat-capacity feedback in the regenerator energy flows.
+  - [o] Resolve the wrong-sign stage cross-coupling with focused diagnostics and a validated correction or explicit model-decision proposal.
+    Diagnostics and a tested equilibrium-coupling checker are in `simulations/validation/test_stand_steady_state/`; `coupling_findings.txt` records the bounded parameter checks. No validated physical correction yet: positive forward coupling is possible, but the tested cases miss the measured magnitude and other stage responses.
+    The isolated harmonic-model audit is in `phase_feasibility/audit_report.txt` under that directory: corrected an ideal-tube integration error, but balanced profiles still violate the small-temperature-oscillation approximation after matching compressor supply. No production model replacement is validated.
 
 - [x] **2.11 Load-map fit set** · Build
   The canonical fit's inputs from `data/test_stand/load_map_index_2026-11-05.csv`: one Denver map per PT1.5 head with raw data on file, in the standard setup, which the index notes when it uses two compressors. Among a head's repeats, the more standard run by the notes, otherwise the more recent. Each point carries its run's compressor count, valve frequency, and MLI state. The selection replaces the record list in `data/systems.md`.
   Context: the index; `data/test_stand.md`; `simulations/exploration/loadmaps/`; the archive at `../../data/test_stand/`.
   Verified by: each selected map traces to its index row and raw file.
 
-- [ ] **2.3 Canonical pulse-tube head** · Build, after 2.10 and 2.11
+- [o] **2.3 Canonical pulse-tube head** · Build, after 2.10 and 2.11
   SN09's and FP1's head model: one PT1.5 head's a_i and R_i fitted to 2.11's set, replacing the S0009-fitted parameters. Ends the first slice.
   Context: ADR 03 "Requirements" and "Parameters"; `simulations/exploration/loadmaps/characterization.md`.
   Verified by: each run's residual, and Q1's coupling to T2 against ADR 03 requirement 4.
 
-- [ ] **2.4 Test the canonical pulse-tube head** · Build, after 2.3
+- [o] **2.4 Test the canonical pulse-tube head** · Build, after 2.3
   Use the test stand cooldown data to validate the pulse tube model in a controlled setting.
   Context: `data/test_stand.md` "Use"; 2.10's model.
 
