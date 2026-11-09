@@ -15,10 +15,10 @@ There are three kinds of entry. If a task does not specify, default to **Discuss
 
 Claim tasks with [o], mark finished tasks with [x], and update each section to have a running count of open vs. completed items, like (5/10). If a task is unclear or has unsettled decisions, interview the user relentlessly until you are aligned on all decisions, before doing the work. 
 
-## Progress `[----------------------------------]` 0% (0/34)
+## Progress `[#---------------------------------]` 3% (1/34)
 
-## 1. Rebuild test suite (0/14)
-#### [ ] 1.1 Public/user interface tests
+## 1. Rebuild test suite (1/14)
+#### [x] 1.1 Public/user interface tests
 #### [ ] 1.2 End-to-end acceptance tests
 #### [ ] 1.3 Pulse tube head acceptance tests
 #### [ ] 1.4 Current-best plotting script

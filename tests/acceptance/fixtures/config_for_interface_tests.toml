@@ -1,0 +1,43 @@
+[meta]
+experiment = "Interface acceptance tests"
+
+[[fridge.nodes]]
+name = "Plate"
+composition = [["OFHC Cu RRR100", 2.5]]
+
+[[fridge.nodes]]
+name = "Bath"
+composition = [["OFHC Cu RRR100", 1.0]]
+
+[[fridge.links]]
+name = "Rod A"
+type = "conduction"
+nodes = ["Plate", "Bath"]
+material = "304 SS"
+area = 2.5e-4
+length = 0.1
+
+[[fridge.links]]
+name = "Rod B"
+type = "conduction"
+nodes = ["Plate", "Bath"]
+material = "304 SS"
+area = 2.25e-4
+length = 0.05
+
+[[procedure.phases]]
+name = "single rod"
+disable = ["Rod B"]
+until = { condition = "gas_pushing_begins", node = "Plate", threshold = 100.0 }
+
+[[procedure.phases]]
+name = "both rods"
+enable = ["Rod B"]
+
+[simulation]
+solver = "Radau"
+max_time = 86400.0
+save_every = 1800.0
+rtol = 1.0e-6
+initial_temperature = [300.0, 4.2]
+fixed_boundary_nodes = ["Bath"]
