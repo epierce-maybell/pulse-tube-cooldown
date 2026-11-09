@@ -129,6 +129,7 @@ This section builds 2.3 and 2.4. ADR 03 as written cannot meet requirement 4, so
   The fitted template's cooldown on one and on two compressors, scored on T1 below 219 K and on T2 throughout. If the transient solver fails, the remedy goes to the human.
   Context: `data/test_stand.md` "Use"; `simulations/validation/test_stand_head/`.
   Verified by: each simulated cooldown's score against the six measured cooldowns.
+  - [ ] Resolve the stand cooldown's stage-1 error, diagnosed in `simulations/validation/test_stand_head/cooldown_diagnosis.md`. Stage 1 cools about twice as fast as measured and undershoots to 16 K; T2 follows the measured spread. At base the fit balances E1 = 62 W against 69 W of a1 regeneration loss, which nearly vanishes while warm, leaving E1 = 117 W. Lowering E1 1.5x fixes the cooldown but raises stage 1's load-map residual to 3.4 to 5.6 W rms. Next: test the stage-1 breakthrough loss as the base loss that vanishes while warm.
 
 - [ ] **3.11 Fit and cooldown figures** · Build, after 3.8 and 3.10
   PNG and PDF in `simulations/validation/test_stand_head/`: the model's standard points against every PT1.5 run's spread on one and two compressors; the four couplings over figure 07's cells; each run's heater-power residuals; and T1 and T2 cooldowns over the six stand cooldowns.
