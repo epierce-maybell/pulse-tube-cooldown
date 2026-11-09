@@ -15,9 +15,9 @@ There are three kinds of entry. If a task does not specify, default to **Discuss
 
 Claim tasks with [o], mark finished tasks with [x], and update each section to have a running count of open vs. completed items, like (5/10). If a task was started and then later put on hold, mark it as [-] with a note for the blocker and do not update progress. If a task is unclear or has unsettled decisions, interview the user relentlessly until you are aligned on all decisions, before doing the work. Do not use this file as a dumping-ground for notes or reporting.
 
-## Progress `[###---------------------------------]` 8.3% (3/36)
+## Progress `[####--------------------------------]` 11.1% (4/36)
 
-## 1. Rebuild test suite (2/14)
+## 1. Rebuild test suite (3/14)
 #### [x] 1.1 Public/user interface tests
 #### [-] 1.2 End-to-end acceptance tests
              Waiting on full simulation configs (4.1, 4.2)
@@ -25,7 +25,7 @@ Claim tasks with [o], mark finished tasks with [x], and update each section to h
              Waiting on pulse tube head links (3.4)
 #### [ ] 1.4 Current-best plotting script
 #### [x] 1.5 Conduction acceptance tests
-#### [ ] 1.6 Radiation acceptance tests
+#### [x] 1.6 Radiation acceptance tests
 #### [ ] 1.7 Joint-contact resistance acceptance tests
 #### [ ] 1.8 MLI acceptance tests
 #### [ ] 1.9 Gas-gap heat switch acceptance tests
