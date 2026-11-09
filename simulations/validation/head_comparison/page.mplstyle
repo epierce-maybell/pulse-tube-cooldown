@@ -1,0 +1,25 @@
+# Page overrides for SciencePlots: science, no-latex, nature.
+# Upstream presets: https://github.com/garrettj403/SciencePlots
+# Six-head colors: the first six entries of Matplotlib's tab10 cycle.
+
+axes.prop_cycle: cycler('color', ['1f77b4', 'ff7f0e', '2ca02c', 'd62728', '9467bd', '8c564b'])
+
+figure.figsize: 11.69, 8.27
+font.size: 8.5
+axes.labelsize: 8.5
+axes.titlesize: 9
+axes.titlelocation: left
+axes.titlepad: 8
+xtick.labelsize: 8
+ytick.labelsize: 8
+legend.fontsize: 8.5
+
+axes.spines.top: False
+axes.spines.right: False
+xtick.top: False
+ytick.right: False
+xtick.minor.visible: False
+ytick.minor.visible: False
+
+savefig.bbox: standard
+svg.fonttype: none

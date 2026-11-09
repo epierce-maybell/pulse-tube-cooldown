@@ -1,0 +1,124 @@
+# Paths are relative to the repository root. Selection follows data/test_stand.md
+# and data/test_stand/load_map_index_2026-11-05.csv, reviewed on 2026-11-09.
+stage_1_max_temperature = 219.0 # K; measured T1 is unreliable above this value.
+
+[[heads]]
+serial = "S0007"
+[heads.cooldown]
+file = "data/test_stand/s0007/cooldown_2026-04-13.dat"
+date = "2026-04-13"
+stand = "Denver"
+compressors = 1
+valve_frequency = 1.0 # Hz
+start = "2026-04-13T09:12:52"
+end = "2026-04-13T11:56:33"
+note = "Standard setup before the May valve and hose changes."
+[heads.load_map]
+file = "data/test_stand/s0007/load_map_2026-04-14.dat"
+format = "stand"
+date = "2026-04-14"
+stand = "Denver"
+compressors = 1
+valve_frequency = 1.0
+note = "Unchanged repeat of April 13; powers come from the index, frequency from shipped settings."
+
+[[heads]]
+serial = "S0009"
+[heads.cooldown]
+file = "data/test_stand/s0009/cooldown_2026-05-14.dat"
+date = "2026-05-14"
+stand = "Denver"
+compressors = 1
+valve_frequency = 1.0
+start = "2026-05-14T10:25:21"
+end = "2026-05-14T14:20:38"
+note = "Stops before the heater step at 14:20:39."
+[heads.load_map]
+file = "data/test_stand/s0009/load_map_2026-05-14.dat"
+format = "stand"
+date = "2026-05-14"
+stand = "Denver"
+compressors = 1
+valve_frequency = 1.0
+note = "The index corrects the file header's frequency to 1.0 Hz."
+
+[[heads]]
+serial = "S0019"
+[heads.cooldown]
+file = "data/test_stand/s0019/cooldown_2026-08-06.dat"
+date = "2026-08-06"
+stand = "Denver"
+compressors = 1
+valve_frequency = 1.1
+start = "2026-08-06T16:17:15"
+end = "2026-08-06T20:17:15"
+note = "Standard setup; one compressor is the stand's documented assumption."
+[heads.load_map]
+file = "data/test_stand/s0019/load_map_2026-08-07.dat"
+format = "stand"
+date = "2026-08-07"
+stand = "Denver"
+compressors = 1
+valve_frequency = 1.1
+note = "Head's shipped rotary valve and inlet line; MLI unrecorded."
+
+[[heads]]
+serial = "S0028"
+[heads.cooldown]
+file = "data/test_stand/s0028/cooldown_2026-06-30.dat"
+date = "2026-06-30"
+stand = "Denver"
+compressors = 2
+valve_frequency = 1.1
+start = "2026-06-30T17:12:03"
+end = "2026-06-30T21:12:02"
+note = "Two compressors, followed by the July 2 correlation map."
+[heads.load_map]
+file = "data/test_stand/s0028/load_map_2026-07-02.dat"
+format = "stand"
+date = "2026-07-02"
+stand = "Denver"
+compressors = 2
+valve_frequency = 1.1
+note = "Two compressors, full MLI."
+
+[[heads]]
+serial = "S0035"
+[heads.cooldown]
+file = "data/test_stand/s0035/cooldown_2026-09-25.dat"
+date = "2026-09-25"
+stand = "Denver"
+compressors = 1
+valve_frequency = 1.1
+start = "2026-09-25T11:24:06"
+end = "2026-09-25T14:00:02"
+note = "New supplier's compressor hose; stops before the first heater step."
+[heads.load_map]
+file = "data/test_stand/s0035/load_map_2026-09-21.dat"
+format = "stand"
+date = "2026-09-21"
+stand = "Denver"
+compressors = 1
+valve_frequency = 1.1
+note = "Before the September 25 hose change. September 25's logged heater powers are unavailable."
+
+[[heads]]
+serial = "S0038"
+[heads.cooldown]
+file = "data/test_stand/s0038/cooldown_2026-10-12.dat"
+date = "2026-10-12"
+stand = "Denver"
+compressors = 1
+valve_frequency = 1.0
+start = "2026-10-12T14:44:33"
+end = "2026-10-12T17:00:02"
+note = "Cleaned head, full warm start, no elbow or filter; stops before loading."
+[heads.load_map]
+file = "data/test_stand/muenster_maps.csv"
+format = "digitized"
+date = "2026-08-31"
+stand = "Münster"
+compressors = 1
+valve_frequency = 1.0
+stage_2_powers = [0.0, 0.5] # W; these levels are explicitly labeled in the source.
+note = "Overview p. 48; digitize.toml records 1.0 and 1.5 W as inferred, so only 0 and 0.5 W are selected."
