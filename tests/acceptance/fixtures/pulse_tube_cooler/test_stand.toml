@@ -1,0 +1,35 @@
+[meta]
+experiment = "Pulse-tube cooler acceptance tests"
+
+[[fridge.nodes]]
+name = "Room temperature"
+composition = [["304 SS", 1.0]]
+
+# Stage inventories from data/test_stand.md
+[[fridge.nodes]]
+name = "Stage 1"
+composition = [["OFHC Cu RRR100", 1.5838], ["Al 6061-T6", 0.4536], ["304 SS", 0.0709]]
+
+[[fridge.nodes]]
+name = "Stage 2"
+composition = [["304 SS", 0.4218], ["OFHC Cu RRR100", 0.0397]]
+
+# Shield area assumes 1.191 kg of copper sheet at 0.0016 m thickness.
+[[fridge.links]]
+name = "Shield radiation"
+type = "radiation"
+nodes = ["Stage 1", "Room temperature"]
+area = [0.0831, 0.5]
+surface = ["Gold-plated Cu", "Machined Al"]
+
+[[procedure.phases]]
+name = "cooldown"
+
+[simulation]
+solver = "Radau"
+rtol = 1e-5
+atol = 1e-6
+max_time = 20000.0
+save_every = 60.0
+initial_temperature = 295.0
+fixed_boundary_nodes = ["Room temperature"]

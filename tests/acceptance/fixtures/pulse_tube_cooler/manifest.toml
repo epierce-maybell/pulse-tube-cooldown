@@ -1,0 +1,170 @@
+# Fixture paths are local; archive paths use archive_root. Frequencies in Hz.
+archive_root = "../../data/test_stand"
+notes_source = "data/test_stand/load_map_index_2026-11-05.csv"
+
+[objectives]
+heater_powers = [[0.0, 0.0], [0.0, 0.5], [20.0, 0.0], [20.0, 0.5]]
+stage_1_gates = [200.0, 150.0, 100.0, 80.0, 65.0, 55.0, 50.0]
+stage_2_gates = [200.0, 100.0, 50.0, 30.0, 10.0, 5.0, 3.0]
+standard_deviations = 2.0
+timing_standard_deviations = 1.0
+single_record_relative_tolerance = 0.1
+
+[[load_maps]]
+serial = "S0007"
+date = 2026-04-14
+file = "records/s0007_load_map_2026-04-14.dat"
+repository_source = "data/test_stand/s0007/load_map_2026-04-14.dat"
+archive_source = "loadmap_data/LoadMap-SN007-04-14-2026.dat"
+compressors = 1
+valve_frequency = 1.0
+notes = ["Repeat of the 04-13 run one day later. No change recorded. The 03-27, 04-13 and 04-14 mean is the S0007 Denver correlation value."]
+
+[[load_maps]]
+serial = "S0008"
+date = 2026-05-08
+file = "records/s0008_load_map_2026-05-08.dat"
+repository_source = "data/test_stand/s0008/load_map_2026-05-08.dat"
+archive_source = "loadmap_data/LoadMap-SN008-05-08-2026.dat"
+compressors = 1
+valve_frequency = 1.0
+notes = ["Only Denver run of S0008."]
+
+[[load_maps]]
+serial = "S0009"
+date = 2026-05-14
+file = "records/s0009_load_map_2026-05-14.dat"
+repository_source = "data/test_stand/s0009/load_map_2026-05-14.dat"
+archive_source = "loadmap_data/LoadMap-SN009-05-14-2026.dat"
+compressors = 1
+valve_frequency = 1.0
+notes = ["First Denver run. Ran at 1.0 Hz per Tom (file header reads 1.1 and is wrong)."]
+
+[[load_maps]]
+serial = "S0019"
+date = 2026-08-07
+file = "records/s0019_load_map_2026-08-07.dat"
+repository_source = "data/test_stand/s0019/load_map_2026-08-07.dat"
+archive_source = "loadmap_data/LoadMap-SN019-08-07-2026.dat"
+compressors = 1
+valve_frequency = 1.1
+notes = ["Denver run. Same rotary valve and inlet line as the Münster run (unit shipped with them). Values only digitized from the image."]
+
+[[load_maps]]
+serial = "S0023"
+date = 2026-06-19
+file = "records/s0023_load_map_2026-06-19.dat"
+repository_source = "data/test_stand/s0023/load_map_2026-06-19.dat"
+archive_source = "loadmap_data/LoadMap-SN023-06-20-2026.dat"
+compressors = 1
+valve_frequency = 1.1
+notes = ["Denver run after the internal O-ring repair."]
+
+[[load_maps]]
+serial = "S0028"
+date = 2026-07-02
+file = "records/s0028_load_map_2026-07-02.dat"
+repository_source = "data/test_stand/s0028/load_map_2026-07-02.dat"
+archive_source = "loadmap_data/LoadMap-SN0028-2-Comp-07-02-2026.dat"
+compressors = 2
+valve_frequency = 1.1
+notes = ["2x F-70. Follows the 06-30 cooldown. This is the S0028 correlation run."]
+
+[[load_maps]]
+serial = "S0034"
+date = 2026-08-12
+file = "records/s0034_load_map_2026-08-12.dat"
+repository_source = "data/test_stand/s0034/load_map_2026-08-12.dat"
+archive_source = "loadmap_data/LoadMap-SN034-08-12-2026.dat"
+compressors = 1
+valve_frequency = 1.0
+notes = ["Denver run with no MLI, 1.0 Hz. Run PDF carries no serial number."]
+
+[[load_maps]]
+serial = "S0035"
+date = 2026-09-21
+file = "records/s0035_load_map_2026-09-21.dat"
+repository_source = "data/test_stand/s0035/load_map_2026-09-21.dat"
+archive_source = "loadmap_data/dataLoadMap Mon Sep 21 16_36_05 2026.dat"
+compressors = 1
+valve_frequency = 1.1
+notes = ["Rotary valve frequency changed from 1.0 to 1.1 Hz. Any other change [TBD]."]
+
+[[cooldowns]]
+serial = "S0007"
+date = 2026-04-13
+file = "records/s0007_cooldown_2026-04-13.dat"
+repository_source = "data/test_stand/s0007/cooldown_2026-04-13.dat"
+archive_source = "continuous_data/dataContinuous Mon Apr 13 09_12_23 2026.dat"
+archive_lines = [[1, 4919]]
+compressors = 1
+valve_frequency = 1.0
+compressor_start = 2026-04-13T09:12:52
+end = 2026-04-13T11:56:33
+notes = ["Repeat after teardown and rebuild of the test setup (SETUP-01.2). Same rotary valve RV0005. Last row is labelled 0 / 0.5 but is the 0 / 0 point."]
+
+[[cooldowns]]
+serial = "S0009"
+date = 2026-05-14
+file = "records/s0009_cooldown_2026-05-14.dat"
+repository_source = "data/test_stand/s0009/cooldown_2026-05-14.dat"
+archive_source = "continuous_data/SN009-Cooldown-05-14-2026.dat"
+archive_lines = [[1, 7349]]
+compressors = 1
+valve_frequency = 1.0
+compressor_start = 2026-05-14T10:25:21
+end = 2026-05-14T14:21:51
+heater_start = 2026-05-14T14:20:39  # data/test_stand.md
+notes = ["First Denver run. Ran at 1.0 Hz per Tom (file header reads 1.1 and is wrong)."]
+
+[[cooldowns]]
+serial = "S0019"
+date = 2026-08-06
+file = "records/s0019_cooldown_2026-08-06.dat"
+repository_source = "data/test_stand/s0019/cooldown_2026-08-06.dat"
+archive_source = "continuous_data/Cooldown-SN019-08-06-2026.dat"
+archive_lines = [[1, 7232]]
+compressors = 1
+valve_frequency = 1.1
+compressor_start = 2026-08-06T16:17:15
+end = 2026-08-06T20:17:15
+notes = []
+
+[[cooldowns]]
+serial = "S0028"
+date = 2026-06-30
+file = "records/s0028_cooldown_2026-06-30.dat"
+repository_source = "data/test_stand/s0028/cooldown_2026-06-30.dat"
+archive_source = "continuous_data/S0028_2026-06-30_dataContinuous Tue Jun 30 16_37_46 2026.dat"
+archive_lines = [[1, 8213]]
+compressors = 2
+valve_frequency = 1.1
+compressor_start = 2026-06-30T17:12:03
+end = 2026-06-30T21:12:02
+notes = []
+
+[[cooldowns]]
+serial = "S0035"
+date = 2026-09-25
+file = "records/s0035_cooldown_2026-09-25.dat"
+repository_source = "data/test_stand/s0035/cooldown_2026-09-25.dat"
+archive_source = "continuous_data/S0035_2026-09-25_dataContinuous Fri Sep 25 11_10_14 2026.dat"
+archive_lines = [[1, 5073]]
+compressors = 1
+valve_frequency = 1.1
+compressor_start = 2026-09-25T11:24:06
+end = 2026-09-25T14:00:02
+notes = ["Compressor hose from a new supplier fitted. Only change from 09-21 per Tom. 25 W column measured first and still settling."]
+
+[[cooldowns]]
+serial = "S0038"
+date = 2026-10-12
+file = "records/s0038_cooldown_2026-10-12.dat"
+repository_source = "data/test_stand/s0038/cooldown_2026-10-12.dat"
+archive_source = "continuous_data/S0038_2026-10-09_dataContinuous Fri Oct  9 15_40_11 2027.dat"
+archive_lines = [[1, 4], [127186, 131535]]
+compressors = 1
+valve_frequency = 1.0
+compressor_start = 2026-10-12T14:44:33
+end = 2026-10-12T17:00:02
+notes = ["Run 5. Warmed up, cleaned (cold trap, pump and purge), then retested in the standard setup. Map started 2 h after the cooldown drop, before full base."]
