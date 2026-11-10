@@ -15,7 +15,7 @@ There are three kinds of entry. If a task does not specify, default to **Discuss
 
 Claim tasks with [o], mark finished tasks with [x], and update each section to have a running count of open vs. completed items, like (5/10). If a task was started and then later put on hold, mark it as [-] with a note for the blocker and do not update progress. If a task is unclear or has unsettled decisions, interview the user relentlessly until you are aligned on all decisions, before doing the work. Do not use this file as a dumping-ground for notes or reporting. Agents may not add tasks to the list.
 
-## Progress `[###############--------------------]` 42.9% (15/35)
+## Progress `[################-------------------]` 45.7% (16/35)
 
 ## 1. Rebuild test suite (11/13)
 #### [x] 1.1 Public/user interface tests
@@ -40,10 +40,10 @@ Claim tasks with [o], mark finished tasks with [x], and update each section to h
 #### [o] 2.4 Prune data/, docs/, and simulations/
 #### [ ] 2.5 Document how to use/modify/extend
 
-## 3. Pulse tube model (2/5)
+## 3. Pulse tube model (3/5)
 #### [x] 3.1 Retire ADR-03
 #### [x] 3.2 Plot pulse tube data
-#### [o] 3.3 Derive reduced pulse tube model
+#### [x] 3.3 Derive reduced pulse tube model
 #### [ ] 3.4 Implement dynamical systems approach
 #### [ ] 3.5 Build archetypal pulse tube head
 

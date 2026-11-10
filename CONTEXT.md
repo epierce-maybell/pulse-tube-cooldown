@@ -13,10 +13,12 @@ has one PT1.1 head; FP1 has two PT1.5 heads. Stage 1, stage 2, and the clamp
 connect to PRP, CFP, and RGP respectively. Other heat paths include conduction,
 bolted joints, radiation, MLI, gas-gap switches, exchange gas, and gas pushing.
 
-The replacement head formulation is in progress in
-[the head-model proposal](docs/proposals/pulse-tube-model-direction.md).
-The cooler link has been removed; shared head-design data and loaders remain.
-Full refrigerator configurations are tasks 4.1 and 4.2.
+The adopted head formulation is recorded in
+[ADR-06](docs/adrs/06-reduced-head-dynamics.md), including its
+clamp temperature and cooling-power closure. Production implementation is task
+3.4. The cooler link has been
+removed; shared head-design data and loaders remain. Full refrigerator
+configurations are tasks 4.1 and 4.2.
 
 ## Where to work
 
@@ -33,7 +35,7 @@ Implementation and test paths are relative to `src/pulse_tube_cooldown/` and
 | Conduction, contacts, radiation, MLI | DESIGN "Physical modeling approach" | `library/links/` | `library/`, `acceptance/`; `data/systems.md` |
 | Gas-gap switches and exchange gas | [ADR-05](docs/adrs/05-exchange-gas-pressure.md) | `library/links/gas_gap_switch.py`, `exchange_gas.py` | Component, integration, and acceptance tests; `data/systems.md` |
 | Gas pushing | [ADR-02](docs/adrs/02-gas-pushing-routine.md) | `library/links/gas_pushing.py` | Component and acceptance tests; `data/systems.md` |
-| Head designs and measurements | [Current proposal](docs/proposals/pulse-tube-model-direction.md), [archived ADR-03](docs/adrs/archive/03-coupled-capacity-maps.md) | `library/heads/`, `measurements/test_stand.py` | `library/test_head_data.py`, `measurements/`; `data/heads/`, `data/test_stand/`, `data/test_stand.md`, `data/compressors.md` |
+| Head designs and measurements | [ADR-06](docs/adrs/06-reduced-head-dynamics.md), [archived ADR-03](docs/adrs/archive/03-coupled-capacity-maps.md) | `library/heads/`, `measurements/test_stand.py` | `library/test_head_data.py`, `measurements/`; `data/heads/`, `data/test_stand/`, `data/test_stand.md`, `data/compressors.md` |
 | Plots | DESIGN "Architecture and responsibilities" | `plot/` | `plot/` |
 | Maintained validation | [Simulation guide](simulations/README.md) | `simulations/validation/` | `validation/`; `data/<system>/cooldown.toml` and measured traces |
 | Data preparation | [Tool guide](tools/README.md) | `tools/` | `data/`; packaged property and head-design data |

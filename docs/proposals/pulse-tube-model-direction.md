@@ -1,6 +1,7 @@
 # Pulse-tube model direction
 
-This proposal records the candidate equation set agreed for handoff on 2026-11-10: five fitted coefficients, seven material-piece energy entries, and all three thermal connections. The candidate has since been implemented and tested; revisions remain under discussion. [DESIGN](../DESIGN.md#open-decisions) records the head-model replacement as in progress.
+Status: superseded by [ADR-06](../adrs/06-reduced-head-dynamics.md).
+This document preserves the earlier candidate specification.
 
 The objective is a compact dynamical model that can jointly fit the cooldown trajectories, load-map points, and cross-couplings. Physical derivations guide the functional forms and preserve useful constraints; reproducing pulse-tube engineering is not an objective. Added structure must address an identified limitation in representing those targets and explain why it improves on the failed formulations. Prioritize revisions and removals; additions need evidence of promise beforehand. This priority governs the closure choices below, including how far to pursue physical derivations.
 

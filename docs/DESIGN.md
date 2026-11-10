@@ -48,10 +48,11 @@ each node's material heat capacity and energy balance. Names identify nodes and
 links in configuration and results; the graph maps link-local order to the
 engine's array indices.
 
-The current integrated state is node temperature. Boundary nodes retain their
+The current engine integrates node temperatures. Boundary nodes retain their
 initial temperatures while links continue to exchange heat with them. The
-representation of internal thermal state in the replacement head model is an
-[open decision](#open-decisions).
+adopted head model carries seven material-piece energy entries, specified in
+[ADR-06](adrs/06-reduced-head-dynamics.md). Their engine
+integration is task 3.4.
 
 ## How a run proceeds
 
@@ -154,13 +155,14 @@ the model. Current coverage and unfinished validation work are tracked in
 
 ## Open decisions
 
-The pulse-tube head model is being replaced. The agreed direction represents a
-head through its two stages and regenerator clamp, with internal thermal state
-belonging to the head model. In the reference fridge, stage 1 connects to PRP,
-stage 2 to CFP, and the clamp to RGP. The formulation, fitted parameters, and
-engine integration remain in progress; the
-[head-model discussion](proposals/pulse-tube-model-direction.md) records the
-current understanding.
+The adopted pulse-tube head formulation is a reduced nonlinear dynamical system
+model with seven internal energy states, stage and clamp temperatures as inputs,
+and cooling powers as outputs. [ADR-06](adrs/06-reduced-head-dynamics.md)
+specifies its vector field, output map, calibration, and algebraic clamp
+relation. In the reference fridge, stage 1 connects to PRP, stage 2 to CFP, and
+the clamp to RGP.
+The stand condition sets clamp load to zero and solves its free temperature.
+Production implementation and engine integration remain work for task 3.4.
 
 The cooler link has been removed. Shared head-design data and loaders retain
 the representation from [archived ADR-03](adrs/archive/03-coupled-capacity-maps.md).
