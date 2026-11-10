@@ -1,4 +1,4 @@
-"""Drive of one gas manifold, from `docs/adrs/03-coupled-capacity-maps.md`.
+"""Drive of one gas manifold, from `docs/adrs/archive/03-coupled-capacity-maps.md`.
 
 The heads, compressors, and warm lines on a manifold share its supply and return pressures. The mean pressure P is the
 one at which the manifold's gas volumes hold its helium charge. The pressure swing dP between supply P + dP / 2 and

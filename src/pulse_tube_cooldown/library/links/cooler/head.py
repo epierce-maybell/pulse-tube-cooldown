@@ -1,4 +1,4 @@
-"""One pulse-tube head's gas inventory, mass swing, and heat flows, from `docs/adrs/03-coupled-capacity-maps.md`.
+"""Head gas inventory, mass swing, and heat flows, from `docs/adrs/archive/03-coupled-capacity-maps.md`.
 
 A head's temperatures run along its chain: the warm flange, the stage-1 section's nodes from its warm end, stage 1, the
 stage-2 section's nodes, and stage 2. Each node's pore gas is at the node's temperature, each stage's heat-exchanger

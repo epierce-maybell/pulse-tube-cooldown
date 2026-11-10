@@ -1,4 +1,4 @@
-"""The cooler as a link: one gas manifold's heads and drive, from `docs/adrs/03-coupled-capacity-maps.md`.
+"""One gas manifold's heads and drive, from `docs/adrs/archive/03-coupled-capacity-maps.md`.
 
 A cooler's configuration names its warm flange, a drive file, and its heads, each with a name, two stage nodes, a head
 model, and a parameter file:

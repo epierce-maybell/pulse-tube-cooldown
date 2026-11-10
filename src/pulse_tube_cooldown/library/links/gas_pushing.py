@@ -1,4 +1,4 @@
-"""Cycle-averaged heat transfer from docs/adrs/gas-pushing-routine.md."""
+"""Cycle-averaged heat transfer from docs/adrs/02-gas-pushing-routine.md."""
 
 from collections.abc import Mapping
 from dataclasses import dataclass

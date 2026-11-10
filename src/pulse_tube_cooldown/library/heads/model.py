@@ -1,4 +1,4 @@
-"""The design shared by every pulse-tube head of one model, from `docs/adrs/03-coupled-capacity-maps.md`."""
+"""Shared head design, from `docs/adrs/archive/03-coupled-capacity-maps.md`."""
 
 from dataclasses import dataclass
 
