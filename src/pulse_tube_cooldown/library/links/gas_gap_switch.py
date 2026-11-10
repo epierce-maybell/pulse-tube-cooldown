@@ -80,6 +80,18 @@ class GasGapSwitch:
     charcoal_mass: float
     brackets: tuple[SwitchBracket, ...] = ()
 
+    def calc_gap_conductance(self, temperature: float, pressure: float) -> float:
+        """Calculates gas-gap conductance before the series brackets.
+
+        Args:
+            temperature: Mean surface temperature in K.
+            pressure: Gas pressure in Pa.
+
+        Returns:
+            Gas-gap conductance in W/K.
+        """
+        return calc_gap_conductance(self.gas, temperature, pressure, area=self.area, gap=self.gap)
+
     def calc_pressure(self, temperature: NDArray[np.float64]) -> float:
         """Calculates equilibrium gas pressure in Pa at the two node temperatures in K."""
         mean = float(np.mean(temperature))
@@ -99,9 +111,7 @@ class GasGapSwitch:
     def calc_energy_balance_terms(self, temperature: NDArray[np.float64]) -> EnergyBalanceTerms:
         """Calculates heat flows in W into the two nodes at their temperatures in K."""
         mean = float(np.mean(temperature))
-        conductance = calc_gap_conductance(
-            self.gas, mean, self.calc_pressure(temperature), area=self.area, gap=self.gap
-        )
+        conductance = self.calc_gap_conductance(mean, self.calc_pressure(temperature))
         at_mean = np.array([mean], dtype=np.float64)
         bracket_resistance = sum(
             bracket.length / (bracket.area * bracket.material.thermal_conductivity(at_mean)[0])
