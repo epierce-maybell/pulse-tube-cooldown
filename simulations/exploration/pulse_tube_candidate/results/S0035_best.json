@@ -1,0 +1,35 @@
+{
+  "evaluation": 55,
+  "parameters": [
+    106.63572292493993,
+    11.034781028468784,
+    0.6040537939346948,
+    769.8904699228616,
+    831.1699566145915
+  ],
+  "score": 1.4179903503295062,
+  "blocks": {
+    "cooldown_T1": 0.305260501014371,
+    "map_T1": 0.3203166497487434,
+    "cooldown_T2": 0.10264136737724205,
+    "map_T2": 0.05758867772343489,
+    "dQ1dT1": 0.06988302011837974,
+    "dQ1dT2": 0.4227417140829904,
+    "dQ2dT1": 0.07355803939508888,
+    "dQ2dT2": 0.06600038086925583
+  },
+  "diagnostics": {
+    "cooldown": {
+      "seconds": 13.074539300054312,
+      "rhs_calls": 1227,
+      "domain_step_retries": 0,
+      "integrator_fallbacks": 0,
+      "maximum_clamp_residual_W": 2.9799887002468495e-09,
+      "maximum_energy_inversion_error_J": 1.174339558929205e-07
+    },
+    "map": {
+      "maximum_balance_residual_W": 6.885834125114343e-10
+    }
+  },
+  "warm_temperature_K": 300.52418201872405
+}

@@ -13,7 +13,7 @@ from simulations.validation.test_stand_steady_state.coupling import analyze_coup
 
 def main() -> None:
     """Reports derivatives and stability for the archived, equilibrated cooler-only cases."""
-    model = ptc.configure_model("data/test_stand/fridge.toml")
+    model = ptc.configure_model("data/test_stand/test_stand.toml")
     cooler = model.graphs[0].links[0]
     mounted = cooler.heads[0]
     chain = [model.graphs[0].get_node_index(name) for name in mounted.calc_chain(cooler.warm_flange)]

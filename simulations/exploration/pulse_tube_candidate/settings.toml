@@ -1,0 +1,36 @@
+# Numerical trial of docs/proposals/pulse-tube-model-direction.md (2026-11-10).
+# Compressor inputs: data/compressors.md; trial values confirmed in chat, 2026-11-10.
+[source]
+mean_pressure = 1.5e6
+pressure_ceiling = 9.5e5
+delivery_per_compressor = 6.6e-3
+
+[numerics]
+solver = "BDF"
+temperature_min = 2.1
+temperature_max = 400.0
+property_knots = 2049
+quadrature_order = 12
+# Resolve the Gd2O2S heat-capacity peak in the local flux quadrature.
+flux_temperature_breaks = [4.8, 5.1, 5.245, 5.3, 5.5, 6.0]
+flux_temperature_ratio = 1.25
+energy_reference_temperature = 2.1
+inversion_temperature_tolerance = 1e-8
+equilibrium_flow_tolerance = 1e-7
+relative_tolerance = 2e-5
+temperature_absolute_tolerance = 1e-5
+energy_absolute_tolerance = 1e-5
+maximum_step = 30.0
+sample_interval = 60.0
+
+[fit]
+# Starting values are numerical guesses, not inferred head properties.
+initial = [150.0, 20.0, 0.2, 3000.0, 300.0]
+# W_star [W], a, b, G1 [W/K], G2 [W/K]. Bounds delimit a numerical search.
+lower = [1.0, 0.0, 0.001, 0.01, 0.01]
+upper = [2000.0, 10000.0, 100.0, 1e6, 1e6]
+maximum_evaluations = 60
+relative_step = 0.002
+# Jacobian normalization floors [W/K], ordered Q1/T1, Q1/T2, Q2/T1, Q2/T2.
+# Each block otherwise uses its measured RMS magnitude; these are fitting scales.
+jacobian_scale_floor = [0.1, 0.1, 0.005, 0.05]

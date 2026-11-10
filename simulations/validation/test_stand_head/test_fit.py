@@ -45,7 +45,7 @@ def test_fit_recovers_the_parameters_behind_synthetic_heater_powers():
 
 def test_template_runs_the_canonical_pt1_5_head():
     """The test-stand template runs PT1.5 with the fitted parameter file and a nonzero stage coupling."""
-    with open("data/test_stand/fridge.toml", "rb") as file:
+    with open("data/test_stand/test_stand.toml", "rb") as file:
         (head,) = tomllib.load(file)["fridge"]["links"][0]["heads"]
 
     assert head["model"] == "PT1.5"

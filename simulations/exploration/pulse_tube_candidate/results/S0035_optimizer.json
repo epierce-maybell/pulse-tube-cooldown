@@ -1,0 +1,20 @@
+{
+  "message": "`xtol` termination condition is satisfied.",
+  "success": true,
+  "evaluations": 5,
+  "optimality": 3180207.9963146844,
+  "active_mask": [
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "jacobian_singular_values": [
+    14139631.584205072,
+    1525.8008047632,
+    9.352098934155963,
+    0.0033160138929975466,
+    1.3415349216079597e-09
+  ]
+}

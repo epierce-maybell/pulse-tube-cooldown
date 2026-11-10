@@ -1,0 +1,20 @@
+{
+  "message": "The maximum number of function evaluations is exceeded.",
+  "success": false,
+  "evaluations": 12,
+  "optimality": 0.6029642006402008,
+  "active_mask": [
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "jacobian_singular_values": [
+    3.7919900727844444,
+    2.3863694054237974,
+    0.9062914948285363,
+    0.6852092174100253,
+    0.2950246910519281
+  ]
+}

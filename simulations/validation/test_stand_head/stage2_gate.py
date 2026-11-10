@@ -3,7 +3,7 @@
 Run from the repository root with `python simulations/validation/test_stand_head/stage2_gate.py`.
 It writes `stage2_gate.txt` beside this file.
 
-The run uses the test-stand template, `data/test_stand/fridge.toml`, with PT1.5's heat-exchanger voids and the
+The run uses the test-stand template, `data/test_stand/test_stand.toml`, with PT1.5's heat-exchanger voids and the
 mean-specific-heat matrix capacity at node boundaries, at a1 = 0.15, R1 = 1e10 Pa s/m^3, and c = 0. The stages are
 held and the matrix nodes are solved. From the template's a2 = 0.05 and R2 = 3e10 Pa s/m^3, each path moves a2 to
 its value and then raises R2, starting each solve from the previous state, which keeps the matrix on its cold branch.
@@ -67,7 +67,7 @@ def main(
         tolerance: Largest net heat flow in W into any matrix node at an accepted state.
     """
     warnings.filterwarnings("ignore", category=RuntimeWarning)
-    model = ptc.configure_model("data/test_stand/fridge.toml")
+    model = ptc.configure_model("data/test_stand/test_stand.toml")
     template = model.graphs[0]
     stages = ("Stage 1", "Stage 2")
     stage_indices = [template.get_node_index(name) for name in stages]

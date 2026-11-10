@@ -1,4 +1,4 @@
-# The pulse-tube test stand's fridge template: copy into a run directory and edit there.
+# The pulse-tube test stand's bare-head template: copy into a run directory and edit there.
 # One PT1.5 head on one compressor, with the stand's stages and radiation shield from data/test_stand.md. The foil on
 # the head's tubes is not modeled; its geometry is unrecorded. A two-compressor run uses
 # data/test_stand/pulse_tube/drive_two_compressors.toml.

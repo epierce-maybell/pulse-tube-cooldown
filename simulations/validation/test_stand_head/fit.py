@@ -4,7 +4,7 @@ Run from the repository root with `python -m simulations.validation.test_stand_h
 this file and `data/heads/pt1_5/parameters.toml`.
 
 The head's a1, a2, R1, R2, and stage coupling c are fitted jointly to every map in `data/test_stand/fit_set.csv`, each
-run at its own compressor count and valve frequency, on the test-stand template `data/test_stand/fridge.toml` with its
+run at its own compressor count and valve frequency, on the test-stand template `data/test_stand/test_stand.toml` with its
 bare-shield radiation link. At each point the stages are held at the measured T1 and T2 and the matrix nodes are
 solved. The residual at a stage is the net heat flow into it, from the cooler, the radiation link, and the heater.
 
@@ -42,7 +42,7 @@ from runs import load_runs  # noqa: E402
 
 __all__ = ["calc_stage_residual", "fit_head"]
 
-TEMPLATE = "data/test_stand/fridge.toml"
+TEMPLATE = "data/test_stand/test_stand.toml"
 TWO_COMPRESSOR_DRIVE = "data/test_stand/pulse_tube/drive_two_compressors.toml"
 
 

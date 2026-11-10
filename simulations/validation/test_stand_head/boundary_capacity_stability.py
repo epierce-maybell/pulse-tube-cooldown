@@ -82,7 +82,7 @@ def growth_rate(graph: Graph, temperature: NDArray[np.float64], fixed: tuple[int
 
 def main() -> None:
     """Writes each void setting's settled root and growth rate."""
-    model = ptc.configure_model("data/test_stand/fridge.toml")
+    model = ptc.configure_model("data/test_stand/test_stand.toml")
     fixed = model.fixed_boundary_nodes
     names = [node.name for node in model.nodes]
     lines = ["Test-stand cold root with mean-specific-heat boundary capacity", ""]
