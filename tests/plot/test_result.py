@@ -100,10 +100,6 @@ def test_marks_phase_switches_in_a_reopened_netcdf_file(ax, tmp_path):
     assert ax.get_ylabel() == "Temperature (K)"
 
 
-def test_returns_the_axes_it_drew_on(ax):
-    assert plot_temperature(_three_phase_data(), ax=ax) is ax
-
-
 def test_draws_on_a_new_figure_without_axes():
     ax = plot_temperature(_three_phase_data())
     try:

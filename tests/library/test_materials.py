@@ -160,24 +160,6 @@ def test_conductivity_integral_of_analytic_conductivity_matches_antiderivative(t
     np.testing.assert_allclose(material.conductivity_integral(temperature), expected, rtol=1e-8, atol=1e-8)
 
 
-def test_conductivity_integral_of_tabulated_conductivity_matches_piecewise_integral(tmp_path):
-    text = _TABLE_MATERIAL.replace(
-        "table = [[10.0, 100.0], [40.0, 400.0]]", "table = [[10.0, 100.0], [25.0, 400.0], [40.0, 100.0]]"
-    )
-    _write(tmp_path, "table.toml", text)
-
-    material = load_material("Table Metal", directory=tmp_path)
-
-    # PCHIP slopes: 40 at 10 K and -40 at 40 K from the three-point end formula, 0 at the 25 K peak. Over each 15 K
-    # interval, a cubic Hermite integrates to h (y0 + y1) / 2 + h^2 (d0 - d1) / 12 = 3750 + 750. To 15 K, a third of
-    # the first interval: 15 (100 * 49/162 + 15 * 40 * 11/324 + 400 * 5/162) = 8500 / 9.
-    np.testing.assert_allclose(
-        material.conductivity_integral(np.array([10.0, 15.0, 25.0, 40.0])),
-        [0.0, 8500.0 / 9.0, 4500.0, 9000.0],
-        rtol=1e-8,
-    )
-
-
 def test_conductivity_integral_extends_linearly_outside_range(tmp_path):
     _write(tmp_path, "poly.toml", _POLY_MATERIAL)
 

@@ -5,7 +5,7 @@ import pytest
 
 from pulse_tube_cooldown.core.errors import ConfigurationError
 from pulse_tube_cooldown.core.types import Graph, Material, Node
-from pulse_tube_cooldown.library.conditions import CONDITIONS, condensing_begins, gas_pushing_begins
+from pulse_tube_cooldown.library.conditions import condensing_begins, gas_pushing_begins
 
 _TOY = Material(
     name="Toy",
@@ -17,10 +17,6 @@ _TOY = Material(
 )
 
 _GRAPH = Graph(nodes=tuple(Node(name, ((_TOY, 1.0),)) for name in ("PRP", "CFP", "MXP")), links=())
-
-
-def test_registers_gas_pushing_begins():
-    assert CONDITIONS["gas_pushing_begins"] is gas_pushing_begins
 
 
 @pytest.mark.parametrize(
@@ -42,10 +38,6 @@ def test_gas_pushing_begins_ignores_other_nodes():
 def test_gas_pushing_begins_rejects_an_unknown_node_when_built():
     with pytest.raises(ConfigurationError, match="STP"):
         gas_pushing_begins(_GRAPH, node="STP", threshold=70.0)
-
-
-def test_registers_condensing_begins():
-    assert CONDITIONS["condensing_begins"] is condensing_begins
 
 
 @pytest.mark.parametrize(

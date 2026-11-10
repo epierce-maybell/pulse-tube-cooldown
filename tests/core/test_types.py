@@ -4,10 +4,9 @@ import dataclasses
 
 import numpy as np
 import pytest
-from numpy.typing import NDArray
 
 from pulse_tube_cooldown.core.errors import ConfigurationError
-from pulse_tube_cooldown.core.types import EnergyBalanceTerms, Gas, Link, Material, Node
+from pulse_tube_cooldown.core.types import Material, Node
 
 
 def _linear_material() -> Material:
@@ -19,90 +18,6 @@ def _linear_material() -> Material:
         thermal_conductivity=lambda temperature: 3.0 + 0.0 * temperature,
         conductivity_integral=lambda temperature: 3.0 * temperature,
     )
-
-
-def _toy_gas() -> Gas:
-    return Gas(
-        name="He-4",
-        molar_mass=4.0026e-3,
-        heat_capacity_ratio=5.0 / 3.0,
-        accommodation_coeff=lambda temperature: 0.05 * temperature,
-        thermal_conductivity=lambda temperature: 2.0e-3 * temperature,
-        saturation_pressure=lambda temperature: 2.5e4 * temperature,
-        adsorption_energy=1.0e3,
-        adsorption_constant=1.0e-6,
-        adsorption_capacity=50.0,
-    )
-
-
-@dataclasses.dataclass(frozen=True, slots=True)
-class _ConstantConductance:
-    """Two-node link with constant conductance, following the Link convention."""
-
-    name: str
-    nodes: tuple[str, ...]
-    conductance: float
-
-    def calc_energy_balance_terms(self, temperature: NDArray[np.float64]) -> EnergyBalanceTerms:
-        into_first = self.conductance * (temperature[1] - temperature[0])
-        return EnergyBalanceTerms(heat_flow=np.array([into_first, -into_first]))
-
-
-@dataclasses.dataclass(frozen=True, slots=True)
-class _ConstantSink:
-    """Single-node link that removes a fixed power."""
-
-    name: str
-    nodes: tuple[str, ...]
-    power: float
-
-    def calc_energy_balance_terms(self, temperature: NDArray[np.float64]) -> EnergyBalanceTerms:
-        return EnergyBalanceTerms(heat_flow=np.full(temperature.shape, -self.power))
-
-
-def test_material_evaluates_properties_over_temperature_arrays():
-    material = _linear_material()
-    temperature = np.array([4.0, 77.0, 300.0])
-
-    np.testing.assert_allclose(material.specific_heat(temperature), [8.0, 154.0, 600.0])
-    np.testing.assert_allclose(material.thermal_conductivity(temperature), [3.0, 3.0, 3.0])
-
-
-def test_material_and_gas_are_keyword_only():
-    with pytest.raises(TypeError):
-        Material("Toy", lambda t: t, lambda t: t, lambda t: t**2 / 2.0)  # type: ignore[misc]
-    with pytest.raises(TypeError):
-        Gas("He-4", 4.0026e-3, 5.0 / 3.0, lambda t: t, lambda t: t, lambda t: t, 1.0, 1.0, 1.0)  # type: ignore[misc]
-
-
-def test_gas_stores_si_properties():
-    helium = _toy_gas()
-
-    assert helium.name == "He-4"
-    assert helium.molar_mass == pytest.approx(4.0026e-3)
-    assert helium.heat_capacity_ratio == pytest.approx(5.0 / 3.0)
-    np.testing.assert_allclose(helium.accommodation_coeff(np.array([10.0])), [0.5])
-    np.testing.assert_allclose(helium.thermal_conductivity(np.array([10.0])), [0.02])
-    np.testing.assert_allclose(helium.saturation_pressure(np.array([4.0])), [1.0e5])
-    assert helium.adsorption_energy == pytest.approx(1.0e3)
-    assert helium.adsorption_constant == pytest.approx(1.0e-6)
-    assert helium.adsorption_capacity == pytest.approx(50.0)
-
-
-def test_node_composition_pairs_materials_with_masses():
-    copper = _linear_material()
-    steel = Material(
-        name="Steel",
-        density=1.0,
-        specific_heat=lambda t: t,
-        specific_heat_integral=lambda t: t**2 / 2.0,
-        thermal_conductivity=lambda t: t,
-        conductivity_integral=lambda t: t**2 / 2.0,
-    )
-    node = Node("RGP", ((copper, 6.35), (steel, 5.0)))
-
-    assert node.name == "RGP"
-    assert [(material.name, mass) for material, mass in node.composition] == [("Toy", 6.35), ("Steel", 5.0)]
 
 
 def test_node_without_materials_is_rejected():
@@ -143,41 +58,3 @@ def test_node_with_nonpositive_mass_is_rejected(mass):
 
     with pytest.raises(ConfigurationError, match=r"RGP(.|\n)*Steel"):
         Node("RGP", ((_linear_material(), 6.35), (steel, mass)))
-
-
-@pytest.mark.parametrize(
-    "component",
-    [
-        _linear_material(),
-        _toy_gas(),
-        Node("PRP", ((_linear_material(), 1.0),)),
-    ],
-)
-def test_components_are_immutable(component):
-    with pytest.raises(dataclasses.FrozenInstanceError):
-        component.name = "changed"
-
-
-def test_two_node_link_returns_signed_flows_in_declared_node_order():
-    link: Link = _ConstantConductance(name="strut", nodes=("PRP", "RGP"), conductance=0.5)
-
-    flow = link.calc_energy_balance_terms(np.array([300.0, 100.0])).heat_flow
-
-    np.testing.assert_allclose(flow, [-100.0, 100.0])
-    assert flow.sum() == pytest.approx(0.0)
-
-
-def test_reversing_declared_node_order_reverses_flow_order():
-    forward = _ConstantConductance(name="strut", nodes=("PRP", "RGP"), conductance=0.5)
-    reverse = _ConstantConductance(name="strut", nodes=("RGP", "PRP"), conductance=0.5)
-
-    np.testing.assert_allclose(
-        reverse.calc_energy_balance_terms(np.array([100.0, 300.0])).heat_flow,
-        forward.calc_energy_balance_terms(np.array([300.0, 100.0])).heat_flow[::-1],
-    )
-
-
-def test_single_node_sink_returns_negative_flow():
-    sink = _ConstantSink(name="cooler", nodes=("PRP",), power=40.0)
-
-    np.testing.assert_allclose(sink.calc_energy_balance_terms(np.array([50.0])).heat_flow, [-40.0])

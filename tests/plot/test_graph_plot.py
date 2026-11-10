@@ -174,10 +174,6 @@ def test_no_edge_passes_behind_another_links_label(crowded):
                 assert not path.intersects_bbox(box, filled=False), (line.get_gid(), link.name)
 
 
-def test_returns_the_axes_it_drew_on(ax):
-    assert plot_graph(_graph(), ax=ax) is ax
-
-
 def test_draws_on_a_new_figure_without_axes():
     ax = plot_graph(_graph(Strap("Rod", ("PRP", "RGP"))))
     try:

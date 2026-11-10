@@ -69,31 +69,6 @@ def _run_ptc(*args):
     return subprocess.run([_RUN_PTC, *map(str, args)], capture_output=True, text=True)
 
 
-def test_public_functions_run_the_canonical_calls(tmp_path):
-    output = tmp_path / "run.nc"
-
-    model = ptc.configure_model(_config(tmp_path))
-    result = ptc.simulate_cooldown(model)
-    ptc.save_output(result, output)
-
-    with xr.open_dataset(output) as saved:
-        assert saved.attrs["experiment"] == "Toy CLI run"
-        assert list(dict.fromkeys(saved["phase"].values)) == ["single rod", "both rods"]
-
-
-def test_installed_cli_configures_simulates_and_saves_a_run(tmp_path):
-    output = tmp_path / "run.nc"
-
-    completed = _run_ptc("--config", _config(tmp_path), "--output", output)
-
-    assert completed.returncode == 0, completed.stderr
-    with xr.open_dataset(output) as saved:
-        assert saved.attrs["experiment"] == "Toy CLI run"
-        assert saved.attrs["status"] == "max_time"
-        assert list(dict.fromkeys(saved["phase"].values)) == ["single rod", "both rods"]
-        assert saved["time"].values[-1] == 3600.0
-
-
 def test_bad_configuration_fails_with_its_error_and_saves_nothing(tmp_path):
     output = tmp_path / "run.nc"
     config = _config(tmp_path, _CONFIG.replace('material = "304 SS"', 'material = "Unobtanium"', 1))

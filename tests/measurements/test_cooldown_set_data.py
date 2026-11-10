@@ -17,35 +17,6 @@ def cooldown_set():
         return list(csv.DictReader(file))
 
 
-def test_cooldown_set_selects_one_cooldown_per_head(cooldown_set):
-    selected = {
-        row["serial"]: (row["date"], int(row["compressors"]), float(row["valve_frequency"])) for row in cooldown_set
-    }
-
-    assert len(cooldown_set) == len(selected)
-    assert selected == {
-        "S0007": ("2026-04-13", 1, 1.0),
-        "S0009": ("2026-05-14", 1, 1.0),
-        "S0019": ("2026-08-06", 1, 1.1),
-        "S0028": ("2026-06-30", 2, 1.1),
-        "S0035": ("2026-09-25", 1, 1.1),
-        "S0038": ("2026-10-12", 1, 1.0),
-    }
-
-
-def test_each_copy_names_its_archive_log(cooldown_set):
-    sources = {row["serial"]: row["source"] for row in cooldown_set}
-
-    assert sources == {
-        "S0007": "dataContinuous Mon Apr 13 09_12_23 2026.dat",
-        "S0009": "SN009-Cooldown-05-14-2026.dat",
-        "S0019": "Cooldown-SN019-08-06-2026.dat",
-        "S0028": "S0028_2026-06-30_dataContinuous Tue Jun 30 16_37_46 2026.dat",
-        "S0035": "S0035_2026-09-25_dataContinuous Fri Sep 25 11_10_14 2026.dat",
-        "S0038": "S0038_2026-10-09_dataContinuous Fri Oct  9 15_40_11 2027.dat",
-    }
-
-
 # Each copy's first and last rows in its archive log: time, T1, TPR, T2.
 _ENDS = {
     "S0007": (

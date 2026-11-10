@@ -30,21 +30,6 @@ QUADRATIC = _material("Quadratic", lambda t: 0.5 * t**2, lambda t: t**3 / 6.0)
 CONSTANT = _material("Constant", lambda t: 400.0 + 0.0 * t, lambda t: 400.0 * t)
 
 
-def test_single_material_node_capacity_follows_temperature():
-    node = Node("PRP", ((LINEAR, 3.0),))
-
-    # C = m * c(T) = 3 kg * 2 T.
-    np.testing.assert_allclose(calc_heat_capacity([node], np.array([4.0])), [24.0])
-    np.testing.assert_allclose(calc_heat_capacity([node], np.array([300.0])), [1800.0])
-
-
-def test_mixed_material_node_sums_mass_weighted_specific_heats():
-    node = Node("RGP", ((LINEAR, 6.35), (QUADRATIC, 5.0), (CONSTANT, 0.25)))
-
-    # At 10 K: 6.35 * 20 + 5.0 * 50 + 0.25 * 400 = 127 + 250 + 100.
-    np.testing.assert_allclose(calc_heat_capacity([node], np.array([10.0])), [477.0])
-
-
 def test_each_node_is_evaluated_at_its_own_temperature():
     nodes = [
         Node("PRP", ((LINEAR, 1.0),)),

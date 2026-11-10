@@ -121,10 +121,10 @@ def test_preserves_temperature_array_shape(tmp_path):
     _write(tmp_path, "test.toml", _TEST_GAS)
 
     gas = load_gas("Test Gas", directory=tmp_path)
-    temperature = np.array([[10.0, 20.0], [3.0, 4.0]])
+    temperature = np.array([[10.0, 20.0], [30.0, 40.0]])
 
-    assert gas.thermal_conductivity(temperature).shape == (2, 2)
-    assert gas.saturation_pressure(temperature).shape == (2, 2)
+    np.testing.assert_allclose(gas.thermal_conductivity(temperature), [[0.01, 0.02], [0.03, 0.04]])
+    np.testing.assert_array_equal(gas.saturation_pressure(temperature), [[np.inf, np.inf], [np.inf, np.inf]])
 
 
 def test_accepts_directory_as_string_and_integer_values(tmp_path):

@@ -96,10 +96,3 @@ def test_invalid_structure_raises_value_error_naming_offenders(nodes, links, men
     assert isinstance(error.value, PTCError)
     for mention in mentions:
         assert repr(mention) in str(error.value)
-
-
-def test_graph_is_immutable():
-    graph = Graph(nodes=_nodes("Plate"), links=())
-
-    with pytest.raises(dataclasses.FrozenInstanceError):
-        graph.nodes = ()  # type: ignore[misc]

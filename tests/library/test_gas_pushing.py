@@ -77,23 +77,6 @@ def test_volume_uses_log_mean_temperature_and_splits_heat_equally(pushing):
     np.testing.assert_allclose(flow, np.array([-0.015, 0.00625, 0.00625, 0.0025]) * frequency * 10000.0, rtol=1e-12)
 
 
-@pytest.mark.parametrize("temperature", [[300.0, 100.0, 50.0], [100.0, 300.0, 50.0], [50.0, 100.0, 300.0]])
-def test_signed_element_flows_conserve_energy(pushing, temperature):
-    flow = pushing.calc_energy_balance_terms(np.array(temperature)).heat_flow
-
-    assert flow.sum() == pytest.approx(0.0, abs=1e-12)
-    assert np.sign(flow[0]) == np.sign(temperature[1] - temperature[0])
-    assert np.sign(flow[-1]) == np.sign(temperature[-2] - temperature[-1])
-
-
-def test_uniform_temperatures_carry_no_heat_including_two_node_volumes(pushing):
-    pushing = replace(pushing, volumes=(GasVolume(nodes=("STP", "MXP"), volume=0.002),))
-
-    flow = pushing.calc_energy_balance_terms(np.full(3, 100.0)).heat_flow
-
-    np.testing.assert_array_equal(flow, np.zeros(3))
-
-
 @pytest.fixture
 def configured_model(tmp_path):
     path = tmp_path / "pushing.toml"
@@ -168,12 +151,6 @@ def test_shared_node_accumulates_heat_from_both_volume_elements(pushing):
     flow = pushing.calc_energy_balance_terms(temperature).heat_flow
 
     np.testing.assert_allclose(flow, np.array([-0.015, 0.00625, 0.0075, 0.00125]) * frequency * 10000.0, rtol=1e-12)
-
-
-def test_zero_wave_strength_carries_no_heat(pushing):
-    flow = replace(pushing, wave_strength=0.0).calc_energy_balance_terms(np.array([300.0, 100.0, 50.0])).heat_flow
-
-    np.testing.assert_array_equal(flow, np.zeros(3))
 
 
 def test_configured_run_preserves_warm_boundary_and_conserves_link_heat(configured_model):

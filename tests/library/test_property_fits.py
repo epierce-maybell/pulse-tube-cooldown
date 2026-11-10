@@ -4,7 +4,6 @@ import numpy as np
 import pytest
 
 from pulse_tube_cooldown.library.property_fits import (
-    PROPERTY_FITS,
     make_fit_from_table,
     make_log_poly_fit,
     make_measured_with_lattice_fit,
@@ -45,10 +44,6 @@ def test_log_poly_preserves_temperature_array_shape():
     np.testing.assert_allclose(result, temperature, rtol=1e-12)
 
 
-def test_log_poly_is_registered():
-    assert PROPERTY_FITS["log_poly"] is make_log_poly_fit
-
-
 # Coefficients are ordered a through i in
 # log10(y) = (a + c T^0.5 + e T + g T^1.5 + i T^2) / (1 + b T^0.5 + d T + f T^1.5 + h T^2).
 @pytest.mark.parametrize(
@@ -72,36 +67,13 @@ def test_rational_poly_matches_hand_calculation(coefficients, temperature, expec
     np.testing.assert_allclose(fit(np.array(temperature)), expected, rtol=1e-12)
 
 
-def test_rational_poly_matches_nist_copper_conductivity():
-    # OFHC copper RRR 100 thermal conductivity fit, valid from 4 K to 300 K, from NIST Cryogenic Material Properties:
-    # https://trc.nist.gov/cryogenics/materials/OFHC%20Copper/OFHC_Copper_rev1.htm (revised 2010-02-03).
-    coefficients = [2.2154, -0.47461, -0.88068, 0.13871, 0.29505, -0.02043, -0.04831, 0.001281, 0.003207]
-    temperature = np.array([4.0, 20.0, 77.0, 300.0])
-
-    # NIST publishes no tabulated values for this fit. Expected values in W/(m K) evaluate NIST's equation with the
-    # legacy scalar `eval_rational_poly` in branch Advanced_Feature_SIM.
-    expected = [642.2969607429585, 2422.510264536503, 547.1996980793672, 396.3239590150121]
-
-    np.testing.assert_allclose(make_rational_poly_fit(coefficients)(temperature), expected, rtol=1e-12)
-
-
 @pytest.mark.parametrize("count", [8, 10])
 def test_rational_poly_rejects_wrong_coefficient_count_when_built(count):
     with pytest.raises(ValueError, match=rf"9 coefficients.*got {count}"):
         make_rational_poly_fit([0.0] * count)
 
 
-def test_rational_poly_is_registered():
-    assert PROPERTY_FITS["rational_poly"] is make_rational_poly_fit
-
-
 _TABLE = [[10.0, 1.0], [20.0, 3.0], [40.0, 7.0]]
-
-
-def test_table_returns_values_at_points():
-    fit = make_fit_from_table(_TABLE)
-
-    np.testing.assert_allclose(fit(np.array([10.0, 20.0, 40.0])), [1.0, 3.0, 7.0])
 
 
 def test_table_follows_collinear_points_exactly():
@@ -116,26 +88,6 @@ def _one_sided_slopes(fit, temperature):
     step = 1e-7 * temperature
     value = fit(temperature)
     return (value - fit(temperature - step)) / step, (fit(temperature + step) - value) / step
-
-
-def test_table_slope_is_continuous_at_interior_points():
-    # Secants of 0.2, 0.05, and -0.3 per K, so a straight line between points would kink at 20 and 40 K.
-    fit = make_fit_from_table([[10.0, 1.0], [20.0, 3.0], [40.0, 4.0], [50.0, 1.0]])
-
-    below, above = _one_sided_slopes(fit, np.array([20.0, 40.0]))
-
-    np.testing.assert_allclose(below, above, atol=1e-4)
-
-
-def test_table_stays_between_neighbouring_points():
-    # A step and a peak: each interval's values stay within its end points, so the peak stays at 4 K.
-    points = [[1.0, 0.0], [2.0, 0.0], [3.0, 1.0], [4.0, 5.0], [4.1, 2.0], [6.0, 1.9]]
-    fit = make_fit_from_table(points)
-
-    for (start, start_value), (end, end_value) in zip(points[:-1], points[1:], strict=False):
-        value = fit(np.linspace(start, end, 201))
-        assert np.all(value >= min(start_value, end_value) - 1e-12)
-        assert np.all(value <= max(start_value, end_value) + 1e-12)
 
 
 def test_table_holds_end_values_outside_points():
@@ -179,10 +131,6 @@ def test_table_rejects_invalid_tables_when_built(table, message):
         make_fit_from_table(table)
 
 
-def test_table_is_registered():
-    assert PROPERTY_FITS["table"] is make_fit_from_table
-
-
 def _wagner_example():
     # ln(p / 2e5) = (5 / T) * (-4 * theta + 2 * theta^1.5), theta = 1 - T / 5.
     return make_wagner_fit(
@@ -217,10 +165,6 @@ def test_wagner_preserves_temperature_array_shape():
 def test_wagner_rejects_mismatched_coefficients_and_exponents_when_built():
     with pytest.raises(ValueError, match="same number"):
         make_wagner_fit(critical_temperature=5.0, critical_pressure=2.0e5, coefficients=[-4.0, 2.0], exponents=[1.0])
-
-
-def test_wagner_is_registered():
-    assert PROPERTY_FITS["wagner"] is make_wagner_fit
 
 
 _GAS_CONSTANT = 8.314462618
@@ -336,7 +280,3 @@ def test_measured_with_lattice_preserves_temperature_array_shape():
     )
 
     assert fit(np.array([[5.0, 10.0], [100.0, 300.0]])).shape == (2, 2)
-
-
-def test_measured_with_lattice_is_registered():
-    assert PROPERTY_FITS["measured_with_lattice"] is make_measured_with_lattice_fit

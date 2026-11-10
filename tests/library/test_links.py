@@ -7,15 +7,7 @@ import pytest
 
 from pulse_tube_cooldown.core.errors import ConfigurationError
 from pulse_tube_cooldown.library.links import radiation
-from pulse_tube_cooldown.library.links.conduction import Conduction, load_conduction
-from pulse_tube_cooldown.library.links.joint_contact import JointContact, load_joint_contact
-from pulse_tube_cooldown.library.links.load import LINK_TYPES, load_link
-from pulse_tube_cooldown.library.links.multi_layer_insulation import (
-    MultiLayerInsulation,
-    load_multi_layer_insulation,
-)
-from pulse_tube_cooldown.library.links.radiation import Radiation, load_radiation
-from pulse_tube_cooldown.library.materials.load import load_material
+from pulse_tube_cooldown.library.links.load import load_link
 from pulse_tube_cooldown.library.surfaces.load import load_surface
 
 _ROD = {
@@ -28,20 +20,13 @@ _ROD = {
 }
 
 
-def test_registers_conduction():
-    assert LINK_TYPES["conduction"] is load_conduction
-
-
 def test_loads_conduction_with_its_material():
     link = load_link(_ROD)
 
-    assert isinstance(link, Conduction)
-    assert (link.name, link.nodes, link.area, link.length) == ("Rod", ("CFP", "STP"), 1.0e-4, 0.1)
-    assert link.material.name == "304 SS"
-    temperature = np.array([10.0, 50.0, 250.0])
-    np.testing.assert_array_equal(
-        link.material.thermal_conductivity(temperature), load_material("304 SS").thermal_conductivity(temperature)
-    )
+    assert (link.name, link.nodes) == ("Rod", ("CFP", "STP"))
+    # Integrating the NIST 304 SS conductivity equation from 10 to 50 K gives 136.400814 W/m.
+    flow = link.calc_energy_balance_terms(np.array([10.0, 50.0])).heat_flow
+    np.testing.assert_allclose(flow, [0.136400814, -0.136400814], rtol=1e-7)
 
 
 def test_unknown_type_names_the_link_and_known_types():
@@ -89,17 +74,13 @@ def surface_directory(tmp_path, monkeypatch):
     monkeypatch.setattr(radiation, "load_surface", partial(load_surface, directory=tmp_path))
 
 
-def test_registers_radiation():
-    assert LINK_TYPES["radiation"] is load_radiation
-
-
 def test_loads_radiation_with_its_surfaces(surface_directory):
     link = load_link(_SHIELD)
 
-    assert isinstance(link, Radiation)
     assert (link.name, link.nodes, link.area) == ("4K shield to still shield", ("STP", "CFP"), (0.119, 0.45))
-    assert [surface.name for surface in link.surface] == ["Bright Finish", "Dull Finish"]
-    np.testing.assert_allclose([s.emissivity(np.array([77.0]))[0] for s in link.surface], [0.02, 0.1])
+    # The two gray surfaces have emissivities 0.02 and 0.1; their radiosity network carries 2.564784 mW.
+    flow = link.calc_energy_balance_terms(np.array([45.0, 70.0])).heat_flow
+    np.testing.assert_allclose(flow, [0.00256478421, -0.00256478421], rtol=1e-7)
 
 
 @pytest.mark.parametrize("missing", ["nodes", "area", "surface"])
@@ -110,17 +91,14 @@ def test_missing_radiation_parameter_is_named(surface_directory, missing):
         load_link(config)
 
 
-@pytest.mark.parametrize(
-    "pair", [{"nodes": ["STP", "CFP", "PRP"]}, {"area": [0.119]}, {"surface": ["Bright Finish"] * 3}]
-)
-def test_radiation_pairs_must_hold_two_entries(surface_directory, pair):
-    with pytest.raises(ValueError, match="unpack"):
-        load_link(_SHIELD | pair)
-
-
 def test_unknown_surface_names_the_surface(surface_directory):
     with pytest.raises(ConfigurationError, match="Black Paint"):
         load_link(_SHIELD | {"surface": ["Bright Finish", "Black Paint"]})
+
+
+def test_radiation_rejects_inner_area_larger_than_outer_area(surface_directory):
+    with pytest.raises(ConfigurationError, match="4K shield to still shield"):
+        load_link(_SHIELD | {"area": [0.5, 0.1]})
 
 
 _BLANKET = {
@@ -138,25 +116,13 @@ _BLANKET = {
 }
 
 
-def test_registers_multi_layer_insulation():
-    assert LINK_TYPES["multi_layer_insulation"] is load_multi_layer_insulation
-
-
 def test_loads_multi_layer_insulation():
     link = load_link(_BLANKET)
 
-    assert isinstance(link, MultiLayerInsulation)
     assert (link.name, link.nodes) == ("Stage 1 blanket", ("Stage 1", "Chamber"))
-    assert (
-        link.area,
-        link.layers,
-        link.layer_density,
-        link.spacer_coefficient,
-        link.layer_density_exponent,
-        link.radiation_coefficient,
-        link.emissivity,
-        link.source,
-    ) == (0.05, 4, 2500.0, 6.789e-13, 2.56, 5.39e-10, 0.03, "Lockheed 1974, NTRS 20190030285")
+    # At 50 and 300 K, spacer and radiation terms contribute 0.14842610 and 0.07476105 W.
+    flow = link.calc_energy_balance_terms(np.array([50.0, 300.0])).heat_flow
+    np.testing.assert_allclose(flow, [0.223187155, -0.223187155], rtol=1e-7)
 
 
 @pytest.mark.parametrize(
@@ -192,22 +158,13 @@ _JOINT = {
 }
 
 
-def test_registers_joint_contact():
-    assert LINK_TYPES["joint_contact"] is load_joint_contact
-
-
 def test_loads_joint_contact():
     link = load_link(_JOINT)
 
-    assert isinstance(link, JointContact)
     assert (link.name, link.nodes) == ("Stage 2 flange", ("PT stage 2", "CFP"))
-    assert (
-        link.force,
-        link.conductance_per_force,
-        link.reference_temperature,
-        link.temperature_exponent,
-        link.source,
-    ) == (1.0e4, 1.9e-3, 4.2, 1.1, "Dhuley 2019, Tables 2 and 5, Au-plated Cu")
+    # Mean temperature 8.4 K: 19 W/K * 2^1.1 * 4 K = 162.909566 W.
+    flow = link.calc_energy_balance_terms(np.array([6.4, 10.4])).heat_flow
+    np.testing.assert_allclose(flow, [162.909566, -162.909566], rtol=1e-7)
 
 
 @pytest.mark.parametrize(

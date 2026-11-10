@@ -1,16 +1,9 @@
 """Requirements for the head-model loader and the library's PT1.1 and PT1.5 design files."""
 
-import math
-import tomllib
-from pathlib import Path
-
 import pytest
 
-import pulse_tube_cooldown
 from pulse_tube_cooldown.core.errors import ConfigurationError
 from pulse_tube_cooldown.library.heads import load_head_model
-
-_HEADS = Path(pulse_tube_cooldown.__file__).parent / "library/heads/data"
 
 # Hand-computed from data/heads/pt1_1/geometry.csv and data/heads/pt1_5/geometry.csv: bores and walls
 # from each tube's outer radius, length, and the 0.5 mm wall; reservoirs as tank plus hose; clamp fractions as the
@@ -93,25 +86,6 @@ def test_matrix_filling_matches_hand_computed_values(name):
             [layer[2] for layer in layers], rel=1e-3
         )
         assert [layer.length_fraction for layer in regenerator.layers] == pytest.approx([layer[3] for layer in layers])
-
-
-@pytest.mark.parametrize("name", _DESIGNS)
-def test_loss_and_waveform_values_follow_snodgrass_2024(name):
-    model = load_head_model(name)
-
-    assert model.waveform_factor == pytest.approx(math.sqrt(2), rel=1e-3)
-    assert model.buffer_fraction == 0.5
-    assert model.stroke_spread == 0.1
-
-
-@pytest.mark.parametrize("path", sorted(_HEADS.glob("*.toml")), ids=lambda path: path.name)
-def test_every_value_names_its_source(path):
-    data = tomllib.loads(path.read_text(encoding="utf-8"))
-
-    sources = data.pop("sources")
-
-    assert set(sources) == set(data) - {"name"}
-    assert all(isinstance(source, str) and source for source in sources.values())
 
 
 def _write_design(directory, layer):

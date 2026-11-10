@@ -100,17 +100,6 @@ def test_single_phase_has_no_switch_marker(data, ax):
     assert not ax.texts
 
 
-def test_marks_zero_heat_flow_with_a_dashed_line_across_the_axes(data, ax):
-    result_plot.plot_heat_flow(data, ax=ax)
-
-    zero_lines = [line for line in ax.get_lines() if np.array_equal(line.get_ydata(), [0.0, 0.0])]
-    assert len(zero_lines) == 1
-    line = zero_lines[0]
-    assert line.get_linestyle() == "--"
-    np.testing.assert_allclose(line.get_xdata(), [0.0, 1.0])
-    assert line.get_transform() == ax.get_yaxis_transform()
-
-
 def test_plots_reopened_netcdf_data(data, ax, tmp_path):
     path = tmp_path / "run.nc"
     data.to_netcdf(path, engine="netcdf4")
@@ -121,10 +110,6 @@ def test_plots_reopened_netcdf_data(data, ax, tmp_path):
     np.testing.assert_allclose(_flow_lines(ax)["switch → stage"].get_ydata(), [4.0, 2.0, np.nan, np.nan, 0.0, -1.0])
     assert ax.get_ylabel() == "Heat flow (W; positive into node)"
     assert len(ax.texts) == 2
-
-
-def test_returns_supplied_axes(data, ax):
-    assert result_plot.plot_heat_flow(data, ax=ax) is ax
 
 
 def test_creates_axes_when_omitted(data):

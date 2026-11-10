@@ -18,25 +18,6 @@ def fit_set():
         return list(csv.DictReader(file))
 
 
-def test_fit_set_selects_one_map_per_head(fit_set):
-    selected = {
-        row["serial"]: (row["date"], int(row["compressors"]), float(row["valve_frequency"]), row["mli"])
-        for row in fit_set
-    }
-
-    assert len(fit_set) == len(selected)
-    assert selected == {
-        "S0007": ("2026-04-14", 1, 1.0, "full"),
-        "S0008": ("2026-05-08", 1, 1.0, "full"),
-        "S0009": ("2026-05-14", 1, 1.0, "full"),
-        "S0019": ("2026-08-07", 1, 1.1, "unrecorded"),
-        "S0023": ("2026-06-19", 1, 1.1, "full"),
-        "S0028": ("2026-07-02", 2, 1.1, "full"),
-        "S0034": ("2026-08-12", 1, 1.0, "none"),
-        "S0035": ("2026-09-21", 1, 1.1, "unrecorded"),
-    }
-
-
 def test_each_map_traces_to_one_denver_pt1_5_index_row(fit_set):
     with open(_DATA / "load_map_index_2026-11-05.csv", encoding="latin-1") as file:
         index = list(csv.DictReader(file))

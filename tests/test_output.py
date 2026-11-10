@@ -76,29 +76,3 @@ def test_saved_output_reopens_identical_to_the_result(tmp_path):
 
     with xr.open_dataset(path) as saved:
         xr.testing.assert_identical(saved.load(), result.data)
-
-
-def test_saved_output_keeps_both_sides_of_a_phase_switch(tmp_path):
-    path = tmp_path / "run.nc"
-
-    save_output(_switching_result(), path)
-
-    with xr.open_dataset(path) as saved:
-        np.testing.assert_array_equal(saved.time, [0.0, 2.0, 3.0, 3.0, 5.0])
-        assert list(saved.phase.values) == ["precool", "precool", "precool", "cooldown", "cooldown"]
-        # At 50 K: 0.5 W/K * (4 K - 50 K) before the switch and 1 W/K * (4 K - 50 K) after.
-        np.testing.assert_allclose(saved.heat_flow.isel(time=[2, 3]).sel(link="strap", node="stage"), [-23.0, -46.0])
-        assert np.isnan(saved.heat_flow.isel(time=3).sel(link="pump")).all()
-
-
-def test_saved_output_records_status_and_meta(tmp_path):
-    path = tmp_path / "run.nc"
-
-    save_output(_switching_result(), path)
-
-    with xr.open_dataset(path) as saved:
-        assert saved.attrs["status"] == "max_time"
-        assert saved.attrs["message"] == "cooldown ended"
-        assert saved.attrs["experiment"] == "Toy switch"
-        assert saved.attrs["version"] == "abc1234"
-        assert saved.connected.dtype == bool

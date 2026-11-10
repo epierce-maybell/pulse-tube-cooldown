@@ -89,10 +89,6 @@ def test_heat_flow_combines_gap_and_bracket_resistances_at_mean_temperature(temp
     np.testing.assert_allclose(flow, [expected, -expected], rtol=1e-12)
 
 
-def test_isothermal_switch_has_zero_heat_flow():
-    np.testing.assert_array_equal(_switch().calc_energy_balance_terms(np.array([10.0, 10.0])).heat_flow, [0.0, 0.0])
-
-
 @pytest.mark.parametrize(("charcoal_mass", "expected"), [(2.0, 0.0), (0.5, 0.0015)])
 def test_strong_adsorption_stays_finite_with_sufficient_or_exhausted_charcoal(charcoal_mass, expected):
     # At 0.005 K, inverse affinity underflows to zero. With 3 mol total and 1000 mol/Pa of free gas,

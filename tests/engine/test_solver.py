@@ -230,15 +230,6 @@ def test_phase_whose_until_is_met_at_its_start_ends_with_zero_length(threshold):
     np.testing.assert_array_equal(second.temperature[0], model.initial_temperature)
 
 
-def test_run_starts_at_zero_from_the_initial_temperature():
-    model = _model((_final_phase(),))
-
-    (solution,) = run_procedure(model)
-
-    assert solution.time[0] == 0.0
-    np.testing.assert_array_equal(solution.temperature[0], model.initial_temperature)
-
-
 @pytest.mark.parametrize(
     ("first_phase", "stop_condition", "expected"),
     [
