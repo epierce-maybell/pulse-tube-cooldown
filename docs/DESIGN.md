@@ -80,11 +80,12 @@ by name, carry units and supplied run metadata, and distinguish inactive links
 from links carrying zero heat. The detailed result schema and interfaces are
 documented with the [core types](../src/pulse_tube_cooldown/core/types.py).
 
-Experiments group their input configuration, additional run inputs, results,
+Maintained validation runs group their input configuration, additional run inputs, results,
 figures, and interpretation in a run directory. Run scripts manage this
 arrangement and record the inputs and provenance needed to understand a result.
 The output function writes the result dataset to the requested file. The
-[toy run](../simulations/validation/toy/) provides a small working example.
+[toy integration test](../tests/integration/test_toy_run.py) checks this sequence
+against a conduction reference using its [fixture](../tests/integration/fixtures/toy.toml).
 
 The engine also provides a
 [steady-state solver](../src/pulse_tube_cooldown/engine/steady_state.py) that
@@ -117,7 +118,7 @@ Materials, gases, surfaces, and head designs have named library data files.
 Property loaders construct temperature-dependent functions and integrals from
 sourced fits or tables. Validity ranges accompany the data; values outside them
 use the endpoint behavior and warnings described by the loaders. Real-helium
-properties used by the existing head implementation are supplied through
+properties for head-model work are supplied through
 [`library/gases/helium.py`](../src/pulse_tube_cooldown/library/gases/helium.py).
 
 Physical inputs use SI units. Values that depend on the system, material, or run
@@ -131,15 +132,16 @@ changed between configurations.
 |---|---|
 | `src/pulse_tube_cooldown/` | The reusable simulator, component library, measurement readers, and plotting functions. Packaged property and head-design data live with their library loaders. |
 | `tests/` | Core, engine, component, interface, integration, and acceptance tests. [Test policy](../tests/README.md) describes their responsibilities and authorship rules. |
-| `data/` | Source measurements, hardware records, geometry, curated input tables, and configuration templates. [The data map](../data/README.md) identifies their locations and provenance. |
-| `data/scripts/` | Preparation tools that turn source records into curated inputs and library data. [Their README](../data/scripts/README.md) describes those workflows. |
-| `simulations/` | Experiments and validation runs with their analysis code, selected inputs, generated outputs, and findings. Experiment-specific comparison and fitting logic lives here. |
+| `data/` | Source measurements, hardware records, geometry, and curated physical inputs. [The data map](../data/README.md) identifies their locations and provenance. |
+| `tools/` | Preparation tools that turn source records into curated inputs and library data. [Their README](../tools/README.md) describes those workflows. |
+| `simulations/` | Maintained validation: the head-comparison target and legacy refrigerator baseline, with their selected inputs, retained results, and findings. |
+| `../pulse-tube-research/` | Local, unversioned workspace for exploratory models, fits, diagnostics, and generated research outputs. |
 | `docs/` | Architecture, ADRs, proposals, reference papers, diagrams, and reporting material. Archived ADRs retain earlier decisions. |
 | `CONTEXT.md`, `GLOSSARY.md`, `TASKS.md`, `AGENTS.md` | Detailed navigation, shared language, current work, and contribution rules. |
 
-Source measurements and prepared physical inputs are distinguished from fitted
-candidates and experiment results. For example, test-stand readers live in the
-package, while a head-comparison experiment chooses its records and analyzes
+Source measurements and prepared physical inputs live in this repository. Fitted
+candidates and exploratory results live in `../pulse-tube-research/`. For example,
+test-stand readers live in the package, while the head comparison chooses its records and analyzes
 predictions under `simulations/`. Refrigerator comparison windows, channel
 mappings, and scoring are recorded with the system data and validation code.
 
@@ -158,6 +160,8 @@ engine integration remain in progress; the
 [head-model discussion](proposals/pulse-tube-model-direction.md) records the
 current understanding.
 
-The existing head implementation and associated experiments follow
-[archived ADR-03](adrs/archive/03-coupled-capacity-maps.md). The replacement work
-and the archetypal head are tracked in [TASKS.md](../TASKS.md).
+The cooler link has been removed. Shared head-design data and loaders retain
+the representation from [archived ADR-03](adrs/archive/03-coupled-capacity-maps.md).
+Its experiments and subsequent candidate investigations are preserved in
+`../pulse-tube-research/`, with original paths and a hashed snapshot manifest.
+The replacement work and the archetypal head are tracked in [TASKS.md](../TASKS.md).

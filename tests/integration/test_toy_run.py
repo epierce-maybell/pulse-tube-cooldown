@@ -16,7 +16,7 @@ from scipy.optimize import brentq
 import pulse_tube_cooldown as ptc
 from pulse_tube_cooldown.library.materials.load import load_material
 
-_CONFIG = Path(__file__).parents[2] / "simulations" / "validation" / "toy" / "toy.toml"
+_CONFIG = Path(__file__).parent / "fixtures" / "toy.toml"
 _RUN_PTC = shutil.which("run-ptc", path=Path(sys.executable).parent)
 
 # The Plate cools toward the Bath, held fixed, through Rod A, and through Rods A and B once it reaches the switch

@@ -49,7 +49,7 @@ The human will write acceptance tests for these targets before implementation.
 
 The concrete comparison target is [head_comparison/comparison.png](../../simulations/validation/head_comparison/comparison.png): both stage cooldown traces, cold load maps, and all four Jacobian panels. The two-compressor record is a different head, not a controlled same-head compressor-doubling measurement.
 
-Retain the observed sign and temperature dependence of the cross-coupling. In the heat-positive convention, `dQ1/dT2` is positive and weakens as `T1` rises; `dQ2/dT1` is small. See [load-map characterization](../../simulations/exploration/loadmaps/characterization.md). The contrary wording in the older `pulse-tube-model` context is not the target. Cooldown also includes the stage-2 slowdown and the moving balance as stage 1 cools.
+Retain the observed sign and temperature dependence of the cross-coupling. In the heat-positive convention, `dQ1/dT2` is positive and weakens as `T1` rises; `dQ2/dT1` is small. See [load-map characterization](../../../pulse-tube-research/simulations/exploration/loadmaps/characterization.md). The contrary wording in the older `pulse-tube-model` context is not the target. Cooldown also includes the stage-2 slowdown and the moving balance as stage 1 cools.
 
 ## Candidate equations
 

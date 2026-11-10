@@ -4,12 +4,12 @@ SN09 and FP1 share the six-plate architecture: PRP, RGP, CFP, STP, ICP, and MXP.
 
 ## Pulse-tube heads
 
-Neither system's heads have test-stand records: FP1's predate the stand, and SN09's serial is unrecorded. An archetypal head is needed for these comparisons. The existing PT1.5 parameters in `heads/pt1_5/parameters.toml` were fitted to `test_stand/fit_set.csv` under [archived ADR-03](../docs/adrs/archive/03-coupled-capacity-maps.md). The replacement formulation is [in progress](../docs/DESIGN.md#open-decisions), and the full refrigerator configurations remain tasks 4.1 and 4.2. SN09's head was recorded as a PT1.1, but no PT1.1 test-stand records exist. `test_stand/s0009/` holds S0009's test-stand records; `heads/pt1_1/geometry.csv` holds the CAD-derived geometry of SN09's PT1.1 head, and `heads/pt1_5/geometry.csv` that of FP1's PT1.5 heads.
+Neither system's heads have test-stand records: FP1's predate the stand, and SN09's serial is unrecorded. An archetypal head is needed for these comparisons. The retired PT1.5 parameters, preserved in `../pulse-tube-research/data/heads/pt1_5/parameters.toml` relative to the repository root, were fitted to `test_stand/fit_set.csv` under [archived ADR-03](../docs/adrs/archive/03-coupled-capacity-maps.md). The replacement formulation is [in progress](../docs/DESIGN.md#open-decisions), and the full refrigerator configurations remain tasks 4.1 and 4.2. SN09's head was recorded as a PT1.1, but no PT1.1 test-stand records exist. `test_stand/s0009/` holds S0009's test-stand records; `heads/pt1_1/geometry.csv` holds the CAD-derived geometry of SN09's PT1.1 head, and `heads/pt1_5/geometry.csv` that of FP1's PT1.5 heads.
 
 ## Cooldown records
 
 - **SN09**: `sn09/cooldown_2026-06-04.dat`, 2026-06-04 00:01 to 2026-06-06 23:00 UTC at 60 s. Channels PRP, RGP, CFP, STP, ICP, MXP, and DHX. The compressors start at 00:21 UTC, the last sample before CFP and PRP begin to fall. Condensing begins at 2026-06-06 14:15 UTC, 61.9 h after compressor start, when STP steps down by about 2 K and ICP and DHX follow; MXP reads 14.5 K. RGP reads a constant 294.94 K until 00:29 UTC.
-- **FP1**: `fp1/cooldown_2026-10-29.dat`, 2026-10-29 16:15 to 2026-11-01 06:00 UTC at 60 s, derived by `data/scripts/derive_fp1_cooldown.py` (from the repository root) as 60 s means of the InfluxDB export `FP1-10-29.csv` (the `thermometer` measurement's `temperature` field at 1 s). Channels PRP, RGP, CFP, STP, MXP, top DHX, and CMN. FP1 has no ICP thermometer. The compressors start at 16:31 UTC, the last sample before PRP and CFP begin to fall. Condensing begins at 2026-10-31 10:42 UTC, 42.2 h after compressor start, when STP steps down by about 2 K; the MXP channel reads 16.1 K. For this run the MXP channel reads a sensor on the DHX. It logs only from 2026-10-31 04:39 UTC (44.9 K). CMN is a sub-kelvin thermometer, below 0.1 K throughout, with occasional -2.0 sentinels.
+- **FP1**: `fp1/cooldown_2026-10-29.dat`, 2026-10-29 16:15 to 2026-11-01 06:00 UTC at 60 s, derived by `tools/derive_fp1_cooldown.py` (from the repository root) as 60 s means of the InfluxDB export `FP1-10-29.csv` (the `thermometer` measurement's `temperature` field at 1 s). Channels PRP, RGP, CFP, STP, MXP, top DHX, and CMN. FP1 has no ICP thermometer. The compressors start at 16:31 UTC, the last sample before PRP and CFP begin to fall. Condensing begins at 2026-10-31 10:42 UTC, 42.2 h after compressor start, when STP steps down by about 2 K; the MXP channel reads 16.1 K. For this run the MXP channel reads a sensor on the DHX. It logs only from 2026-10-31 04:39 UTC (44.9 K). CMN is a sub-kelvin thermometer, below 0.1 K throughout, with occasional -2.0 sentinels.
 
 Both routines begin condensing once their MXP channel falls below 14 K (`exit_temperature` in the `gas_pushing` subroutine). Compressor start and the onset of condensing are read from the traces above.
 
@@ -20,7 +20,7 @@ approximation and its assumptions.
 
 ## Inventories and geometry
 
-`<system>/bom_by_node.csv` gives node masses by material. `<system>/geometry.csv` is read from STEP exports of the CAD assemblies by `data/scripts/step_geometry.py` (`uv run --with cadquery`, from the repository root), one row per value with its source. Supports are the legacy model's values.
+`<system>/bom_by_node.csv` gives node masses by material. `<system>/geometry.csv` is read from STEP exports of the CAD assemblies by `tools/step_geometry.py` (`uv run --with cadquery`, from the repository root), one row per value with its source. Supports are the legacy model's values.
 
 ## Gas-gap switches
 

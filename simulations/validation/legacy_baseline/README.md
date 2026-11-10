@@ -1,7 +1,8 @@
 # Legacy baseline
 
 The legacy model run on SN09 and FP1 and scored with `measurements.residual`. `../legacy_baseline.py` makes every
-file here except this one and `inputs.toml`; run it from `simulations/validation/`.
+file here except this one and `inputs.toml`. Run
+`uv run python -m simulations.validation.legacy_baseline` from the repository root.
 
 ## Baselines
 

@@ -5,4 +5,4 @@ __pycache__/
 .pytest_cache/
 .claude/settings.local.json
 dist/
-simulations/exploration/loadmaps/muenster_figures/
+simulations/**/results/

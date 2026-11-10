@@ -20,7 +20,8 @@ from pathlib import Path
 import numpy as np
 import xarray as xr
 from matplotlib.figure import Figure
-from measurements import read_measurements, residual
+
+from simulations.validation.measurements import read_measurements, residual
 
 
 def legacy_system(base: dict, system: str) -> dict:

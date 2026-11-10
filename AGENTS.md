@@ -13,6 +13,7 @@
 ## Code
 5. An `__init__.py` holds only a docstring and re-exports. Definitions live in named modules, not `__init__.py` files.
 6. Keep the directories organized. Caring about the codebase extends to caring about the repository structure. That is the entry-point and logical map for both humans and agents, so it needs to be clear and simple to navigate.
+   Exploratory models, fits, diagnostics, and generated research outputs belong in `../pulse-tube-research/`. This repository holds the reusable library in `src/`, its tests and fixtures in `tests/`, source and curated inputs in `data/`, preparation tools in `tools/`, and maintained validation runs in `simulations/`. Promote research into the library against the agreed design and acceptance criteria.
 7. Values that could change between systems, materials, or runs live in configuration or library data files, not in magic numbers or module-level CONSTANTS. Sources should be recorded in a logical place, near the value if possible. Do not treat a chosen default as an invariant. Physical values are always in SI units.
 8. Handle an error only when it could reasonably happen, would corrupt something downstream, and needs handling beyond what Python already raises. Parse at the boundary rather than validate throughout, and only where parsing solves a real problem.
 9. Comments and documentation say what is, not what isn't, and not why a choice was made. Defensive comments, guards against hypothetical misuse, and explanations aimed at future agents are code smells. Assume later agents are as capable as you.

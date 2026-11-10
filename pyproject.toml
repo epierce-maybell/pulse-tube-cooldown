@@ -44,3 +44,7 @@ convention = "google"
 
 [tool.uv.sources]
 he34pak = { git = "ssh://git@github.com/MaybellQuantum/he34pak.git" }
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--import-mode=importlib"

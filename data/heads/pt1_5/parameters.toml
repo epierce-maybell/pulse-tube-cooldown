@@ -1,8 +1,0 @@
-packing = [0.1011, 0.0184]
-resistance = [7.982e+09, 5.074e+10]  # Pa s/m^3
-frequency = 1.0  # Hz
-
-[sources]
-packing = "simulations/validation/test_stand_head/fit.txt: fitted to data/test_stand/fit_set.csv"
-resistance = "simulations/validation/test_stand_head/fit.txt: fitted to data/test_stand/fit_set.csv"
-frequency = "data/test_stand/fit_set.csv: the standard runs' 1.0 Hz, such as S0009's"
