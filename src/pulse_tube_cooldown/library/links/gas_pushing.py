@@ -56,35 +56,72 @@ class GasPushing:
 
     def calc_energy_balance_terms(self, temperature: NDArray[np.float64]) -> EnergyBalanceTerms:
         """Returns heat flow into each node in W for node temperatures in K, both in `nodes` order."""
-        indices = [tuple(self.nodes.index(node) for node in volume.nodes) for volume in self.volumes]
-        gas_temperature = np.array([_log_mean(temperature[list(pair)]) for pair in indices])
-        capacity = np.array([volume.volume for volume in self.volumes]) / (R * gas_temperature)
-        downstream = np.cumsum(capacity[::-1])[::-1]
+        volume_node_indices = [tuple(self.nodes.index(node) for node in volume.nodes) for volume in self.volumes]
+        gas_temperature = np.array([_log_mean(temperature[list(indices)]) for indices in volume_node_indices])
+        volume_molar_capacity = np.array([volume.volume for volume in self.volumes]) / (R * gas_temperature)
+        downstream_molar_capacity = np.cumsum(volume_molar_capacity[::-1])[::-1]
         warm_temperature = float(temperature[0])
-        path_capacity = self.warm_volume / (R * warm_temperature) + downstream[0]
-        buffer_capacity = self.buffer_volume / (R * warm_temperature)
-        pressure_rate = self._calc_pressure_rate(path_capacity, buffer_capacity, warm_temperature)
+        path_molar_capacity = self.warm_volume / (R * warm_temperature) + downstream_molar_capacity[0]
+        buffer_molar_capacity = self.buffer_volume / (R * warm_temperature)
+        cycle_pressure_rate = self.calc_pressure_rate(path_molar_capacity, buffer_molar_capacity, warm_temperature)
 
-        boundary_heat = (
-            2.5 * R * pressure_rate * downstream * (np.r_[warm_temperature, gas_temperature[:-1]] - gas_temperature)
+        upstream_temperature = np.concatenate(([warm_temperature], gas_temperature[:-1]))
+        molar_heat_capacity = 2.5 * R
+        boundary_heat_flow = (
+            molar_heat_capacity
+            * cycle_pressure_rate
+            * downstream_molar_capacity
+            * (upstream_temperature - gas_temperature)
         )
-        element_heat = boundary_heat - np.r_[boundary_heat[1:], 0.0]
-        flows = np.zeros(len(self.nodes), dtype=np.float64)
-        flows[0] = -boundary_heat[0]
-        for pair, heat in zip(indices, element_heat, strict=True):
-            np.add.at(flows, list(pair), heat / len(pair))
-        return EnergyBalanceTerms(heat_flow=flows)
+        volume_heat_flow = boundary_heat_flow - np.concatenate((boundary_heat_flow[1:], [0.0]))
+        node_heat_flow = np.zeros(len(self.nodes), dtype=np.float64)
+        node_heat_flow[0] = -boundary_heat_flow[0]
+        for indices, heat_flow in zip(volume_node_indices, volume_heat_flow, strict=True):
+            np.add.at(node_heat_flow, list(indices), heat_flow / len(indices))
+        return EnergyBalanceTerms(heat_flow=node_heat_flow)
 
-    def _calc_pressure_rate(self, path_capacity: float, buffer_capacity: float, warm_temperature: float) -> float:
-        """Returns cycle frequency times still-side pressure excursion, in Pa/s."""
+    def calc_pressure_rate(
+        self, path_molar_capacity: float, buffer_molar_capacity: float, warm_temperature: float
+    ) -> float:
+        """Returns cycle frequency times still-side pressure excursion, in Pa/s.
+
+        Args:
+            path_molar_capacity: Still-side gas inventory per unit pressure, mol/Pa.
+            buffer_molar_capacity: Buffer gas inventory per unit pressure, mol/Pa.
+            warm_temperature: Manifold and buffer temperature, K.
+        """
         if self.pump_speed == 0.0 or self.flow_conductance == 0.0 or self.depressurization_time == 0.0:
             return 0.0
-        relaxation_time = path_capacity * buffer_capacity / (self.flow_conductance * (path_capacity + buffer_capacity))
-        excursion_fraction = (
-            buffer_capacity
-            / (path_capacity + buffer_capacity)
-            * -np.expm1(-self.depressurization_time / relaxation_time)
+        equalization_time = (
+            path_molar_capacity
+            * buffer_molar_capacity
+            / (self.flow_conductance * (path_molar_capacity + buffer_molar_capacity))
         )
+        excursion_fraction = (
+            buffer_molar_capacity
+            / (path_molar_capacity + buffer_molar_capacity)
+            * -np.expm1(-self.depressurization_time / equalization_time)
+        )
+        pressure_excursion = self.calc_pressure_excursion(excursion_fraction)
+        if pressure_excursion == 0.0:
+            return 0.0
+        maximum_path_pressure = self.fill_pressure - max(self.refill_pressure - pressure_excursion, 0.0) / 2.0
+        pumping_time = (
+            -path_molar_capacity
+            * R
+            * warm_temperature
+            / self.pump_speed
+            * np.log1p(-pressure_excursion / maximum_path_pressure)
+        )
+        return pressure_excursion / (pumping_time + self.depressurization_time)
+
+    def calc_pressure_excursion(self, excursion_fraction: float) -> float:
+        """Returns the still-side pressure excursion allowed by both opening limits, in Pa.
+
+        Args:
+            excursion_fraction: Still-side pressure rise per unit buffer-minus-still
+                pressure difference during the valve-open interval.
+        """
         cap_excursion = (
             excursion_fraction
             * (self.buffer_pressure_cap - self.fill_pressure + self.refill_pressure / 2.0)
@@ -94,12 +131,7 @@ class GasPushing:
             cap_excursion = (
                 excursion_fraction * (self.buffer_pressure_cap - self.fill_pressure) / (1.0 - excursion_fraction)
             )
-        excursion = max(0.0, min(excursion_fraction * self.wave_strength, cap_excursion))
-        if excursion == 0.0:
-            return 0.0
-        maximum = self.fill_pressure - max(self.refill_pressure - excursion, 0.0) / 2.0
-        pumping_time = -path_capacity * R * warm_temperature / self.pump_speed * np.log1p(-excursion / maximum)
-        return excursion / (pumping_time + self.depressurization_time)
+        return max(0.0, min(excursion_fraction * self.wave_strength, cap_excursion))
 
 
 def _log_mean(temperature: NDArray[np.float64]) -> float:

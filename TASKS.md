@@ -15,9 +15,9 @@ There are three kinds of entry. If a task does not specify, default to **Discuss
 
 Claim tasks with [o], mark finished tasks with [x], and update each section to have a running count of open vs. completed items, like (5/10). If a task was started and then later put on hold, mark it as [-] with a note for the blocker and do not update progress. If a task is unclear or has unsettled decisions, interview the user relentlessly until you are aligned on all decisions, before doing the work. Do not use this file as a dumping-ground for notes or reporting.
 
-## Progress `[##########--------------------------]` 27.8% (10/36)
+## Progress `[###########-------------------------]` 30.6% (11/36)
 
-## 1. Rebuild test suite (7/14)
+## 1. Rebuild test suite (8/14)
 #### [x] 1.1 Public/user interface tests
 #### [-] 1.2 End-to-end acceptance tests
              Waiting on full simulation configs (4.1, 4.2)
@@ -30,7 +30,7 @@ Claim tasks with [o], mark finished tasks with [x], and update each section to h
 #### [x] 1.8 MLI acceptance tests
 #### [x] 1.9 Gas-gap heat switch acceptance tests
 #### [x] 1.10 Exchange gas acceptance tests
-#### [ ] 1.11 Gas pushing acceptance tests
+#### [x] 1.11 Gas pushing acceptance tests
 #### [ ] 1.12 Material properties acceptance tests
 #### [ ] 1.13 Test policy doc, guardrails to protect tests from agents
 #### [ ] 1.14 Prune existing test suite
