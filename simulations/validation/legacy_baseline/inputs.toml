@@ -15,8 +15,6 @@ fp1 = "fp1_generous"
 # conductance (`k_table`); `linked_mass_gas_links` replaces a linked mass's gas links.
 [runs]
 sn09_tuned = { system = "sn09", system_inputs = false }
-sn09_corrected = { system = "sn09", system_inputs = true }
-fp1 = { system = "fp1", system_inputs = true }
 
 [runs.fp1_generous]
 system = "fp1"

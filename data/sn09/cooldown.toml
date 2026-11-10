@@ -3,6 +3,7 @@ record = "cooldown_2026-06-04.dat"
 compressor_start = 2026-06-04T00:21:00Z
 condensing_begins = 2026-06-06T14:15:00Z
 scored = ["PRP", "RGP", "CFP", "STP", "ICP", "DHX"]
+stuck_samples = 10
 
 [channels]
 prp_temperature = "PRP"

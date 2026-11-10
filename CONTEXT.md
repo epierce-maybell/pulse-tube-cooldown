@@ -16,8 +16,7 @@ bolted joints, radiation, MLI, gas-gap switches, exchange gas, and gas pushing.
 The adopted head formulation is recorded in
 [ADR-06](docs/adrs/06-reduced-head-dynamics.md), including its
 clamp temperature and cooling-power closure. Production implementation is task
-3.4. The cooler link has been
-removed; shared head-design data and loaders remain. Full refrigerator
+3.4. Source head geometry remains in `data/heads/`. Full refrigerator
 configurations are tasks 4.1 and 4.2.
 
 ## Where to work
@@ -35,10 +34,10 @@ Implementation and test paths are relative to `src/pulse_tube_cooldown/` and
 | Conduction, contacts, radiation, MLI | DESIGN "Physical modeling approach" | `library/links/` | `library/`, `acceptance/`; `data/systems.md` |
 | Gas-gap switches and exchange gas | [ADR-05](docs/adrs/05-exchange-gas-pressure.md) | `library/links/gas_gap_switch.py`, `exchange_gas.py` | Component, integration, and acceptance tests; `data/systems.md` |
 | Gas pushing | [ADR-02](docs/adrs/02-gas-pushing-routine.md) | `library/links/gas_pushing.py` | Component and acceptance tests; `data/systems.md` |
-| Head designs and measurements | [ADR-06](docs/adrs/06-reduced-head-dynamics.md), [archived ADR-03](docs/adrs/archive/03-coupled-capacity-maps.md) | `library/heads/`, `measurements/test_stand.py` | `library/test_head_data.py`, `measurements/`; `data/heads/`, `data/test_stand/`, `data/test_stand.md`, `data/compressors.md` |
+| Head geometry and measurements | [ADR-06](docs/adrs/06-reduced-head-dynamics.md), [archived ADR-03](docs/adrs/archive/03-coupled-capacity-maps.md) | `measurements/test_stand.py` | `measurements/`; `data/heads/`, `data/test_stand/`, `data/test_stand.md`, `data/compressors.md` |
 | Plots | DESIGN "Architecture and responsibilities" | `plot/` | `plot/` |
-| Maintained validation | [Simulation guide](simulations/README.md) | `simulations/validation/` | `validation/`; `data/<system>/cooldown.toml` and measured traces |
-| Data preparation | [Tool guide](tools/README.md) | `tools/` | `data/`; packaged property and head-design data |
+| Refrigerator measurements and validation | [Simulation guide](simulations/README.md) | `measurements/refrigerator.py`, `measurements/comparison.py`, `simulations/validation/` | `measurements/test_refrigerator.py`, `validation/`; `data/<system>/cooldown.toml` and measured traces |
+| Helium adsorption fit | [Data guide](data/README.md) | `library/gases/prepare.py` | Packaged `library/gases/data/he4.toml` source coefficients |
 
 Link types are registered in `library/links/load.py`; condition factories are
 registered in `library/conditions.py`. [Test policy](tests/README.md) governs the
@@ -54,8 +53,9 @@ layout, source-data copies, documentation, and package source at transfer.
 
 The former `simulations/exploration/` and head investigations under
 `simulations/validation/{sn09_load_map,sn09_bare_head,test_stand_head,test_stand_steady_state}/`
-are there. Historical provenance strings in packaged data retain their original
-paths; resolve those paths against the research snapshot. Several old scripts
+are there. `archive/e40e98a-directory-audit/` preserves the subsequent preparation
+scripts, retired catalogs, head definitions, and legacy comparisons, together
+with their committed inputs and a SHA-256 manifest. Several older scripts
 require a retired cooler implementation from Git history.
 
 The production repository retains the head-comparison figure and legacy baseline.

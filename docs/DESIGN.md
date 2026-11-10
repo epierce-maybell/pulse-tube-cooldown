@@ -33,7 +33,7 @@ boundary nodes, a procedure, and solver options.
 | [`engine/`](../src/pulse_tube_cooldown/engine/) | Assemble node energy balances, integrate a procedure, find steady states, and reconstruct results. |
 | [`library/`](../src/pulse_tube_cooldown/library/) | DR component physics, physical properties, conditions, and loaders for their configuration and data. |
 | [`config.py`](../src/pulse_tube_cooldown/config.py), [`__main__.py`](../src/pulse_tube_cooldown/__main__.py), [`output.py`](../src/pulse_tube_cooldown/output.py) | Build configured models, provide the command-line entry point, and save results. |
-| [`measurements/`](../src/pulse_tube_cooldown/measurements/) | Read test-stand measurements into labeled datasets. |
+| [`measurements/`](../src/pulse_tube_cooldown/measurements/) | Read test-stand and refrigerator records into labeled datasets and compare measured and simulated cooldowns. |
 | [`plot/`](../src/pulse_tube_cooldown/plot/) | Draw graphs and plot simulation histories and comparisons with measurements. |
 
 The engine operates on the shared node and link interfaces. The DR library
@@ -115,9 +115,10 @@ Short explanations and component interfaces live beside their implementations
 in [`library/links/`](../src/pulse_tube_cooldown/library/links/). ADRs record
 significant modeling decisions and their assumptions.
 
-Materials, gases, surfaces, and head designs have named library data files.
+Materials, gases, and surfaces have named library data files.
 Published source coefficients used to derive a library property live with that
-property's data.
+property's data. Source head geometry and recorded material filling live in
+`data/heads/`.
 Property loaders construct temperature-dependent functions and integrals from
 sourced fits or tables. Validity ranges accompany the data; values outside them
 use the endpoint behavior and warnings described by the loaders. Real-helium
@@ -133,10 +134,9 @@ changed between configurations.
 
 | Location | Contents and role |
 |---|---|
-| `src/pulse_tube_cooldown/` | The reusable simulator, component library, measurement readers, and plotting functions. Packaged property and head-design data live with their library loaders. |
+| `src/pulse_tube_cooldown/` | The reusable simulator, component library, measurement readers, and plotting functions. Packaged property data live with their library loaders. |
 | `tests/` | Core, engine, component, interface, integration, and acceptance tests. [Test policy](../tests/README.md) describes their responsibilities and authorship rules. |
 | `data/` | Source measurements, hardware records, geometry, and curated physical inputs. [The data map](../data/README.md) identifies their locations and provenance. |
-| `tools/` | Preparation tools that turn source records into curated inputs and library data. [Their README](../tools/README.md) describes those workflows. |
 | `simulations/` | Maintained validation: the head-comparison target and legacy refrigerator baseline, with their selected inputs, retained results, and findings. |
 | `../pulse-tube-research/` | Local, unversioned workspace for exploratory models, fits, diagnostics, and generated research outputs. |
 | `docs/` | Architecture, ADRs, proposals, reference papers, diagrams, and reporting material. Archived ADRs retain earlier decisions. |
@@ -146,7 +146,12 @@ Source measurements and prepared physical inputs live in this repository. Fitted
 candidates and exploratory results live in `../pulse-tube-research/`. For example,
 test-stand readers live in the package, while the head comparison chooses its records and analyzes
 predictions under `simulations/`. Refrigerator comparison windows, channel
-mappings, and scoring are recorded with the system data and validation code.
+mappings, and stuck-reading thresholds are recorded with the system data.
+Reusable readers and log-temperature scoring live in the measurements package.
+The helium adsorption fitting script reads source coefficients from packaged gas
+data; its [command](../data/README.md#helium-adsorption-fit) is recorded in the data guide.
+Historical BoM, CAD, and data-export preparation is preserved in
+`../pulse-tube-research/archive/`.
 
 Acceptance tests express required physical behavior and public interfaces.
 Component tests and assembled simulations provide complementary evidence about
@@ -164,8 +169,8 @@ the clamp to RGP.
 The stand condition sets clamp load to zero and solves its free temperature.
 Production implementation and engine integration remain work for task 3.4.
 
-The cooler link has been removed. Shared head-design data and loaders retain
-the representation from [archived ADR-03](adrs/archive/03-coupled-capacity-maps.md).
-Its experiments and subsequent candidate investigations are preserved in
+The retired cooler implementation, head-design loader, generated inventories,
+and experiments from [archived ADR-03](adrs/archive/03-coupled-capacity-maps.md),
+together with subsequent candidate investigations, are preserved in
 `../pulse-tube-research/`, with original paths and a hashed snapshot manifest.
 The replacement work and the archetypal head are tracked in [TASKS.md](../TASKS.md).

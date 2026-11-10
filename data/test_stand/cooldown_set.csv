@@ -1,7 +1,0 @@
-serial,date,file,source,compressors,valve_frequency
-S0007,2026-04-13,s0007/cooldown_2026-04-13.dat,dataContinuous Mon Apr 13 09_12_23 2026.dat,1,1.0
-S0009,2026-05-14,s0009/cooldown_2026-05-14.dat,SN009-Cooldown-05-14-2026.dat,1,1.0
-S0019,2026-08-06,s0019/cooldown_2026-08-06.dat,Cooldown-SN019-08-06-2026.dat,1,1.1
-S0028,2026-06-30,s0028/cooldown_2026-06-30.dat,S0028_2026-06-30_dataContinuous Tue Jun 30 16_37_46 2026.dat,2,1.1
-S0035,2026-09-25,s0035/cooldown_2026-09-25.dat,S0035_2026-09-25_dataContinuous Fri Sep 25 11_10_14 2026.dat,1,1.1
-S0038,2026-10-12,s0038/cooldown_2026-10-12.dat,S0038_2026-10-09_dataContinuous Fri Oct  9 15_40_11 2027.dat,1,1.0

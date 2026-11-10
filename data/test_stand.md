@@ -20,15 +20,19 @@ A load map opens with the valve settings, the valve frequency (`f:1.1`), and the
 
 Some load maps exist only as steady plateaus in a continuous log, about 2 h per point: S0035's on 2026-09-25, and S0038's on 2026-10-02, -06, -08, -09, and -12. A continuous log's trailing fields do not hold the heater powers; they read 0 throughout the Sep 21 log, which contains the plateaus of `dataLoadMap Mon Sep 21 16_36_05 2026.dat`. That file's powers are 25, 20, and 0 W on stage 1 against 0.5 and 0 W on stage 2, and its points match S0035's Sep 25 plateaus within 0.2 K, so it is taken as S0035's.
 
-## Load-map fit set
+## Load-map provenance
 
-`test_stand/fit_set.csv` lists the existing archetypal head's load maps, read by `measurements.read_load_map_set`. It holds one Denver map per PT1.5 head whose load-map file is in the archive's `loadmap_data/`, in the standard setup: no elbow or compressor filter, and the head's own rotary valve and compressor hoses. Among a head's repeats it holds the more standard run by the index's notes, otherwise the more recent. Each map is a copy of its archive file, named in `source`. A run has two compressors where the index notes two, otherwise one. Its MLI state is the index's, or `unrecorded` where the index gives none.
+The maintained head comparison selects maps and records their conditions in
+`simulations/validation/head_comparison/records.toml` relative to the repository.
+The earlier population-fit catalog is preserved in the research archive.
 
 Two archive files carry other names than the index's. `LoadMap-SN023-06-20-2026.dat` is S0023's 2026-06-19 map, `dataLoadMap Fri Jun 19 10_52_14 2026.dat`: its first point matches the plateau at 13:16 in that day's continuous log. `dataLoadMap Mon Sep 21 16_36_05 2026.dat` is S0035's 2026-09-21 map. The index lists no raw data for S0019's, S0034's, and S0035's selected maps; the archive holds each one's stand file.
 
-## Cooldown set
+## Cooldown comparison windows
 
-`test_stand/cooldown_set.csv` lists the stand cooldowns that test the existing archetypal head, one per head, with the fit set's columns other than `mli`. S0007, S0009, S0019, S0035, and S0038 run on one compressor and S0028 on two. S0038's is run 5 on 2026-10-12, its standard-setup cooldown after cleaning. The cooldowns have no index rows of their own; each run's valve frequency is that of the index's load map that follows it.
+The maintained comparison records each selected cooldown and its window in
+`simulations/validation/head_comparison/records.toml`. The original cooldown
+catalog is preserved in the research archive.
 
 Each copy holds its archive log's header and one contiguous run of its rows, unchanged. The compressor starts at the first row where T2 falls more than 1 K from the row before. A copy starts at the log's first row, except S0038's, which starts 10 min before its compressor starts since its log holds earlier runs. It ends at the last row before the first heater step, or 4 h after the compressor starts, whichever comes first. S0009's copy is the whole log and so ends with 1 min of the next load map's first heater step, from 14:20:39.
 

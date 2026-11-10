@@ -10,7 +10,7 @@ uv run pytest
 
 Start with [CONTEXT.md](CONTEXT.md) for navigation,
 [DESIGN.md](docs/DESIGN.md) for architecture, and [TASKS.md](TASKS.md) for current
-work. [Data](data/README.md), [preparation tools](tools/README.md), and
+work. [Data preparation and provenance](data/README.md) and
 [maintained validation](simulations/README.md) have separate guides.
 
 Exploratory models, fits, diagnostics, and research outputs live in the local

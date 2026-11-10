@@ -1,9 +1,0 @@
-serial,date,file,source,compressors,valve_frequency,mli
-S0007,2026-04-14,s0007/load_map_2026-04-14.dat,LoadMap-SN007-04-14-2026.dat,1,1.0,full
-S0008,2026-05-08,s0008/load_map_2026-05-08.dat,LoadMap-SN008-05-08-2026.dat,1,1.0,full
-S0009,2026-05-14,s0009/load_map_2026-05-14.dat,LoadMap-SN009-05-14-2026.dat,1,1.0,full
-S0019,2026-08-07,s0019/load_map_2026-08-07.dat,LoadMap-SN019-08-07-2026.dat,1,1.1,unrecorded
-S0023,2026-06-19,s0023/load_map_2026-06-19.dat,LoadMap-SN023-06-20-2026.dat,1,1.1,full
-S0028,2026-07-02,s0028/load_map_2026-07-02.dat,LoadMap-SN0028-2-Comp-07-02-2026.dat,2,1.1,full
-S0034,2026-08-12,s0034/load_map_2026-08-12.dat,LoadMap-SN034-08-12-2026.dat,1,1.0,none
-S0035,2026-09-21,s0035/load_map_2026-09-21.dat,dataLoadMap Mon Sep 21 16_36_05 2026.dat,1,1.1,unrecorded

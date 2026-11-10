@@ -6,8 +6,8 @@ from pathlib import Path
 import pytest
 import xarray as xr
 
-from simulations.validation.legacy_baseline import legacy_system, with_run_options
-from simulations.validation.measurements import read_measurements, residual
+from pulse_tube_cooldown.measurements import log_temperature_residual, read_refrigerator_cooldown
+from simulations.validation.legacy_baseline.run import legacy_system, with_run_options
 
 ARCHIVE = Path(__file__).parents[2] / "simulations" / "validation" / "legacy_baseline"
 
@@ -82,13 +82,14 @@ def test_run_options():
     assert with_run_options(config, {}) == config
 
 
-@pytest.mark.parametrize("run", ["sn09_tuned", "sn09_corrected", "fp1", "fp1_generous"])
+@pytest.mark.parametrize("run", ["sn09_tuned", "fp1_generous"])
 def test_archived_scores(run):
     """Each archived run covers its window and scores as recorded."""
     with (ARCHIVE / "scores.toml").open("rb") as file:
         scores = tomllib.load(file)[run]
     with xr.open_dataset(ARCHIVE / f"{run}.nc") as trace:
-        rms, rms_by_node = residual(trace.temperature.load(), read_measurements(scores["system"]))
+        measured = read_refrigerator_cooldown(Path(__file__).parents[2] / "data" / scores["system"] / "cooldown.toml")
+        rms, rms_by_node = log_temperature_residual(trace.temperature.load(), measured)
 
     assert scores["rms"] == pytest.approx(rms)
     assert scores["rms_by_node"] == pytest.approx(rms_by_node)

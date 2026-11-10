@@ -14,7 +14,7 @@ from scipy.constants import R
 
 def main() -> None:
     """Prints adsorption_energy in J/mol, adsorption_constant in 1/Pa, and adsorption_capacity in mol/kg."""
-    source = Path(__file__).resolve().parents[1] / "src/pulse_tube_cooldown/library/gases/data/he4.toml"
+    source = Path(__file__).with_name("data") / "he4.toml"
     data = tomllib.loads(source.read_text(encoding="utf-8"))["sources"]["martins2011"]
     mmol_per_cm3 = data["amount_pressure"] / (R * data["amount_temperature"]) * 1e-3
 

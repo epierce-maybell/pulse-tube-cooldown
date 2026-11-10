@@ -1,10 +1,13 @@
-"""The legacy model run on SN09 and FP1 and scored against their measured cooldowns.
+"""Derives the retained SN09 and FP1 legacy baselines.
 
-The legacy model is `ptc_cooldown_simulator.py` in `../pulse_tube_cooldown_simulation`, branch
-`Advanced_Feature_SIM`, at the commit in `legacy_baseline/inputs.toml`. Its inputs are in that file; its runs and
-scores are archived beside it. Run from this directory: `uv run python legacy_baseline.py`.
+Run from the repository root:
+    python -m simulations.validation.legacy_baseline.run
+
+inputs.toml selects the legacy commit, source inputs, and the two baseline runs.
+Results, complete run configurations, scores, and figures are written beside it.
 """
 
+import argparse
 import copy
 import csv
 import importlib
@@ -21,18 +24,22 @@ import numpy as np
 import xarray as xr
 from matplotlib.figure import Figure
 
-from simulations.validation.measurements import read_measurements, residual
+from pulse_tube_cooldown.measurements import log_temperature_residual, read_refrigerator_cooldown
+
+
+def _read_measurements(system: str) -> xr.Dataset:
+    return read_refrigerator_cooldown(Path(__file__).parents[3] / "data" / system / "cooldown.toml")
 
 
 def legacy_system(base: dict, system: str) -> dict:
     """Returns a legacy saved system for `system`.
 
     It is `base`, a saved system in the legacy `ptc_systems.json` format, with the plate and DHX materials of
-    `data/<system>/bom_by_node.csv` and the system's coolers from `legacy_baseline/inputs.toml`.
+    `data/<system>/bom_by_node.csv` and the system's coolers from `inputs.toml`.
     """
-    with (Path(__file__).parent / "legacy_baseline" / "inputs.toml").open("rb") as file:
+    with (Path(__file__).with_name("inputs.toml")).open("rb") as file:
         inputs = tomllib.load(file)
-    with (Path(__file__).parents[2] / "data" / system / "bom_by_node.csv").open(encoding="utf-8") as file:
+    with (Path(__file__).parents[3] / "data" / system / "bom_by_node.csv").open(encoding="utf-8") as file:
         materials = {
             row["node"]: [
                 {"material": material, "mass": float(row[column])}
@@ -53,7 +60,7 @@ def legacy_system(base: dict, system: str) -> dict:
 
 
 def with_run_options(config: dict, run: dict) -> dict:
-    """Returns `config` with a run's options from `legacy_baseline/inputs.toml` applied.
+    """Returns `config` with a run's options from `inputs.toml` applied.
 
     Args:
         config: A saved system in the legacy `ptc_systems.json` format.
@@ -85,7 +92,7 @@ def simulate_legacy(
     config: dict,
     initial_temperature: float,
     max_time: float,
-    legacy: Path = Path(__file__).parents[3] / "pulse_tube_cooldown_simulation",
+    legacy: Path = Path(__file__).parents[4] / "pulse_tube_cooldown_simulation",
 ) -> xr.DataArray:
     """Runs the legacy engine on a saved system, as the legacy GUI does, from `initial_temperature` to `max_time`.
 
@@ -226,28 +233,21 @@ def simulate_legacy(
     )
 
 
-def plot_runs(
-    measured: xr.Dataset, temperatures: dict[str, xr.DataArray], rms_by_node: dict[str, dict[str, float]]
+def plot_baseline(
+    measured: xr.Dataset,
+    temperature: xr.DataArray,
+    rms_by_node: dict[str, float],
+    *,
+    label: str,
 ) -> Figure:
-    """Plots legacy runs over a system's measured cooldown, one panel per thermometer.
-
-    Args:
-        measured: The system's `read_measurements`.
-        temperatures: Each run's `temperature(time, node)`, by run name.
-        rms_by_node: Each run's RMS log-temperature residual by scored node, by run name.
-
-    Returns:
-        The Figure, with log-temperature panels in `measured`'s node order sharing time in hours over the window.
-    """
-    run_colors = ["#2a78d6", "#eb6834"]
+    """Plots one baseline over the measured cooldown, with a panel per thermometer."""
     nodes = measured.node.values
     figure = Figure(figsize=(9.0, 2.0 * len(nodes)), layout="constrained")
     axes = figure.subplots(len(nodes), 1, sharex=True, squeeze=False)[:, 0]
     for ax, node, scored in zip(axes, nodes, measured.scored.values, strict=True):
         ax.plot(measured.time / 3600.0, measured.temperature.sel(node=node), color="#2b2b2b", lw=1.5, label="Measured")
-        for (name, temperature), color in zip(temperatures.items(), run_colors, strict=False):
-            label = f"{name}, RMS {rms_by_node[name][node]:.2f}" if scored else name
-            ax.plot(temperature.time / 3600.0, temperature.sel(node=node), color=color, lw=1.5, label=label)
+        curve_label = f"{label}, RMS {rms_by_node[node]:.2f}" if scored else label
+        ax.plot(temperature.time / 3600.0, temperature.sel(node=node), color="#2a78d6", lw=1.5, label=curve_label)
         ax.set_yscale("log")
         ax.set_ylabel(f"{node} (K)" if scored else f"{node} (K), not scored")
         ax.grid(which="major", color="0.85", lw=0.5)
@@ -257,16 +257,25 @@ def plot_runs(
     return figure
 
 
-def main(repository: Path = Path(__file__).parents[3] / "pulse_tube_cooldown_simulation") -> None:
-    """Runs and scores each run in `legacy_baseline/inputs.toml` and archives the results and figures beside it.
+def main(
+    repository: Path = Path(__file__).parents[4] / "pulse_tube_cooldown_simulation",
+    *,
+    output: Path | None = None,
+) -> None:
+    """Derives the selected baselines and saves their configurations, traces, scores, and plots.
 
     Args:
         repository: The legacy repository. Every run uses its tree at `inputs.toml`'s `legacy_commit`, whatever
             is checked out.
+        output: Destination directory. Defaults to the directory containing this script and its inputs.
     """
-    archive = Path(__file__).parent / "legacy_baseline"
-    with (archive / "inputs.toml").open("rb") as file:
+    source = Path(__file__).with_name("inputs.toml")
+    archive = Path(__file__).parent if output is None else output
+    archive.mkdir(parents=True, exist_ok=True)
+    with source.open("rb") as file:
         inputs = tomllib.load(file)
+    if archive.resolve() != source.parent.resolve():
+        (archive / source.name).write_bytes(source.read_bytes())
     commit = inputs["legacy_commit"]
 
     scores = [
@@ -274,15 +283,13 @@ def main(repository: Path = Path(__file__).parents[3] / "pulse_tube_cooldown_sim
         "# Each run sets every legacy target to 0 K, so it ends at max_time and no linked mass is held at its target.",
         "# initial_temperature is the mean of the scored nodes' first valid readings, in K; max_time is in s.",
     ]
-    temperatures = {system: {} for system in inputs["coolers"]}
-    rms_by_run = {system: {} for system in inputs["coolers"]}
     with tempfile.TemporaryDirectory() as directory:
         legacy = export_commit(repository, commit, Path(directory))
         with (legacy / "ptc_systems.json").open(encoding="utf-8") as file:
             base = json.load(file)[inputs["base_system"]]
         for name, run in inputs["runs"].items():
             system = run["system"]
-            measured = read_measurements(system)
+            measured = _read_measurements(system)
             scored = measured.temperature.sel(node=measured.node[measured.scored])
             initial_temperature = float(
                 np.mean([readings.dropna("time")[0] for readings in scored.transpose("node", ...)])
@@ -293,9 +300,7 @@ def main(repository: Path = Path(__file__).parents[3] / "pulse_tube_cooldown_sim
             config["T_init"] = initial_temperature
             config["max_time_hrs"] = max_time / 3600.0
             temperature = simulate_legacy(config, initial_temperature, max_time, legacy)
-            rms, rms_by_node = residual(temperature, measured)
-            temperatures[system][name] = temperature
-            rms_by_run[system][name] = rms_by_node
+            rms, rms_by_node = log_temperature_residual(temperature, measured)
 
             (archive / f"{name}.json").write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
             temperature.to_dataset(name="temperature").to_netcdf(archive / f"{name}.nc")
@@ -309,13 +314,18 @@ def main(repository: Path = Path(__file__).parents[3] / "pulse_tube_cooldown_sim
                 *(f"{node} = {value}" for node, value in rms_by_node.items()),
             ]
             print(f"{name}: rms {rms:.4f}", {node: round(value, 4) for node, value in rms_by_node.items()})
+            figure = plot_baseline(measured, temperature, rms_by_node, label=name)
+            figure.suptitle(f"{system.upper()}: legacy baseline and measured cooldown")
+            figure.savefig(archive / f"{system}.png", dpi=150)
 
     (archive / "scores.toml").write_text("\n".join(scores) + "\n", encoding="utf-8")
-    for system, runs in temperatures.items():
-        figure = plot_runs(read_measurements(system), runs, rms_by_run[system])
-        figure.suptitle(f"{system.upper()}: legacy runs and measured cooldown")
-        figure.savefig(archive / f"{system}.png", dpi=150)
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument(
+        "--legacy-repository", type=Path, default=Path(__file__).parents[4] / "pulse_tube_cooldown_simulation"
+    )
+    parser.add_argument("--output", type=Path, help="Directory for derived baseline evidence")
+    args = parser.parse_args()
+    main(args.legacy_repository, output=args.output)
