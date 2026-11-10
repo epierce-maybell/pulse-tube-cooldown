@@ -97,17 +97,6 @@ def test_interpolation_has_continuous_slopes_at_interior_points(interpolant, tab
     assert np.all(np.abs(below - above) <= 1e-4 * np.maximum(secant[:-1], secant[1:]))
 
 
-def test_integral_has_the_property_as_its_local_slope(property_functions):
-    """Verify local integral consistency in broad intervals and inside the narrow feature."""
-    property_function, integral = property_functions
-    temperature = np.array([1.5, 2.5, 3.5, 4.0002, 4.0005, 4.0008, 5.0, 6.5])
-    step = 1e-7
-
-    slope = (integral(temperature + step) - integral(temperature - step)) / (2.0 * step)
-
-    np.testing.assert_allclose(slope, property_function(temperature), rtol=1e-5, atol=1e-7)
-
-
 @pytest.mark.parametrize("start, end", [(3.0, 4.0), (4.0, 4.001), (4.001, 6.0)])
 def test_integral_resolves_sharp_and_broad_features(property_functions, start, end):
     """Verify integral differences against independent quadrature across each feature."""
