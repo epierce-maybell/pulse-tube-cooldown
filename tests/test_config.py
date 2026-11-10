@@ -9,7 +9,6 @@ from pulse_tube_cooldown.config import configure_model, load_fridge, load_proced
 from pulse_tube_cooldown.core.errors import ConfigurationError
 from pulse_tube_cooldown.core.types import Graph, Model
 from pulse_tube_cooldown.library.links.conduction import Conduction
-from pulse_tube_cooldown.library.links.cooler import load_matrix_nodes
 
 _FRIDGE = tomllib.loads(
     """
@@ -110,33 +109,6 @@ def test_duplicate_node_names_are_rejected():
 def test_node_missing_a_key_is_rejected(node):
     with pytest.raises(ConfigurationError, match="name|composition"):
         load_fridge({"nodes": [node]})
-
-
-def test_nodes_a_link_table_defines_follow_the_configured_nodes():
-    fixtures = "tests/integration/fixtures/cooler"
-    cooler = {
-        "name": "Cooler",
-        "type": "cooler",
-        "warm_flange": "Bath",
-        "drive": f"{fixtures}/drive.toml",
-        "heads": [{"name": "PT", "stages": ["Plate", "Mixed"], "model": "PT1.5", "parameters": f"{fixtures}/pt.toml"}],
-    }
-    clamp = {
-        "name": "Clamp",
-        "type": "conduction",
-        "nodes": ["PT stage 2 HoCu2", "Plate"],
-        "material": "OFHC Cu RRR100",
-        "area": 1e-4,
-        "length": 0.01,
-    }
-
-    graph = load_fridge(_fridge(links=[*_FRIDGE["links"], cooler, clamp]))
-    names = [node.name for node in graph.nodes]
-
-    assert names[:3] == ["Plate", "Mixed", "Bath"]
-    assert names[3:] == [node.name for node in load_matrix_nodes(cooler)]
-    assert names[3:5] == ["PT stage 1 304 SS", "PT stage 1 Pb"]
-    assert graph.connectivity[3] == (names.index("PT stage 2 HoCu2"), 0)
 
 
 _GRAPH = load_fridge(

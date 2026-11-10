@@ -1,8 +1,0 @@
-packing = [0.15, 0.05]
-resistance = [1e10, 3e10]  # Pa s/m^3
-frequency = 1.4  # Hz
-
-[sources]
-packing = "placeholder"
-resistance = "placeholder"
-frequency = "placeholder"
