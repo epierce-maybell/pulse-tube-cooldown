@@ -1,558 +1,163 @@
-# Design Specification: Pulse Tube Cooldown Simulation
-
-## Scope
-Simulate temperature and heat fluxes in a Maybell dilution refrigerator during cooldown, from room temperature to when condensing begins. Version 1.0.0 targets a full cooldown simulation of two 6-plate systems (SN09 for the standard model and FP1 for the fridge-plus model), with error comparable to or lower than the legacy model. For this task, we'll define "error" more precisely as the least-squares residual to log-temperature across all thermometers mounted on the system (except for MXP).
-
-## Public API
-For now, we'll call the library Pulse Tube Cooldown, and we can have a canonical import statement:
-```python
-import pulse_tube_cooldown as ptc
-```
-
-#### Configuration files
-Each fridge has a template file which describes its architecture, including nodes, links, materials, and so forth. A simulation (a "run") should be self-contained in its own subdirectory, where we store the configuration file, including any changes from the template, and output, including raw output data and any figures. We should strive for human-readable simulation directories: plots of the configured graph for quick viewing, highlighted changes to templates, and summaries of key results, where applicable.
-
-Configuration files are written in TOML, with the following sections:
-```toml
-[meta]
-experiment = "Validation on SN5"
-version = # insert commit hash or version tag
-
-[fridge]
-[[fridge.nodes]]
-name = "PRP"
-composition = [["OFHC Cu RRR50", 11.8]]
-
-[[fridge.nodes]]
-name = "RGP"
-composition = [["OFHC Cu RRR100", 6.35], ["304 SS", 5.0], ["Lead", 3.0]]
-
-[[fridge.links]]
-name = "PRP-RGP Switch 1"
-type = "gas_gap_switch"
-nodes = ["PRP", "RGP"] # order matters
-
-[[fridge.links]]
-name = "Exchange gas"
-type = "exchange_gas"
-nodes = ["Vacuum can", "PRP", "RGP", "CFP", "STP", "ICP", "MXP"]
-
-[[fridge.links]]
-name = "Gas pushing"
-type = "gas_pushing_pm5"
-nodes = ["STP", "ICP", "MXP"]
-
-[procedure]
-until = { condition = "condensing_begins", node = "MXP", threshold = 10.0 }
-
-[[procedure.phases]]
-name = "precool"
-disable = ["Gas pushing"]
-until = { condition = "gas_pushing_begins", node = "CFP", threshold = 70.0 }
-
-[[procedure.phases]]
-name = "gas pushing"
-enable = ["Gas pushing"]
-
-[simulation]
-solver = "Radau"
-max_time = 604800.0 # still returns a Result
-save_every = 100.0
-initial_temperature = 300.0 # scalar or array of size [nodes]
-fixed_boundary_nodes = ["Vacuum can"]
-```
-
-#### Public functions
-The library exposes the following public functions:
-```python
-def configure_model(path_to_config) -> Model: ...
-
-
-def simulate_cooldown(model) -> Result: ...
-
-
-def save_output(result, path_to_output) -> None: ...
-```
-
-So the canonical run is:
-```python
-model = ptc.configure_model(path_to_config)
-result = ptc.simulate_cooldown(model)
-ptc.save_output(result, path_to_output)
-```
-
-#### Command-Line Interface
-V1 includes a command-line interface (CLI) to run simulations for a given configuration file. It should be easy to invoke, with only a few options:
-```bash
-run-ptc --config "path_to_config" --output "path_to_output"
-```
-
-## Data model
-The important structures are listed here. The Model holds information about the simulation, including the order of operations (see Phases and Procedure, below), and is responsible for constructing graphs. A Graph describes the connectivity between components of the system, Nodes and Links, which may consist of Materials, Gases, and Surfaces that are responsible for their own thermal properties. Simulation output is stored in a Result.
-
-```python
-@dataclass(frozen=True, slots=True, kw_only=True)
-class Material:
-    name: str
-    density: float
-    specific_heat: Callable[[NDArray[np.float64]], NDArray[np.float64]]
-    thermal_conductivity: Callable[[NDArray[np.float64]], NDArray[np.float64]] | None
-    conductivity_integral: Callable[[NDArray[np.float64]], NDArray[np.float64]] | None
-
-
-@dataclass(frozen=True, slots=True, kw_only=True)
-class Gas:
-    name: str
-    molar_mass: float
-    heat_capacity_ratio: float
-    accommodation_coeff: Callable[[NDArray[np.float64]], NDArray[np.float64]]
-    thermal_conductivity: Callable[[NDArray[np.float64]], NDArray[np.float64]]
-    saturation_pressure: Callable[[NDArray[np.float64]], NDArray[np.float64]]
-    adsorption_energy: float
-    adsorption_constant: float
-    adsorption_capacity: float # per kg of charcoal
-
-
-@dataclass(frozen=True, slots=True, kw_only=True)
-class Surface:
-    name: str
-    emissivity: Callable[[NDArray[np.float64]], NDArray[np.float64]]
-
-
-@dataclass(frozen=True, slots=True)
-class Node:
-    name: str
-    composition: tuple[tuple[Material, float], ...]
-
-
-class Link(Protocol):
-    @property
-    def name(self) -> str: ...
-
-    @property
-    def nodes(self) -> tuple[str, ...]: ...
-
-    def calc_heat_flow(self, temperature: NDArray[np.float64]) -> NDArray[np.float64]: ...
-
-
-@dataclass(frozen=True, slots=True)
-class Graph:
-    nodes: tuple[Node, ...]
-    links: tuple[Link, ...]
-    connectivity: tuple[tuple[int, ...], ...]
-
-    def get_node_index(self, name: str) -> int: ...
-    def get_link_index(self, name: str) -> int: ...
-
-
-@dataclass(frozen=True, slots=True)
-class Model:
-    meta: Mapping[str, Any]
-    nodes: tuple[Node, ...]
-    procedure: Procedure
-    initial_temperature: NDArray[np.float64]
-    fixed_boundary_nodes: tuple[int, ...]
-    solver_options: Mapping[str, Any]
-    graphs: tuple[Graph, ...]
-
-
-@dataclass(frozen=True, slots=True, kw_only=True)
-class PhaseSolution:
-    phase: Phase
-    end: Literal["until", "stop_condition", "max_time", "solver_failure"]
-    time: NDArray[np.float64]
-    temperature: NDArray[np.float64]
-    message: str
-
-
-@dataclass(frozen=True, slots=True)
-class Result:
-    status: str
-    model: Model
-    data: xr.Dataset
-```
-
-A Result's data is an xarray Dataset, saved as netCDF by `save_output`. The dimensions of `data` are `time`, `node`, and `link`, using node and link names as coordinates. The variables are `phase(time)` (Phase names), `temperature(time, node)` (K), `heat_flow(time, link, node)` (W into the node, NaN where link does not touch node or is inactive), and `connected(link, node)` (bool). At a phase switch, time holds a duplicate entry, one for each phase. Attributes record status, units, and run provenance.
-
-## Phases and Procedure
-During different phases of the cooldown, the simulation needs to activate different physics for certain components. A Procedure holds a sequence of Phases, each of which specifies the Links that are operating during that Phase (note that these are instantiated Links, not Link types, so a Phase can change detailed information during the run). It has a defined stopping point, which should be a function that takes (time, temperature) and returns a float that equals zero when the phase should end. The Procedure has a stop_condition that operates the same way.
-
-The design follows from this:
-```python
-@dataclass(frozen=True, slots=True)
-class Phase:
-    name: str
-    links: tuple[Link, ...]
-    until: Callable[[float, NDArray[np.float64]], float] | None
-
-
-@dataclass(frozen=True, slots=True)
-class Procedure:
-    phases: tuple[Phase, ...]
-    stop_condition: Callable[[float, NDArray[np.float64]], float] | None
-```
-
-The [fridge] part of the configuration defines the full graph, with every link active. Each phase specifies which links should activate or deactivate in each phase, cumulatively, including an initial phase (which should only deactivate links) and an end phase (which should not have an `until` condition). Link names are unique. Redundant enables or disables should raise an error rather than silently succeeding.
-
-## Engine
-The engine is responsible for constructing the thermal properties, heat flows, and linear system.
-
-```python
-def calc_heat_capacity(nodes: Sequence[Node], temperature: NDArray[np.float64]) -> NDArray[np.float64]: ...
-
-
-def calc_link_heat_flows(graph: Graph, temperature: NDArray[np.float64]) -> NDArray[np.float64]: ...
-
-
-def calc_net_heat_flow(graph: Graph, temperature: NDArray[np.float64]) -> NDArray[np.float64]: ...
-
-
-def calc_temperature_rate_of_change(
-    graph: Graph, fixed_boundary_nodes: tuple[int, ...], time: float, temperature: NDArray[np.float64]
-) -> NDArray[np.float64]: ...
-
-
-def integrate_phase(
-    model: Model, phase: Phase, time: float, temperature: NDArray[np.float64]
-) -> PhaseSolution: ...
-
-
-def run_procedure(model: Model) -> Sequence[PhaseSolution]: ...
-
-
-def reconstruct_heat_flow(graph: Graph, temperature: NDArray[np.float64]) -> NDArray[np.float64]: ...
-
-
-def build_result(model: Model, solutions: Sequence[PhaseSolution]) -> Result: ...
-```
-
-## Dilution refrigerator library
-As a general rule, physical values should always be specified in SI units.
-
-Materials are specified in individual TOML files in materials/data. Each entry should take the format:
-```toml
-name = "OFHC Cu RRR100"
-density = 8960.0 # kg/m^3
-
-[specific_heat]
-form = "log_poly"
-coefficients = []
-range = [4.0, 300.0] # out-of-range will clamp to ends and raise a warning
-source = "NIST Cryogenic Material Properties"
-
-
-[thermal_conductivity]
-form = "rational_poly"
-coefficients = []
-range = [4.0, 300.0]
-source = "NIST Cryogenic Material Properties"
-```
-
-The `thermal_conductivity` table is optional.
-
-This library has to handle some mapping from the config file to actual objects:
-```python
-LINK_TYPES = {
-    "cooler": load_cooler,
-    "gas_gap_switch": load_gas_gap_switch,
-    "exchange_gas": load_exchange_gas,
-    "radiation": load_radiation,
-    "multi_layer_insulation": load_multi_layer_insulation,
-    "conduction": load_conduction,
-    "joint_contact": load_joint_contact
-    ...
-}
-
-PROPERTY_FITS = {
-    "log_poly": make_log_poly,
-    "rational_poly": make_rational_poly,
-    "table": make_fit_from_table,
-    "measured_with_lattice": make_measured_with_lattice_fit,
-    ...
-}
-
-CONDITIONS = {
-    "gas_pushing_begins": gas_pushing_begins,
-    "condensing_begins": condensing_begins,
-    ...
-}
-```
-
-Specific Links are frozen dataclasses that match the Link Protocol, where their fields are set by the TOML configuration file. There is a generic loader:
-```python
-def load_link(config: Mapping) -> Link: ...
-```
-which relies on a shared materials loader used by both nodes and links:
-```python
-def load_material(name: str) -> Material: ...
-```
-Links share a common schema, even though there is considerable variation in physics between specific types. Shared quantities should have shared names between types. This should look something like:
-```python
-@dataclass(frozen=True, slots=True)
-class SpecificLinkTemplate:
-    name: str
-    nodes: tuple[str, ...]
-    example_arg1: ...
-    example_arg2: ...
-
-    def calc_heat_flow(self, temperature_at_nodes: NDArray[np.float64]) -> NDArray[np.float64]:
-        """Temperature only on this link's nodes. Positive values indicate heat flow into node."""
-```
-
-Conditions should generate functions that are positive before the condition is met (during cooldown), negative after, and zero where the switch happens. To stay agnostic to the specific Graph, the condition generator should map a node name rather than an index. For example:
-```python
-def gas_pushing_begins(graph: Graph, node: str, threshold: float) -> Callable[[float, NDArray[np.float64]], float]:
-    """Gas pushing starts once a certain node cools to a certain threshold."""
-    idx = graph.get_node_index(node)
-    return lambda time, temperature: temperature[idx] - threshold
-```
-Conditions and their arguments should be named for the physical event they mark, and for that reason, they are allowed to share implementations between two functions with different names.
-
-## Specific physical processes
-Some decisions are not obvious, but have leverage over the rest of the design.
-
-#### Coupled capacity maps
-We do not have extended load map data during cooldown for our pulse tubes. What we do have is one run per unit, post-tuning, on a test stand for exactly one cooldown curve. The regenerator matrix is a chain of nodes along each column, and the cooler is one link per manifold over the warm flange, those nodes, and the stage nodes. The decision for how to model coupled capacity maps is recorded in `docs/adrs/03-coupled-capacity-maps.md`. In cases where we do not have test stand data, e.g., for older pulse tube units that pre-date the test stand, we can use a canonical cooler fit to the broader population of load maps. 
-
-#### Cooler configuration
-A cooler link covers one gas manifold: its warm flange, its compressors, and the heads on it. Each head names its two stage nodes, its model, and its per-unit parameter file:
-```toml
-[[fridge.links]]
-name = "Cooler"
-type = "cooler"
-warm_flange = "Warm flange"
-
-[[fridge.links.heads]]
-name = "PT"
-stages = ["PRP", "CFP"]
-model = "PT1.1"
-parameters = "data/sn09/pulse_tube/parameters.toml"
-```
-
-A head model is a TOML file in `library/heads/data/` describing the design shared by every head of that model: its two regenerator columns, its pulse-tube gas volumes, and the clamp position $x_R$ as a fraction of the stage-2 column's length from stage 1. Each layer of a column gives its position `index`, counting from 0 at the warm end, and its matrix material, matrix mass, pore gas volume, and fraction of the column's length:
-```toml
-name = "PT1.1"
-clamp_fraction = 0.668
-pulse_tube_volumes = [250.8e-6, 200.9e-6]  # m^3, stage 1 and stage 2
-source = "CAD 910-000018; Falter 2024; derived in data/sn09/pulse_tube/"
-
-[[stage_1_column]]
-index = 0
-material = "304 SS"
-mass = 0.976           # kg
-pore_volume = 2.85e-4  # m^3
-length_fraction = 0.72
-
-[[stage_1_column]]
-index = 1
-material = "Pb"
-mass = 1.112
-pore_volume = 6.01e-5
-length_fraction = 0.28
-
-[[stage_2_column]]
-# Pb, Er3Ni, HoCu2, Gd2O2S
-```
-In each column, the indices run from 0 to one less than the number of layers, each once, and the length fractions sum to one. Each layer becomes a Node whose composition is only its matrix, named `"<head> stage 1 Pb"` from the head, column, and material, or by the layer's optional `name`. Generated nodes follow the configured nodes, in link order, and the rest of the configuration refers to them by name. The cooler reads matrix mass, material, and pore volume from the same layer entries. The clamp is the stage-2 node whose span contains `clamp_fraction`; in a fridge, a contact link joins it to the RGP plate node.
-
-The parameter file holds the head's $a_1$, $a_2$, $C_1$, $C_2$, and valve frequency $f$, each with its source.
-
-#### Gas pushing
-Gas pushing is its own specific link type, although future scenarios may extend this to consider different methods. Here, we focus on `gas_pushing_pm5`, which is currently deployed. The decision for how to model gas pushing is recorded in `docs/adrs/gas-pushing-routine.md`.
-
-#### Gas-gap heat switch
-Gas-gap heat switches are a specific link type, always connecting only two nodes, handled here with a reduced-complexity model. Heat flow $Q$ through the switch is given by:
-
-$$
-Q = \frac{(T_h - T_c)}{\frac{1}{hA} + \sum_b \frac{L_b}{k_b A_b}},
-$$
-
-where $T_h$ and $T_c$ are the temperatures of the warmer and colder adjacent nodes, respectively, $A$ is the gap area, and each bracket $b$ has a length $L_b$, area $A_b$, and conductivity $k_b$. The gap's conductance per unit area $h$ is a combination of the high-pressure and low-pressure behavior:
-
-$$
-\frac{1}{h} = \frac{d}{k_g} + \frac{1}{h_m}, \qquad h_m = \alpha \frac{\gamma + 1}{\gamma - 1} \sqrt{\frac{R}{8 \pi M \bar{T}}} P,
-$$
-
-for gap width $d$, gas thermal conductivity $k_g$, accommodation coefficient $\alpha$, heat capacity ratio $\gamma$, molar mass $M$, and ideal gas constant $R$.
-
-The pressure $P$ follows from conservation. Each switch seals after filling to pressure $P_{fill}$ at temperature $T_{fill}$, so the total amount of gas is $n = P_{fill} V / (R T_{fill})$. The gas is either free or held by the charcoal, so we have:
-
-$$
-n = \frac{P V}{R \bar{T}} + n_s \frac{K P}{1 + K P}, \qquad K = K_0   e^{E / R \bar{T}},
-$$
-
-where $n_s$ is the charcoal mass times its capacity and $K_0$ and $E$ are the gas adsorption constants on the charcoal. $P$ is the positive root of this quadratic, capped at some $P_{sat}(T_c)$. Gas properties and $k_b$ are evaluated at the mean temperature $\bar{T} = (T_h + T_c) / 2$.
-
-The configuration for the switch should look something like:
-```toml
-[[fridge.links]]
-name = "CFP-STP Switch"
-type = "gas_gap_switch"
-nodes = ["CFP", "STP"]
-gas = "He-4"
-fill_pressure = 1.0e5      # Pa
-fill_temperature = 295.0   # K
-gas_volume = 2.5e-6        # m^3
-gap = 5.1e-4               # m
-area = 4.6e-3              # m^2
-charcoal_mass = 1.8e-4     # kg
-brackets = [{ material = "OFHC Cu RRR100", area = 1.0e-4, length = 0.02 }]
-```
-
-#### Exchange gas
-
-Exchange gas is one link over every node with a surface facing the gas. Each facing pair of surfaces, including the vacuum can and the PRP, has an area $A$ and gap $d$ and carries $Q = hA(T_b - T_a)$, where $h$ is the gas-gap switch's gap conductance per unit area at the pair's mean temperature, and $T_b$ and $T_a$ are the node temperatures. The pressure is the same throughout the can, a cubic in the CFP temperature clamped at zero:
-
-$$
-P = \max(0,\ a T^3 + b T^2 + c T + d).
-$$
-
-Its coefficients are the pumping threshold from the `monitor_ovc` routine, converted from mbar to Pa. Using them assumes outgassing and residual air keep P1 pressed against that threshold; if P1 sits below it, the link overstates the coupling in proportion. N2 stands in for air. The cubic reaches zero near 68 K, which ends the coupling without a phase change.
-
-```toml
-[[fridge.links]]
-name = "Exchange gas"
-type = "exchange_gas"
-nodes = ["Vacuum can", "PRP", "RGP", "CFP", "STP", "ICP", "MXP"]
-gas = "N2"
-pressure_node = "CFP"
-pressure_coefficients = [3.16030871e-07, -1.32989499e-04, 1.90126130e-02, -7.78545808e-01]
-surfaces = [{ nodes = ["Vacuum can", "PRP"], area = 0.5, gap = 0.02 }]
-```
-
-#### Radiation
-Radiation Links connect exactly two nodes, ordered as `[inner, outer]` corresponding to their orientation in physical space. We'll denote `inner` as $\Box_1$ and `outer` as $\Box_2$. Heat flow $Q$ between them is given by grey-body radiation:
-
-$$
-Q = \pm \frac{\sigma A_1 (T_2^4 - T_1^4)}{\frac{1}{\epsilon_1(T_1)} + \frac{A_1}{A_2} \left(\frac{1}{\epsilon_2(T_2)} - 1 \right)},
-$$
-
-for each node's temperature $T_1$ and $T_2$, surface area $A_1$ and $A_2$, and emissivity $\epsilon_1$ and $\epsilon_2$. Parallel plates have $A_1 = A_2$. $Q$ is positive into the inner node and negative into the outer node, by construction. Rather than store emissivity on each Node, we track each Surface adjacent to the Radiation Link as its own type.
-
-Surface configuration looks like:
-```toml
-name = "Polished OFHC Cu"
-[emissivity]
-form = "table"
-table = [[4.0, 0.006], [77.0, 0.015], [300.0, 0.03]]
-range = [4.0, 300.0]
-source = "..."
-```
-And a Radiation Link is configured as:
-```toml
-[[fridge.links]]
-name = "4K shield to still shield"
-type = "radiation"
-nodes = ["STP", "CFP"]
-area = [0.119, 0.45]
-surface = ["Polished OFHC Cu", "Polished OFHC Cu"]
-```
-
-#### Multi-layer insulation
-Multi-layer insulation (MLI) is its own link type, `multi_layer_insulation`. MLI Links connect exactly two nodes, ordered as `[inner, outer]`: the blanket wraps the inner node ($\Box_1$) and faces the outer node ($\Box_2$). An MLI Link replaces the Radiation Link over the area its blanket covers. Heat flow $Q$ follows the Lockheed correlation (Keller, Cunnington, and Glassford, NASA CR-134477, 1974), the sum of conduction through the spacers and radiation between the layers:
-
-$$
-Q = \pm A \left[C_s n^b \bar{T} \frac{T_2 - T_1}{N + 1} + C_r \epsilon \frac{T_2^{4.67} - T_1^{4.67}}{N} \right],
-$$
-
-for blanket area $A$, layer count $N$, layer density $n$ (layers per meter of blanket thickness), node temperatures $T_1$ and $T_2$, and their mean $\bar{T} = (T_1 + T_2) / 2$. The spacer coefficient $C_s$ (W m$^{-2}$ K$^{-2}$ (layers/m)$^{-b}$), layer density exponent $b$, radiation coefficient $C_r$ (W m$^{-2}$ K$^{-4.67}$), and layer emissivity $\epsilon$ depend on how the blanket is built. They are fit together, so $\epsilon$ is the blanket's room-temperature value. $Q$ is positive into the inner node and negative into the outer node, by construction.
-
-The link's table carries the blanket's coefficients and their source:
-```toml
-[[fridge.links]]
-name = "Stage 1 blanket"
-type = "multi_layer_insulation"
-nodes = ["Stage 1", "Chamber"]
-area = 0.05                       # m^2
-layers = 4
-layer_density = 2000.0            # layers/m
-spacer_coefficient = 6.789e-13    # W m^-2 K^-2 (layers/m)^-b
-layer_density_exponent = 2.56
-radiation_coefficient = 5.39e-10  # W m^-2 K^-4.67
-emissivity = 0.03
-source = "Lockheed 1974, NTRS 20190030285"
-```
-
-#### Joint-contact resistance
-Joints, such as bolted flanges and clamps, are their own link type, `joint_contact`, connecting exactly two nodes. Contact conductance depends on the clamping force rather than the apparent contact area *(Dhuley, Cryogenics 101 (2019) 111–124)*, and the joint's conductance is modeled by a power-law of the form:
-
-$$
-G(T) = g F \left( \frac{T}{T_r} \right)^n,
-$$
-
-for clamping force $F$, conductance per unit force $g$ at reference temperature $T_r$, and temperature exponent $n$, which runs from 1 for clean metallic contacts toward 2 for oxidized bare copper. Heat flow is $Q = G(\bar{T}) (T_2 - T_1)$ into the first node, at the mean temperature $\bar{T}$. A bolt torque converts to force with Dhuley's Eq. A1.
-
-The link is configured as:
-```toml
-[[fridge.links]]
-name = "Stage 2 flange"
-type = "joint_contact"
-nodes = ["PT stage 2", "CFP"]
-force = 1.0e4                    # N
-conductance_per_force = 1.9e-3   # W/(K N)
-reference_temperature = 4.2      # K
-temperature_exponent = 1.1
-source = "Dhuley 2019, Tables 2 and 5, Au-plated Cu assembled warm"
-```
-
-## Package layout
-The repository structure should have the following shape, although this is not a comprehensive description (specific files may be added or removed later, during implementation):
-```bash
-src/pulse_tube_cooldown/
-    __init__.py
-    __main__.py
-    config.py
-    output.py
-    core/
-        __init__.py
-        types.py
-        errors.py
-    engine/
-        __init__.py
-        equations.py
-        solver.py
-    library/
-        __init__.py
-        conditions.py
-        property_fits.py
-        materials/
-            __init__.py
-            load.py
-            data/
-                ofhc_cu_rrr100.toml
-                ss_304.toml
-                ...
-        gases/
-            __init__.py
-            load.py
-            data/...
-        surfaces/
-            __init__.py
-            load.py
-            data/...
-        heads/
-            data/...
-        links/
-            __init__.py
-            conduction.py
-            radiation.py
-            gas_gap_switch.py
-            gas_pushing.py
-            exchange_gas.py
-            multi_layer_insulation.py
-            joint_contact.py
-            cooler/
-                __init__.py
-                head.py
-                drive.py
-    plot/
-        __init__.py
-        graph.py
-        result.py
-
-tests/
-    core/...
-    engine/...
-    library/...
-    regression/...
-```
+# Architecture and design
+
+The pulse-tube cooldown simulator predicts how a dilution refrigerator cools from
+room temperature to the start of condensing. This document describes its
+architecture, the responsibilities of the repository's parts, and the philosophy
+behind the modeling approach. [CONTEXT.md](../CONTEXT.md) maps individual work
+areas to code, tests, and data. [GLOSSARY.md](../GLOSSARY.md) defines shared terms.
+
+## Purpose and scope
+
+The simulator is a design tool for understanding cooldown time, node temperatures,
+and heat flows in individual refrigerators. Different refrigerator architectures
+are represented by different graphs, material inventories, and procedures.
+SN09 and FP1 are the reference systems for the v1 release; the release work is
+tracked in [TASKS.md](../TASKS.md).
+
+A useful prediction follows from physics we understand. Component behavior is
+checked against physical invariants and known solutions, and assembled models
+are compared with measurements. Agreement with data needs an explanation in the
+modeled energy balances. The legacy simulator supplies reference physics, data,
+and comparison runs.
+
+## Architecture and responsibilities
+
+A graph represents the thermal system. Nodes hold material inventories at a
+single temperature; links describe heat transfer, including shared media and
+sources or sinks. A configured model combines the nodes with initial conditions,
+boundary nodes, a procedure, and solver options.
+
+| Part | Responsibility |
+|---|---|
+| [`core/`](../src/pulse_tube_cooldown/core/) | Shared types for physical properties, nodes, links, graphs, procedures, and results. |
+| [`engine/`](../src/pulse_tube_cooldown/engine/) | Assemble node energy balances, integrate a procedure, find steady states, and reconstruct results. |
+| [`library/`](../src/pulse_tube_cooldown/library/) | DR component physics, physical properties, conditions, and loaders for their configuration and data. |
+| [`config.py`](../src/pulse_tube_cooldown/config.py), [`__main__.py`](../src/pulse_tube_cooldown/__main__.py), [`output.py`](../src/pulse_tube_cooldown/output.py) | Build configured models, provide the command-line entry point, and save results. |
+| [`measurements/`](../src/pulse_tube_cooldown/measurements/) | Read test-stand measurements into labeled datasets. |
+| [`plot/`](../src/pulse_tube_cooldown/plot/) | Draw graphs and plot simulation histories and comparisons with measurements. |
+
+The engine operates on the shared node and link interfaces. The DR library
+supplies the physical laws and data behind those interfaces. This separation
+lets a new link participate in an existing graph and solver. Models can also be
+built directly in Python with custom materials and links.
+
+A link receives temperatures only for its own nodes, in its declared order. It
+returns the heat flow into each node and any additional heat capacity sharing
+that node's temperature, such as attached gas. The engine adds these terms to
+each node's material heat capacity and energy balance. Names identify nodes and
+links in configuration and results; the graph maps link-local order to the
+engine's array indices.
+
+The current integrated state is node temperature. Boundary nodes retain their
+initial temperatures while links continue to exchange heat with them. The
+representation of internal thermal state in the replacement head model is an
+[open decision](#open-decisions).
+
+## How a run proceeds
+
+The public entry points are `configure_model`, `simulate_cooldown`, and
+`save_output`. The `run-ptc` command uses the same sequence.
+
+1. **Configure.** Read the TOML configuration, load material and link data, build
+   the graph, and resolve named conditions and boundary nodes. Link loaders can
+   also define nodes required by their component model.
+2. **Build the procedure.** Each phase selects its active links. Configuration
+   applies link enables and disables cumulatively; direct Python construction
+   supplies each phase's links explicitly. Each phase has a graph over the same
+   nodes.
+3. **Integrate.** The engine assembles energy balances from the active graph and
+   passes temperature rates to SciPy's ODE solver. A phase-ending condition
+   advances to the next phase with the current temperatures. A procedure-ending
+   condition, the time limit, or a solver failure ends the run.
+4. **Build the result.** Reconstruct link heat flows at the sampled temperatures
+   and collect the phase histories in a labeled xarray dataset. Phase switches
+   retain samples on both sides so changes in heat flow remain visible.
+5. **Save and inspect.** Save the dataset as netCDF and use the plotting functions
+   to inspect temperatures, signed heat flows, and comparisons with measurements.
+
+Heat flow is positive into the receiving node. Results identify nodes and links
+by name, carry units and supplied run metadata, and distinguish inactive links
+from links carrying zero heat. The detailed result schema and interfaces are
+documented with the [core types](../src/pulse_tube_cooldown/core/types.py).
+
+Experiments group their input configuration, additional run inputs, results,
+figures, and interpretation in a run directory. Run scripts manage this
+arrangement and record the inputs and provenance needed to understand a result.
+The output function writes the result dataset to the requested file. The
+[toy run](../simulations/validation/toy/) provides a small working example.
+
+The engine also provides a
+[steady-state solver](../src/pulse_tube_cooldown/engine/steady_state.py) that
+balances net heat flow at free nodes while holding boundary temperatures and
+applying specified heater powers. It shares the transient solver's energy-balance
+assembly and supports component investigations and load-map comparisons.
+
+## Physical modeling approach
+
+Nodes combine the masses and temperature-dependent specific heats of their
+materials. Links represent the processes coupling those thermal masses. Keeping
+individual contributions explicit makes heat-flow budgets available for
+investigation and comparison with the physical system.
+
+| Process | Approach |
+|---|---|
+| Conduction | Integrate a material's conductivity between endpoint temperatures for a solid heat path. |
+| Joint contact | Use a force-dependent contact conductance with a temperature power law and sourced coefficients. |
+| Radiation | Exchange gray-body radiation between enclosing surfaces, with each surface's temperature-dependent emissivity. |
+| Multi-layer insulation | Use the Lockheed correlation for spacer conduction and inter-layer radiation over the blanket's area. The blanket replaces direct radiation over that area. |
+| Gas-gap heat switch | Combine molecular and viscous gas conduction with bracket resistance. Determine sealed-gas pressure from free gas, charcoal adsorption, and saturation at the colder surface. |
+| Exchange gas | Couple facing surface pairs through gas at a shared pressure. Use the configured pumping threshold as a pressure proxy for the reference systems, as recorded in [ADR-05](adrs/05-exchange-gas-pressure.md). |
+| Gas pushing | Average gas transport over the routine's pressure cycles, accounting for the ordered gas volumes and operational limits described in [ADR-02](adrs/02-gas-pushing-routine.md). |
+
+Short explanations and component interfaces live beside their implementations
+in [`library/links/`](../src/pulse_tube_cooldown/library/links/). ADRs record
+significant modeling decisions and their assumptions.
+
+Materials, gases, surfaces, and head designs have named library data files.
+Property loaders construct temperature-dependent functions and integrals from
+sourced fits or tables. Validity ranges accompany the data; values outside them
+use the endpoint behavior and warnings described by the loaders. Real-helium
+properties used by the existing head implementation are supplied through
+[`library/gases/helium.py`](../src/pulse_tube_cooldown/library/gases/helium.py).
+
+Physical inputs use SI units. Values that depend on the system, material, or run
+belong in configuration or data, with their sources recorded nearby. Separating
+shared component data from individual run inputs lets comparisons identify what
+changed between configurations.
+
+## Repository organization
+
+| Location | Contents and role |
+|---|---|
+| `src/pulse_tube_cooldown/` | The reusable simulator, component library, measurement readers, and plotting functions. Packaged property and head-design data live with their library loaders. |
+| `tests/` | Core, engine, component, interface, integration, and acceptance tests. [Test policy](../tests/README.md) describes their responsibilities and authorship rules. |
+| `data/` | Source measurements, hardware records, geometry, curated input tables, and configuration templates. [The data map](../data/README.md) identifies their locations and provenance. |
+| `data/scripts/` | Preparation tools that turn source records into curated inputs and library data. [Their README](../data/scripts/README.md) describes those workflows. |
+| `simulations/` | Experiments and validation runs with their analysis code, selected inputs, generated outputs, and findings. Experiment-specific comparison and fitting logic lives here. |
+| `docs/` | Architecture, ADRs, proposals, reference papers, diagrams, and reporting material. Archived ADRs retain earlier decisions. |
+| `CONTEXT.md`, `GLOSSARY.md`, `TASKS.md`, `AGENTS.md` | Detailed navigation, shared language, current work, and contribution rules. |
+
+Source measurements and prepared physical inputs are distinguished from fitted
+candidates and experiment results. For example, test-stand readers live in the
+package, while a head-comparison experiment chooses its records and analyzes
+predictions under `simulations/`. Refrigerator comparison windows, channel
+mappings, and scoring are recorded with the system data and validation code.
+
+Acceptance tests express required physical behavior and public interfaces.
+Component tests and assembled simulations provide complementary evidence about
+the model. Current coverage and unfinished validation work are tracked in
+[TASKS.md](../TASKS.md).
+
+## Open decisions
+
+The pulse-tube head model is being replaced. The agreed direction represents a
+head through its two stages and regenerator clamp, with internal thermal state
+belonging to the head model. In the reference fridge, stage 1 connects to PRP,
+stage 2 to CFP, and the clamp to RGP. The formulation, fitted parameters, and
+engine integration remain in progress; the
+[head-model discussion](proposals/pulse-tube-model-direction.md) records the
+current understanding.
+
+The existing head implementation and associated experiments follow
+[archived ADR-03](adrs/archive/03-coupled-capacity-maps.md). The replacement work
+and the archetypal head are tracked in [TASKS.md](../TASKS.md).

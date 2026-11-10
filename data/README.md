@@ -9,11 +9,11 @@ under `simulations/`. Published documents and diagrams live under `docs/`.
 |---|---|
 | `sn09/`, `fp1/` | Refrigerator cooldown records and comparison conventions, BoM exports and node assignments, geometry, and fridge configuration templates. |
 | `heads/pt1_1/geometry.csv`, `heads/pt1_5/geometry.csv` | Pulse-tube head geometry by model, from CAD and stated estimates. PT1.5 records what its CAD shows; its other quantities, including the matrix filling, are PT1.1's. |
-| `heads/pt1_5/parameters.toml` | The canonical PT1.5 head's packing coefficients, resistances, and valve frequency, fitted to the test-stand load maps. |
+| `heads/pt1_5/parameters.toml` | The existing archetypal PT1.5 head's packing coefficients, resistances, and valve frequency, fitted to the test-stand load maps under archived ADR-03. |
 | `test_stand/<serial>/` | Measured cooldowns and load maps, grouped by cold-head serial. |
-| `test_stand/fridge.toml`, `test_stand/pulse_tube/` | The test stand's fridge template, running the canonical PT1.5 head, with its one- and two-compressor drives. |
-| `test_stand/fit_set.csv` | The canonical head's load-map fit set, one map per head, with each run's compressors, valve frequency, and MLI state. |
-| `test_stand/cooldown_set.csv` | The stand cooldowns that test the canonical head, one per head, with each run's compressors and valve frequency. |
+| `test_stand/fridge.toml`, `test_stand/pulse_tube/` | The test stand's fridge template, running the existing archetypal PT1.5 head, with its one- and two-compressor drives. |
+| `test_stand/fit_set.csv` | The existing archetypal head's load-map fit set, one map per head, with each run's compressors, valve frequency, and MLI state. |
+| `test_stand/cooldown_set.csv` | The stand cooldowns used to test that head, one per head, with each run's compressors and valve frequency. |
 | `test_stand/load_map_index_2026-11-05.csv` | Supplied November 5, 2026 draft index of load-map tests and setup changes. |
 | `test_stand/runs.csv` | Catalog of the datasets used in the load-map characterization, with provenance and assumptions. |
 | `test_stand/muenster_maps.csv` | Digitized manufacturer load maps, with source page and image names. |
@@ -25,6 +25,10 @@ under `simulations/`. Published documents and diagrams live under `docs/`.
 SN09 is a refrigerator; S0009 is a cold-head serial. SN09's installed head serial
 is unknown. The test-stand measurements are separate from the
 refrigerator cooldown records.
+
+The replacement head formulation is in progress, as summarized in
+[DESIGN](../docs/DESIGN.md#open-decisions). SN09's and FP1's fridge templates are
+placeholders tracked in `TASKS.md`.
 
 The full test-stand archive is `../../data/test_stand/` relative to the repository.
 The characterization and digitizing workflow is in

@@ -4,7 +4,7 @@ SN09 and FP1 share the six-plate architecture: PRP, RGP, CFP, STP, ICP, and MXP.
 
 ## Pulse-tube heads
 
-Neither system's heads have test-stand records: FP1's predate the stand, and SN09's serial is unrecorded. Both systems use the canonical head of DESIGN "Coupled capacity maps", fitted to the load-map set `test_stand/fit_set.csv`: one Denver map each of S0007, S0008, S0009, S0019, S0023, S0028, S0034, and S0035 (`test_stand.md` "Load-map fit set"). The head-to-head spread among those maps is accepted as error. SN09's head was recorded as a PT1.1, but no PT1.1 records exist. `test_stand/s0009/` holds S0009's test-stand records; `heads/pt1_1/geometry.csv` holds the CAD-derived geometry of SN09's PT1.1 head, and `heads/pt1_5/geometry.csv` that of FP1's PT1.5 heads.
+Neither system's heads have test-stand records: FP1's predate the stand, and SN09's serial is unrecorded. An archetypal head is needed for these comparisons. The existing PT1.5 parameters in `heads/pt1_5/parameters.toml` were fitted to `test_stand/fit_set.csv` under [archived ADR-03](../docs/adrs/archive/03-coupled-capacity-maps.md). The replacement formulation is [in progress](../docs/DESIGN.md#open-decisions), and the full refrigerator configurations remain tasks 4.1 and 4.2. SN09's head was recorded as a PT1.1, but no PT1.1 test-stand records exist. `test_stand/s0009/` holds S0009's test-stand records; `heads/pt1_1/geometry.csv` holds the CAD-derived geometry of SN09's PT1.1 head, and `heads/pt1_5/geometry.csv` that of FP1's PT1.5 heads.
 
 ## Cooldown records
 
@@ -14,6 +14,9 @@ Neither system's heads have test-stand records: FP1's predate the stand, and SN0
 Both routines begin condensing once their MXP channel falls below 14 K (`exit_temperature` in the `gas_pushing` subroutine). Compressor start and the onset of condensing are read from the traces above.
 
 The routine logs, `monitor_ovc` P1 diagnostics, and P2 and P3 pressure traces for these runs are not pulled. The model takes its exchange-gas pressure and gas-pushing thresholds from the routines' settings.
+
+[ADR-05](../docs/adrs/05-exchange-gas-pressure.md) records the exchange-gas pressure
+approximation and its assumptions.
 
 ## Inventories and geometry
 
