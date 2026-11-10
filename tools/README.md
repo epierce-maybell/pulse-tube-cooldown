@@ -1,7 +1,7 @@
 # Data preparation
 
 Run these tools from the repository root. Their inputs and outputs live in
-`data/`, except for packaged head-design files under `src/`.
+`data/` and packaged library data under `src/`.
 
 | Tool | Inputs and outputs |
 |---|---|
@@ -9,7 +9,7 @@ Run these tools from the repository root. Their inputs and outputs live in
 | `step_geometry.py` | Extracts a STEP assembly into an inventory and BREP parts, then prints a geometry report for transcription into `data/<system>/geometry.csv`. Requires CadQuery. |
 | `derive_fp1_cooldown.py` | Bins an InfluxDB thermometer CSV export into 60 s means; writes `data/fp1/cooldown_<date>.dat` or a supplied output path. Requires pandas. |
 | `derive_head_model.py` | Reads `data/heads/pt1_1/geometry.csv` and `data/heads/pt1_5/geometry.csv`; writes `pt1_1.toml` and `pt1_5.toml` in `src/pulse_tube_cooldown/library/heads/data/`. |
-| `derive_he4_adsorption.py` | Reads `data/gases/martins2011.toml`; prints fitted Langmuir constants and residuals. |
+| `derive_he4_adsorption.py` | Reads `sources.martins2011` in `src/pulse_tube_cooldown/library/gases/data/he4.toml`; prints fitted Langmuir constants and residuals. |
 
 Examples:
 

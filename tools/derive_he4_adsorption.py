@@ -1,4 +1,4 @@
-"""Prints Langmuir constants for He-4 on charcoal, fitted to the Roubeau isotherm in martins2011.toml.
+"""Prints Langmuir constants for He-4 on charcoal from the source isotherm recorded in he4.toml.
 
 The Roubeau isotherm is ln P = (a - b ln(Q + c)) (d - 1 / T) + e + ln Q + ln 100, for pressure P in Pa, temperature T in
 K, and amount adsorbed Q in cm^3/g. The Langmuir constant K = (n / (n_s - n)) / P, for amount adsorbed n and capacity
@@ -14,8 +14,8 @@ from scipy.constants import R
 
 def main() -> None:
     """Prints adsorption_energy in J/mol, adsorption_constant in 1/Pa, and adsorption_capacity in mol/kg."""
-    source = Path(__file__).resolve().parents[1] / "data/gases/martins2011.toml"
-    data = tomllib.loads(source.read_text(encoding="utf-8"))
+    source = Path(__file__).resolve().parents[1] / "src/pulse_tube_cooldown/library/gases/data/he4.toml"
+    data = tomllib.loads(source.read_text(encoding="utf-8"))["sources"]["martins2011"]
     mmol_per_cm3 = data["amount_pressure"] / (R * data["amount_temperature"]) * 1e-3
 
     volume_per_gram, log_pressure = np.meshgrid(

@@ -29,7 +29,7 @@ Implementation and test paths are relative to `src/pulse_tube_cooldown/` and
 | Energy balances and solvers | DESIGN "How a run proceeds" | `engine/` | `engine/` |
 | Configuration, CLI, output | DESIGN "How a run proceeds" | `config.py`, `__main__.py`, `output.py` | `test_config.py`, `test_cli.py`, `test_output.py`, `acceptance/test_interfaces.py`; `integration/fixtures/toy.toml` |
 | Materials and property fits | DESIGN "Physical modeling approach" | `library/materials/`, `library/property_fits.py` | Material and fit tests under `library/`; packaged material data |
-| Gases and surfaces | DESIGN "Physical modeling approach" | `library/gases/`, `library/surfaces/` | Component and data tests under `library/`; packaged data and `data/gases/` |
+| Gases and surfaces | DESIGN "Physical modeling approach" | `library/gases/`, `library/surfaces/` | Component and data tests under `library/`; packaged property data and source coefficients |
 | Conduction, contacts, radiation, MLI | DESIGN "Physical modeling approach" | `library/links/` | `library/`, `acceptance/`; `data/systems.md` |
 | Gas-gap switches and exchange gas | [ADR-05](docs/adrs/05-exchange-gas-pressure.md) | `library/links/gas_gap_switch.py`, `exchange_gas.py` | Component, integration, and acceptance tests; `data/systems.md` |
 | Gas pushing | [ADR-02](docs/adrs/02-gas-pushing-routine.md) | `library/links/gas_pushing.py` | Component and acceptance tests; `data/systems.md` |

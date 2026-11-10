@@ -6,7 +6,7 @@ molar_mass = 4.002602e-3
 # Ideal monatomic gas; NIST WebBook gives Cp/Cv = 1.6667-1.6673 at 0.001 MPa from 10 to 300 K.
 heat_capacity_ratio = 1.6666666666666667
 
-# Langmuir fit by data/scripts/derive_he4_adsorption.py to Martins et al., Sensors and Actuators A 171, 324 (2011),
+# Langmuir fit by tools/derive_he4_adsorption.py to sources.martins2011,
 # carbon B (granular coconut shell), with capacity at their highest measured amount.
 adsorption_energy = 2188.0
 adsorption_constant = 8.11e-9
@@ -41,3 +41,18 @@ coefficients = [
 exponents = [0.981, 1.13, 1.536, 3.109, 0.338, 14.431]
 range = [2.1768, inf]
 source = "CoolProp Helium.json ancillary vapor-pressure equation, fit to the Ortiz-Vega helium equation of state, https://raw.githubusercontent.com/CoolProp/CoolProp/master/dev/fluids/Helium.json; agrees with the ITS-90 He-4 vapor-pressure scale within 0.05%"
+
+[sources.martins2011]
+source = "Martins et al., Sensors and Actuators A 171, 324 (2011), doi:10.1016/j.sna.2011.08.017, carbon B: Eq. 3 constants from Table 2 and capacity from Table 3"
+# Published amounts are in cm^3/g at amount_temperature (K) and amount_pressure (Pa).
+# Fit ranges use the same amount unit and Pa.
+amount_temperature = 298.15
+amount_pressure = 101325.0
+a = 484.0
+b = 56.0
+c = 17.8
+d = 0.012
+e = 5.65
+capacity = 332.5
+amount_range = [1.0, 60.0]
+pressure_range = [1.0e-4, 1.0e3]

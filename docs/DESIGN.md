@@ -115,6 +115,8 @@ in [`library/links/`](../src/pulse_tube_cooldown/library/links/). ADRs record
 significant modeling decisions and their assumptions.
 
 Materials, gases, surfaces, and head designs have named library data files.
+Published source coefficients used to derive a library property live with that
+property's data.
 Property loaders construct temperature-dependent functions and integrals from
 sourced fits or tables. Validity ranges accompany the data; values outside them
 use the endpoint behavior and warnings described by the loaders. Real-helium

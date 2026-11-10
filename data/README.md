@@ -16,8 +16,10 @@ candidates live in [`../pulse-tube-research/`](../../pulse-tube-research/README.
 | `test_stand/muenster_maps.csv` | Digitized manufacturer maps with source page and image names. |
 | `test_stand/muenster_key_points.csv`, `test_stand/valve_settings.csv` | Transcribed manufacturer reference tables. |
 | `test_stand/sn0117_load_map.png` | Supplied PTD 420Q (SN117) chart with two F-70H compressors; originally `load_map.png`. |
-| `gases/` | Published adsorption inputs used to derive packaged gas properties. |
 | `systems.md`, `test_stand.md`, `compressors.md` | Measurement formats, hardware records, operating conditions, and sources. |
+
+Shared property data and their source coefficients live with their library
+loaders under `src/pulse_tube_cooldown/library/`.
 
 SN09 is a refrigerator; S0009 is a cold-head serial. SN09's installed head serial
 is unknown. Stand measurements are separate from refrigerator cooldown records.
