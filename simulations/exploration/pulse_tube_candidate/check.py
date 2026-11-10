@@ -1,6 +1,7 @@
 """Replay and refine a saved candidate independently of acceptance tests."""
 
 import argparse
+import hashlib
 import json
 import time
 import tomllib
@@ -29,29 +30,22 @@ def audit(config: dict) -> dict:
         ("cp", candidate.helium.cp, [p["cp"] for p in exact]),
         ("beta", candidate.helium.beta, [p["expansion_coefficient"] / t for t, p in zip(sample, exact, strict=True)]),
         ("viscosity", candidate.helium.viscosity, [p["viscosity"] for p in exact]),
-        (
-            "mass_response",
-            candidate.helium.mass_response,
-            [p["density"] * p["isothermal_compressibility"] for p in exact],
-        ),
     ):
         values = np.asarray(values)
         property_errors[name] = float(np.max(np.abs(table.value(sample) / values - 1)))
     parameters = Parameters(*config["fit"]["initial"])
     boundary = np.array([295.0, 45.0, 3.0])
     start = time.perf_counter()
-    centers, evaluation = candidate.equilibrate(boundary, parameters, compressors=1, frequency=1.0)
+    centers, evaluation = candidate.equilibrate(boundary, parameters)
     equilibrium_seconds = time.perf_counter() - start
     energy = candidate.energies(centers, boundary)
-    recovered, recovered_evaluation = candidate.recover_profile(
-        energy, boundary, parameters, compressors=1, frequency=1.0
-    )
+    recovered, recovered_evaluation = candidate.recover_profile(energy, boundary, parameters)
     residual = (
         np.sum(evaluation.heat_flow)
         + np.sum(evaluation.energy_rate)
         - (evaluation.flows[0] - np.sum(evaluation.tube_power) + np.sum(evaluation.wall_leak))
     )
-    off = candidate.evaluate(centers, boundary, parameters, compressors=0, frequency=1.0)
+    off = candidate.evaluate(centers, boundary, parameters, drive_enabled=False)
     off_expected = []
     temperature = candidate.complete_temperature(centers, boundary)
     for i, codes in enumerate(candidate.node_codes):
@@ -85,7 +79,7 @@ def audit(config: dict) -> dict:
     timings = []
     for _ in range(10):
         start = time.perf_counter()
-        candidate.evaluate(centers, boundary, parameters, compressors=1, frequency=1.0)
+        candidate.evaluate(centers, boundary, parameters)
         timings.append(time.perf_counter() - start)
     refined_config = {
         **config,
@@ -96,9 +90,7 @@ def audit(config: dict) -> dict:
         },
     }
     refined = build_candidate(refined_config)
-    refined_centers, refined_evaluation = refined.equilibrate(
-        boundary, parameters, compressors=1, frequency=1.0, guess=centers
-    )
+    refined_centers, refined_evaluation = refined.equilibrate(boundary, parameters, guess=centers)
     return {
         "helium_relative_errors_against_direct_hepak": property_errors,
         "parameters": parameters.as_array().tolist(),
@@ -108,7 +100,6 @@ def audit(config: dict) -> dict:
         "flow_W": evaluation.flows.tolist(),
         "Q_W": evaluation.heat_flow.tolist(),
         "z": evaluation.pressure_fraction,
-        "demand_kg_per_s": evaluation.demand,
         "s2": evaluation.profile_measure,
         "transmission": evaluation.transmission.tolist(),
         "equilibrium_residual_W": float(np.max(np.abs(evaluation.energy_rate))),
@@ -125,7 +116,7 @@ def audit(config: dict) -> dict:
     }
 
 
-def reconstruct(candidate, head, parameters, cooldown, *, warm):
+def reconstruct(candidate, parameters, cooldown, *, warm):
     """Recovers accepted profiles and source/heat budgets along a saved trace."""
     rows = []
     guess = np.full(8, warm)
@@ -135,15 +126,12 @@ def reconstruct(candidate, head, parameters, cooldown, *, warm):
             cooldown.matrix_energy[index].values,
             boundary,
             parameters,
-            compressors=head.cooldown.compressors,
-            frequency=head.cooldown.valve_frequency,
             guess=guess,
         )
         rows.append(
             {
                 "z": evaluated.pressure_fraction,
-                "Dpass": evaluated.pass_demand,
-                "Dfill": evaluated.fill_demand,
+                "pressure_amplitude_Pa": evaluated.pressure_fraction * candidate.source["pressure_amplitude"],
                 "s2": evaluated.profile_measure,
                 "W1": evaluated.tube_power[0],
                 "W2c": evaluated.tube_power[1],
@@ -171,6 +159,7 @@ def main():
     """Compares solvers or checks a fitted head under refined numerics."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--head")
+    parser.add_argument("--output", type=Path, help="Verification output directory; default results/verification")
     parser.add_argument("--audit", action="store_true", help="Check properties, conservation, and energy inversion")
     parser.add_argument("--evaluation", type=int, help="Replay a logged coefficient set, including rejected trials")
     parser.add_argument("--solver", choices=("BDF", "Radau"), default="Radau")
@@ -229,24 +218,26 @@ def main():
         else:
             prediction, diagnostics = predict_one(candidate, stand, head, parameters, warm=warm)
             cooldown = prediction.cooldown
-        budgets = reconstruct(candidate, head, parameters, cooldown, warm=warm)
+        budgets = reconstruct(candidate, parameters, cooldown, warm=warm)
     tag = f"{head.serial}_{args.solver}" + ("_refined" if args.refine else "")
     if args.cooldown_only:
         tag += "_cooldown_only"
     if args.evaluation is not None:
         tag += f"_evaluation_{args.evaluation}"
-    output = result_directory / "verification"
-    output.mkdir(exist_ok=True)
+    output = args.output or result_directory / "verification"
+    output.mkdir(exist_ok=True, parents=True)
     cooldown.to_netcdf(output / f"{tag}_cooldown.nc")
     if prediction is not None:
         prediction.load_map.to_netcdf(output / f"{tag}_map.nc")
     budgets.to_netcdf(output / f"{tag}_budgets.nc")
     report = {
         "parameters": parameters.as_array().tolist(),
+        "source": config["source"],
+        "model_sha256": hashlib.sha256((here / "model.py").read_bytes()).hexdigest(),
         "diagnostics": diagnostics,
         "numerics": config["numerics"],
-        "source_at_start": {key: budgets[key][0].item() for key in ("z", "Dpass", "Dfill")},
-        "source_at_end": {key: budgets[key][-1].item() for key in ("z", "Dpass", "Dfill")},
+        "source_at_start": {key: budgets[key][0].item() for key in ("z", "pressure_amplitude_Pa")},
+        "source_at_end": {key: budgets[key][-1].item() for key in ("z", "pressure_amplitude_Pa")},
         "maximum_balance_residual_W": float(np.max(np.abs(budgets.balance_residual))),
     }
     if args.evaluation is None:
@@ -261,23 +252,13 @@ def main():
     (output / f"{tag}.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(report, indent=2), flush=True)
     plt.switch_backend("Agg")
-    figure, axes = plt.subplots(3, 1, figsize=(9, 8), sharex=True)
-    axes[0].plot(budgets.time / 3600, budgets.z)
-    axes[0].set_ylabel("Pressure fraction z")
-    axes[1].plot(budgets.time / 3600, 1e3 * budgets.Dpass, label="Through-flow demand")
-    axes[1].plot(budgets.time / 3600, 1e3 * budgets.Dfill, label="Filling demand")
-    axes[1].axhline(
-        1e3 * head.cooldown.compressors * config["source"]["delivery_per_compressor"],
-        color="k",
-        ls=":",
-        label="Available compressor delivery",
-    )
-    axes[1].set_ylabel("Ceiling demand (g/s)")
-    axes[1].legend()
+    figure, axes = plt.subplots(2, 1, figsize=(9, 6), sharex=True)
+    axes[0].plot(budgets.time / 3600, budgets.pressure_amplitude_Pa / 1e6)
+    axes[0].set_ylabel("Pressure amplitude (MPa)")
     for name in ("W1", "W2c"):
-        axes[2].plot(budgets.time / 3600, budgets[name], label=name)
-    axes[2].set(xlabel="Time since compressor start (h)", ylabel="Delivered power (W)")
-    axes[2].legend()
+        axes[1].plot(budgets.time / 3600, budgets[name], label=name)
+    axes[1].set(xlabel="Time since compressor start (h)", ylabel="Delivered power (W)")
+    axes[1].legend()
     figure.suptitle(head.serial + " source diagnostics")
     figure.tight_layout()
     figure.savefig(output / f"{tag}_source.png", dpi=150)

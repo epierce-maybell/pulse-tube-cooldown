@@ -1,9 +1,10 @@
 # Numerical trial of docs/proposals/pulse-tube-model-direction.md (2026-11-10).
 # Compressor inputs: data/compressors.md; trial values confirmed in chat, 2026-11-10.
 [source]
+# Effective helium-property pressure: trial value, in Pa absolute.
 mean_pressure = 1.5e6
-pressure_ceiling = 9.5e5
-delivery_per_compressor = 6.6e-3
+# Prescribed peak amplitude in Pa, initialized from half the FP1 supply-return swing.
+pressure_amplitude = 9.5e5
 
 [numerics]
 solver = "BDF"

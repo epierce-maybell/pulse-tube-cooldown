@@ -1,0 +1,91 @@
+{
+  "scope": "Local structural check. Measured cell-average Jacobians are imposed as local examples; this is not a fitted global heat-flow law. The wall-only clamp example assumes perfect contact and omits active gas transport.",
+  "geometry": {
+    "clamp_fraction": 0.619,
+    "wall_area_m2": 5.1051e-05,
+    "length_m": 0.2445
+  },
+  "cells": [
+    {
+      "stage_temperatures_K": [
+        47.759637548995855,
+        3.043994234938008
+      ],
+      "measured_cell_J_W_per_K": [
+        [
+          -1.5386398305481546,
+          1.192128428284503
+        ],
+        [
+          0.0012030452749888447,
+          -0.37891267928146016
+        ]
+      ],
+      "measured_forward_reverse_ratio": 990.9256559738013,
+      "wall_only_floating_clamp_K": 30.40855622046181,
+      "wall_only_cross_derivatives_W_per_K": [
+        3.932604377049152e-05,
+        0.0011495361415997693
+      ],
+      "clamp_elimination_maximum_error_W_per_K": 0.0,
+      "three_terminal_local_J_order_T1_T2_TR": [
+        [
+          -1.5393473802572815,
+          1.1920891022407325,
+          0.001187382214315192
+        ],
+        [
+          5.350913338907537e-05,
+          -0.3789765712003419,
+          0.0019291065371682514
+        ],
+        [
+          0.0018570858507266064,
+          0.00010321796265220872,
+          -0.0031164887514834433
+        ]
+      ]
+    },
+    {
+      "stage_temperatures_K": [
+        56.30258402659723,
+        3.114258667586091
+      ],
+      "measured_cell_J_W_per_K": [
+        [
+          -1.2465000727740994,
+          0.5545491799034147
+        ],
+        [
+          0.0101950356497204,
+          -0.41695896526548665
+        ]
+      ],
+      "measured_forward_reverse_ratio": 54.39404029142588,
+      "wall_only_floating_clamp_K": 35.44176233364137,
+      "wall_only_cross_derivatives_W_per_K": [
+        4.0570735443758965e-05,
+        0.0013203780235652213
+      ],
+      "clamp_elimination_maximum_error_W_per_K": 0.0,
+      "three_terminal_local_J_order_T1_T2_TR": [
+        [
+          -1.2473127771795571,
+          0.554508609167971,
+          0.0013961011490556258
+        ],
+        [
+          0.008874657626155179,
+          -0.417024879399974,
+          0.002268206328780662
+        ],
+        [
+          0.002133082429022975,
+          0.00010648486993112589,
+          -0.003664307477836288
+        ]
+      ]
+    }
+  ],
+  "conclusion": "A conservative clamp extension can preserve any unloaded stage Jacobian exactly; unloaded maps do not identify its off-stand response."
+}

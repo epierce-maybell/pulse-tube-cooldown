@@ -37,7 +37,6 @@ class HeliumTable:
     cp: ThermalProperty
     beta: ThermalProperty
     viscosity: ThermalProperty
-    mass_response: ThermalProperty
     kinematic_viscosity: ThermalProperty
 
     @classmethod
@@ -48,13 +47,9 @@ class HeliumTable:
         cp = np.array([p["cp"] for p in rows])
         beta = np.array([p["expansion_coefficient"] for p in rows]) / temperature
         viscosity = np.array([p["viscosity"] for p in rows])
-        response = density * np.array([p["isothermal_compressibility"] for p in rows])
         return cls(
             temperature,
-            *(
-                ThermalProperty.from_values(temperature, v)
-                for v in (density, cp, beta, viscosity, response, viscosity / density)
-            ),
+            *(ThermalProperty.from_values(temperature, v) for v in (density, cp, beta, viscosity, viscosity / density)),
         )
 
 

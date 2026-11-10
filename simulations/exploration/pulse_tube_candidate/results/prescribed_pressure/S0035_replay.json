@@ -1,0 +1,98 @@
+{
+  "config": {
+    "source": {
+      "mean_pressure": 1500000.0,
+      "pressure_amplitude": 950000.0
+    },
+    "numerics": {
+      "solver": "Radau",
+      "temperature_min": 2.1,
+      "temperature_max": 400.0,
+      "property_knots": 4097,
+      "quadrature_order": 24,
+      "flux_temperature_breaks": [
+        4.8,
+        5.1,
+        5.245,
+        5.3,
+        5.5,
+        6.0
+      ],
+      "flux_temperature_ratio": 1.25,
+      "energy_reference_temperature": 2.1,
+      "inversion_temperature_tolerance": 1e-08,
+      "equilibrium_flow_tolerance": 1e-07,
+      "relative_tolerance": 5e-06,
+      "temperature_absolute_tolerance": 1e-05,
+      "energy_absolute_tolerance": 1e-05,
+      "maximum_step": 15.0,
+      "sample_interval": 30.0
+    },
+    "fit": {
+      "initial": [
+        150.0,
+        20.0,
+        0.2,
+        3000.0,
+        300.0
+      ],
+      "lower": [
+        1.0,
+        0.0,
+        0.001,
+        0.01,
+        0.01
+      ],
+      "upper": [
+        2000.0,
+        10000.0,
+        100.0,
+        1000000.0,
+        1000000.0
+      ],
+      "maximum_evaluations": 60,
+      "relative_step": 0.002,
+      "jacobian_scale_floor": [
+        0.1,
+        0.1,
+        0.005,
+        0.05
+      ]
+    }
+  },
+  "parameters": [
+    106.63572292493993,
+    11.034781028468784,
+    0.6040537939346948,
+    769.8904699228616,
+    831.1699566145915
+  ],
+  "model_sha256": "33014c986dee5f9ff620144947190f4818b9385ceadd019ca65f3448c3b74ee2",
+  "success": false,
+  "error": "Integration stopped at 5488.92 s after bounded step retries: Energy/profile inversion residual 7.30105e-08 K.",
+  "stopped_time_s": 5488.92206772672,
+  "last_profile_guess_K": [
+    213.9690532553601,
+    96.89993967041126,
+    56.291627186112905,
+    32.830249963353545,
+    9.879901021544049,
+    4.487203320793622,
+    2.1000000409419504,
+    6.726495444326259
+  ],
+  "last_stages_K": [
+    63.882011066936535,
+    2.220544182447419
+  ],
+  "failed_profile_centers_K": [
+    213.9690541987112,
+    96.8999406010927,
+    56.29162756382146,
+    32.83024928897417,
+    9.879900224231658,
+    4.487202922079373,
+    2.100000000000009,
+    6.72649502265193
+  ]
+}

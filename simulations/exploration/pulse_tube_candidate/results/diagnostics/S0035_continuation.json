@@ -1,0 +1,393 @@
+{
+  "parameters": [
+    106.63572292493993,
+    11.034781028468784,
+    0.6040537939346948,
+    769.8904699228616,
+    831.1699566145915
+  ],
+  "numerics": {
+    "solver": "BDF",
+    "temperature_min": 2.1,
+    "temperature_max": 400.0,
+    "property_knots": 2049,
+    "quadrature_order": 12,
+    "flux_temperature_breaks": [
+      4.8,
+      5.1,
+      5.245,
+      5.3,
+      5.5,
+      6.0
+    ],
+    "flux_temperature_ratio": 1.25,
+    "energy_reference_temperature": 2.1,
+    "inversion_temperature_tolerance": 1e-08,
+    "equilibrium_flow_tolerance": 1e-07,
+    "relative_tolerance": 2e-05,
+    "temperature_absolute_tolerance": 1e-05,
+    "energy_absolute_tolerance": 1e-05,
+    "maximum_step": 30.0,
+    "sample_interval": 60.0
+  },
+  "branches": [
+    {
+      "anchor_stages_K": [
+        84.629308415986,
+        4.563794763215169
+      ],
+      "points": [
+        {
+          "heaters_W": [
+            25.0,
+            0.5
+          ],
+          "temperature_K": [
+            225.98994328211808,
+            121.22766690361092,
+            80.56284645513593,
+            48.818188400005255,
+            15.822564180396697,
+            5.805443508804915,
+            4.842647768332133,
+            8.741004754862999,
+            90.53392097896301,
+            4.623048109594148
+          ],
+          "balance_residual_W": 1.936228954946273e-13,
+          "finite_mode_count": 9,
+          "maximum_growth_rate_per_s": -0.0009618389928565178
+        },
+        {
+          "heaters_W": [
+            25.0,
+            0.0
+          ],
+          "temperature_K": [
+            225.05991658962748,
+            119.1957904890702,
+            77.60181967670263,
+            43.684397206974715,
+            9.282537767804369,
+            3.8627574335570785,
+            3.1784253221134264,
+            5.595415438279315,
+            88.28301564381074,
+            3.0195684328635206
+          ],
+          "balance_residual_W": 1.0030681840689226e-10,
+          "finite_mode_count": 9,
+          "maximum_growth_rate_per_s": -0.0010802912819034428
+        },
+        {
+          "heaters_W": [
+            20.0,
+            0.5
+          ],
+          "temperature_K": [
+            223.77717991774267,
+            116.05753277559995,
+            75.35058256595352,
+            45.91559333376291,
+            15.575249108940202,
+            5.944366032745275,
+            4.745459802265648,
+            9.020378688708815,
+            84.629308415986,
+            4.563794763215169
+          ],
+          "balance_residual_W": 2.4868995751603507e-14,
+          "finite_mode_count": 9,
+          "maximum_growth_rate_per_s": -0.0010970258405791741
+        },
+        {
+          "heaters_W": [
+            20.0,
+            0.0
+          ],
+          "temperature_K": [
+            223.1378719945073,
+            114.691359047077,
+            73.17308335663206,
+            41.6324333487129,
+            9.777161804262064,
+            4.043052950176432,
+            3.09506979085767,
+            5.972949405170288,
+            83.1360394486242,
+            2.9835936013272
+          ],
+          "balance_residual_W": 4.1758185798101977e-10,
+          "finite_mode_count": 9,
+          "maximum_growth_rate_per_s": -0.0012153567575637274
+        },
+        {
+          "heaters_W": [
+            0.0,
+            0.5
+          ],
+          "temperature_K": [
+            216.86236719409456,
+            99.90628289273812,
+            59.141753545945114,
+            36.84008663543329,
+            14.45145599113843,
+            6.584560526945484,
+            4.853071145786441,
+            9.609389799744898,
+            66.26798415758469,
+            4.445224005198533
+          ],
+          "balance_residual_W": 1.1325351767510483e-10,
+          "finite_mode_count": 9,
+          "maximum_growth_rate_per_s": -0.0017464697469492948
+        },
+        {
+          "heaters_W": [
+            0.0,
+            0.0
+          ],
+          "temperature_K": [
+            216.82946720179922,
+            99.91931479265445,
+            58.66039395505163,
+            34.6520605300057,
+            10.908901054171995,
+            5.007051355908649,
+            3.129944869988174,
+            7.205980023457956,
+            66.3307631592389,
+            2.897156575594987
+          ],
+          "balance_residual_W": 3.6353142718326126e-11,
+          "finite_mode_count": 9,
+          "maximum_growth_rate_per_s": -0.0018575814147779848
+        }
+      ]
+    },
+    {
+      "anchor_stages_K": [
+        84.94569139031894,
+        4.66026275461079
+      ],
+      "points": [
+        {
+          "heaters_W": [
+            25.0,
+            0.5
+          ],
+          "temperature_K": [
+            226.21360894516522,
+            121.73324589233042,
+            80.97235770658479,
+            48.6899842137767,
+            15.086206765786855,
+            5.647195496154785,
+            5.644990316130439,
+            8.223298715593558,
+            91.10844986060235,
+            4.930253563321321
+          ],
+          "balance_residual_W": 2.1671553440683056e-12,
+          "finite_mode_count": 9,
+          "maximum_growth_rate_per_s": -0.0009243153988053496
+        },
+        {
+          "heaters_W": [
+            25.0,
+            0.0
+          ],
+          "error": "Continuation residual 0.0131962 W at [20.25   0.475] W"
+        },
+        {
+          "heaters_W": [
+            20.0,
+            0.5
+          ],
+          "temperature_K": [
+            223.90449008564715,
+            116.3393274191539,
+            75.6171180295576,
+            46.015538016831655,
+            15.480832120102649,
+            5.906466012447005,
+            5.424396202903804,
+            8.925953872135432,
+            84.94569139031904,
+            4.660262754610876
+          ],
+          "balance_residual_W": 1.0658141036401503e-14,
+          "finite_mode_count": 9,
+          "maximum_growth_rate_per_s": -0.0005058747829133105
+        },
+        {
+          "heaters_W": [
+            20.0,
+            0.0
+          ],
+          "error": "Continuation residual 0.0123364 W at [20.     0.475] W"
+        },
+        {
+          "heaters_W": [
+            0.0,
+            0.5
+          ],
+          "temperature_K": [
+            216.86236719409462,
+            99.90628289273816,
+            59.14175354594511,
+            36.84008663543326,
+            14.451455991138376,
+            6.584560526945472,
+            4.853071145786465,
+            9.609389799744863,
+            66.26798415758468,
+            4.445224005198543
+          ],
+          "balance_residual_W": 1.1333145533143352e-10,
+          "finite_mode_count": 9,
+          "maximum_growth_rate_per_s": -0.0017464697469015647
+        },
+        {
+          "heaters_W": [
+            0.0,
+            0.0
+          ],
+          "error": "Continuation residual 0.015391 W at [19.     0.475] W"
+        }
+      ]
+    }
+  ],
+  "previously_failed_trials": [
+    {
+      "evaluation": 44,
+      "original_error": "Map point 2, heaters [20.   0.5]: balance residual 4.21946e-05 W.",
+      "roots": [
+        {
+          "stages_K": [
+            84.62191877648618,
+            4.563287136207259
+          ],
+          "balance_residual_W": 4.973799150320701e-14,
+          "finite_mode_count": 9,
+          "maximum_growth_rate_per_s": -0.0010984218597173616
+        },
+        {
+          "error": "Continuation residual 4.84571e-05 W at [20.   0.5] W"
+        }
+      ]
+    },
+    {
+      "evaluation": 47,
+      "original_error": "Map point 2, heaters [20.   0.5]: balance residual 5.69753e-06 W.",
+      "roots": [
+        {
+          "stages_K": [
+            84.59229251326495,
+            4.5637753726793555
+          ],
+          "balance_residual_W": 2.234656903965515e-12,
+          "finite_mode_count": 9,
+          "maximum_growth_rate_per_s": -0.0010967087869904143
+        },
+        {
+          "error": "Continuation residual 6.46368e-06 W at [20.   0.5] W"
+        }
+      ]
+    },
+    {
+      "evaluation": 48,
+      "original_error": "Map point 2, heaters [20.   0.5]: balance residual 0.000178429 W.",
+      "roots": [
+        {
+          "stages_K": [
+            84.62580400276997,
+            4.563554873819683
+          ],
+          "balance_residual_W": 3.019806626980426e-14,
+          "finite_mode_count": 9,
+          "maximum_growth_rate_per_s": -0.0010972081747566045
+        },
+        {
+          "error": "Continuation residual 0.000209423 W at [20.   0.5] W"
+        }
+      ]
+    },
+    {
+      "evaluation": 56,
+      "original_error": "Map point 2, heaters [20.   0.5]: balance residual 3.45392e-05 W.",
+      "roots": [
+        {
+          "stages_K": [
+            84.59766354578568,
+            4.563537835516792
+          ],
+          "balance_residual_W": 1.8740564655672642e-13,
+          "finite_mode_count": 9,
+          "maximum_growth_rate_per_s": -0.0010967667394603815
+        },
+        {
+          "error": "Continuation residual 3.90427e-05 W at [20.   0.5] W"
+        }
+      ]
+    },
+    {
+      "evaluation": 57,
+      "original_error": "Map point 2, heaters [20.   0.5]: balance residual 0.000207935 W.",
+      "roots": [
+        {
+          "stages_K": [
+            84.63117347885087,
+            4.563316646989263
+          ],
+          "balance_residual_W": 3.907985046680551e-14,
+          "finite_mode_count": 9,
+          "maximum_growth_rate_per_s": -0.0010972354383364496
+        },
+        {
+          "error": "Continuation residual 0.000236896 W at [20.   0.5] W"
+        }
+      ]
+    }
+  ],
+  "load_step": {
+    "success": true,
+    "message": "The solver successfully reached the end of the integration interval.",
+    "duration_s": 7200.0,
+    "initial_heaters_W": [
+      25.0,
+      0.0
+    ],
+    "final_heaters_W": [
+      20.0,
+      0.5
+    ],
+    "final_stages_K": [
+      84.63029379632445,
+      4.563804563616018
+    ],
+    "relaxed_stages_K": [
+      84.62930841598595,
+      4.5637947632151645
+    ],
+    "balance_residual_W": 1.7763568394002505e-14
+  },
+  "lower_branch_responses": {
+    "dQ1dT1": [
+      -1.140483149102565,
+      -0.9141105839420435
+    ],
+    "dQ1dT2": [
+      0.5215184224548841,
+      1.0750416048415818
+    ],
+    "dQ2dT1": [
+      0.0018685090167477338,
+      0.002734227761337457
+    ],
+    "dQ2dT2": [
+      -0.32052007494702733,
+      -0.31731743115291794
+    ]
+  }
+}

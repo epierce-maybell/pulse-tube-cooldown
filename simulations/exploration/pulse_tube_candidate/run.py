@@ -102,8 +102,6 @@ def simulate(
             value[:7],
             boundary,
             parameters,
-            compressors=head.cooldown.compressors,
-            frequency=head.cooldown.valve_frequency,
             guess=last_profile,
         )
         last_profile = centers
@@ -228,8 +226,6 @@ def solve_map(
                 centers,
                 np.r_[warm, stage],
                 parameters,
-                compressors=head.load_map.compressors,
-                frequency=head.load_map.valve_frequency,
             )
             stage_heat = evaluated.heat_flow[[0, 2]] + stand.external_heat(stage, warm) + heater
             return np.r_[evaluated.energy_rate, evaluated.flows[6] - evaluated.flows[7], stage_heat]

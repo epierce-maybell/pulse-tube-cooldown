@@ -1,0 +1,375 @@
+{
+  "serial": "S0035",
+  "inventory": "stand + stage-lumped regenerators",
+  "config": {
+    "serial": "S0035",
+    "head_design": "PT1.5",
+    "stand": "data/test_stand/test_stand.toml",
+    "records": "simulations/validation/head_comparison/records.toml",
+    "law": {
+      "initial": [
+        40.0,
+        2.3,
+        1.5,
+        0.4,
+        60.0,
+        15.0,
+        0.5,
+        0.02
+      ],
+      "lower": [
+        30.0,
+        1.7,
+        0.01,
+        0.005,
+        26.0,
+        0.6,
+        0.0,
+        0.0
+      ],
+      "upper": [
+        50.0,
+        3.2,
+        10.0,
+        2.0,
+        500.0,
+        100.0,
+        0.95,
+        0.95
+      ]
+    },
+    "fit": {
+      "maximum_evaluations": 200,
+      "difference_fraction": 0.001,
+      "cooldown_log_scales": [
+        0.03,
+        0.06
+      ],
+      "map_temperature_scales": [
+        1.0,
+        0.05
+      ],
+      "sample_interval": 60.0
+    },
+    "numerics": {
+      "relative_tolerance": 1e-08,
+      "absolute_tolerance": 1e-09,
+      "maximum_step": 60.0,
+      "property_min_temperature": 1.0,
+      "property_max_temperature": 400.0,
+      "property_knots": 4097
+    }
+  },
+  "parameters": [
+    42.56123868186663,
+    2.4015380500373227,
+    1.6641276501394109,
+    0.38128078003815113,
+    137.8991544403806,
+    23.236885610266366,
+    0.8230209923308162,
+    0.0113966007933769
+  ],
+  "optimizer": {
+    "success": true,
+    "message": "`ftol` termination condition is satisfied.",
+    "optimality": 0.49741467848935017,
+    "evaluations": 29,
+    "calls": 493,
+    "active_bounds": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "scaled_squared_residual": 119.77264447773753
+  },
+  "elapsed_seconds": 124.51292090001516,
+  "cooldown_rmse_K": {
+    "T1": 9.140254474899704,
+    "T2": 38.4873118003518
+  },
+  "map_rmse_K": {
+    "T1": 1.7542883106578866,
+    "T2": 0.08484715155157356
+  },
+  "refined_maximum_difference_K": {
+    "T1": 5.142216252806975e-07,
+    "T2": 2.0445239812261207e-07
+  },
+  "map_cells_measured": {
+    "coords": {
+      "P1_low": {
+        "dims": [
+          "cell"
+        ],
+        "attrs": {
+          "units": "W"
+        },
+        "data": [
+          0.0,
+          20.0
+        ]
+      },
+      "P1_high": {
+        "dims": [
+          "cell"
+        ],
+        "attrs": {
+          "units": "W"
+        },
+        "data": [
+          20.0,
+          25.0
+        ]
+      },
+      "P2_low": {
+        "dims": [
+          "cell"
+        ],
+        "attrs": {
+          "units": "W"
+        },
+        "data": [
+          0.0,
+          0.0
+        ]
+      },
+      "P2_high": {
+        "dims": [
+          "cell"
+        ],
+        "attrs": {
+          "units": "W"
+        },
+        "data": [
+          0.5,
+          0.5
+        ]
+      }
+    },
+    "attrs": {},
+    "dims": {
+      "cell": 2
+    },
+    "data_vars": {
+      "dQ1dT1": {
+        "dims": [
+          "cell"
+        ],
+        "attrs": {
+          "units": "W/K"
+        },
+        "data": [
+          -1.5386398305481546,
+          -1.2465000727740994
+        ]
+      },
+      "dQ1dT2": {
+        "dims": [
+          "cell"
+        ],
+        "attrs": {
+          "units": "W/K"
+        },
+        "data": [
+          1.192128428284503,
+          0.5545491799034147
+        ]
+      },
+      "dQ2dT1": {
+        "dims": [
+          "cell"
+        ],
+        "attrs": {
+          "units": "W/K"
+        },
+        "data": [
+          0.0012030452749888447,
+          0.0101950356497204
+        ]
+      },
+      "dQ2dT2": {
+        "dims": [
+          "cell"
+        ],
+        "attrs": {
+          "units": "W/K"
+        },
+        "data": [
+          -0.37891267928146016,
+          -0.41695896526548665
+        ]
+      },
+      "T1": {
+        "dims": [
+          "cell"
+        ],
+        "attrs": {
+          "units": "K"
+        },
+        "data": [
+          47.759637548995855,
+          56.30258402659723
+        ]
+      },
+      "T2": {
+        "dims": [
+          "cell"
+        ],
+        "attrs": {
+          "units": "K"
+        },
+        "data": [
+          3.043994234938008,
+          3.114258667586091
+        ]
+      }
+    }
+  },
+  "map_cells_predicted": {
+    "coords": {
+      "P1_low": {
+        "dims": [
+          "cell"
+        ],
+        "attrs": {
+          "units": "W"
+        },
+        "data": [
+          0.0,
+          20.0
+        ]
+      },
+      "P1_high": {
+        "dims": [
+          "cell"
+        ],
+        "attrs": {
+          "units": "W"
+        },
+        "data": [
+          20.0,
+          25.0
+        ]
+      },
+      "P2_low": {
+        "dims": [
+          "cell"
+        ],
+        "attrs": {
+          "units": "W"
+        },
+        "data": [
+          0.0,
+          0.0
+        ]
+      },
+      "P2_high": {
+        "dims": [
+          "cell"
+        ],
+        "attrs": {
+          "units": "W"
+        },
+        "data": [
+          0.5,
+          0.5
+        ]
+      }
+    },
+    "attrs": {},
+    "dims": {
+      "cell": 2
+    },
+    "data_vars": {
+      "dQ1dT1": {
+        "dims": [
+          "cell"
+        ],
+        "attrs": {
+          "units": "W/K"
+        },
+        "data": [
+          -1.6480100482552655,
+          -1.6140769558262256
+        ]
+      },
+      "dQ1dT2": {
+        "dims": [
+          "cell"
+        ],
+        "attrs": {
+          "units": "W/K"
+        },
+        "data": [
+          1.8477100828576922,
+          1.8094299769706337
+        ]
+      },
+      "dQ2dT1": {
+        "dims": [
+          "cell"
+        ],
+        "attrs": {
+          "units": "W/K"
+        },
+        "data": [
+          0.00316552223901758,
+          0.0030937887788902415
+        ]
+      },
+      "dQ2dT2": {
+        "dims": [
+          "cell"
+        ],
+        "attrs": {
+          "units": "W/K"
+        },
+        "data": [
+          -0.38123445232001885,
+          -0.38122250920069384
+        ]
+      },
+      "T1": {
+        "dims": [
+          "cell"
+        ],
+        "attrs": {
+          "units": "K"
+        },
+        "data": [
+          49.76080198837525,
+          57.44883979357799
+        ]
+      },
+      "T2": {
+        "dims": [
+          "cell"
+        ],
+        "attrs": {
+          "units": "K"
+        },
+        "data": [
+          3.1171875168297856,
+          3.1807302525535777
+        ]
+      }
+    }
+  },
+  "input_sha256": {
+    "simulations\\exploration\\pulse_tube_reduced\\screen.py": "37c626ddc6c73c95b6c4539bc51ff226aa8d8d26a3c3e11534a2e89281c186ff",
+    "simulations\\exploration\\pulse_tube_reduced\\settings.toml": "aef04d2782e3c4ea9024ded3be500d37a106e433161a3810fba4e37d16d1af6c",
+    "data\\test_stand\\test_stand.toml": "8c1bf7f56a78ba4a1a856c33d0f21fecc1924aa3f3459966a0d036bc420e4ec0",
+    "simulations\\validation\\head_comparison\\records.toml": "2b8e6ffa1ce9458fc792c86f6ea1c364bb29e4150552896aebc3a57e3d4fa696",
+    "data\\test_stand\\s0035\\cooldown_2026-09-25.dat": "1552398990bf67d75058f54a79f2f624c8a421e80fad954a8fd4499dcf003205",
+    "data\\test_stand\\s0035\\load_map_2026-09-21.dat": "57d89c0f887380567c1aa6e04717dfd5580d68f13b435d13f1ffa016b306fba0",
+    "src\\pulse_tube_cooldown\\library\\materials\\load.py": "07e983e68b404dbe770da117873e07c0581e019944cacab090e5fead6048430d",
+    "src\\pulse_tube_cooldown\\library\\heads\\data\\pt1_5.toml": "b6f89db21432572f5ca2cc1a61972d5d53ff2605f7311be53ad20d3dd94e8fd7"
+  },
+  "scope": "Stand-only feasibility screen; clamp and drive dependence unresolved. Cooldown follows a hose change relative to the load map."
+}

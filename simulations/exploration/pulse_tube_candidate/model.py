@@ -1,6 +1,7 @@
 """Five-coefficient candidate, with matrix energies and a floating clamp.
 
-Equations follow docs/proposals/pulse-tube-model-direction.md, 2026-11-10.
+Thermal equations follow docs/proposals/pulse-tube-model-direction.md, 2026-11-10.
+The drive has a prescribed pressure amplitude.
 This experiment uses the existing head inventories without the retired head's
 packing, valve, waveform, breakthrough, or stage-coupling coefficients.
 """
@@ -83,9 +84,6 @@ class Evaluation:
     flows: NDArray
     conductance: NDArray
     pressure_fraction: float
-    demand: float
-    pass_demand: float
-    fill_demand: float
     profile_measure: float
     transmission: NDArray
     input_power_cap: float
@@ -190,9 +188,6 @@ class Candidate:
         self.panel_lengths = np.array([panel.length for panel in panels])
         self.panel_mass = np.array(
             [pieces[p.piece].mass * p.length / (pieces[p.piece].end - pieces[p.piece].start) for p in panels]
-        )
-        self.panel_pore_volume = np.array(
-            [pieces[p.piece].pore_volume * p.length / (pieces[p.piece].end - pieces[p.piece].start) for p in panels]
         )
         self.heat_primitive = np.stack([piece.heat.primitive.c for piece in pieces])
         self.heat_value = np.stack([piece.heat.value.c for piece in pieces])
@@ -306,13 +301,11 @@ class Candidate:
         boundary: NDArray,
         parameters: Parameters,
         *,
-        compressors: int,
-        frequency: float,
+        drive_enabled: bool = True,
         clamp_temperature: float | None = None,
         clamp_conductance: float = 0.0,
-        other_demand: float = 0.0,
     ) -> Evaluation:
-        """Calculates conservative flows and the common pressure-limited source."""
+        """Calculates conservative flows at the prescribed pressure amplitude."""
         temperature = self.complete_temperature(centers, boundary)
         self.check_temperature(temperature)
         ta, tb = self.left @ temperature, self.right @ temperature
@@ -337,18 +330,8 @@ class Candidate:
         junction = parameters.power + branch_2
         input_power = junction / transmission[0]
         power_scale = np.array([input_power, branch_2])
-        response_average = mean_integral(self.helium.mass_response, ta, tb)
-        mass_response = self.panel_pore_volume @ response_average
-        for i, tube in enumerate(self.design.pulse_tubes):
-            response = mean_integral(self.helium.mass_response, np.array([boundary[i + 1]]), np.array([boundary[0]]))[0]
-            mass_response += tube.volume * response
-            mass_response += self.design.heat_exchanger_voids[i] * self.helium.mass_response.value(boundary[i + 1])
-        mass_response += self.design.dead_volume * self.helium.mass_response.value(boundary[0])
-        pressure = self.source["pressure_ceiling"]
-        pass_demand = 2 * self.helium.density.value(boundary[0]) * input_power / (np.pi * pressure)
-        fill_demand = 2 * frequency * pressure * mass_response
-        demand = pass_demand + fill_demand
-        z = min(1.0, compressors * self.source["delivery_per_compressor"] / (demand + other_demand))
+        pressure = self.source["pressure_amplitude"]
+        z = float(drive_enabled)
         exchange = np.array([parameters.exchange_1, parameters.exchange_2])
         q_temperatures, q_weights, q_panels = [], [], []
         for index, panel in enumerate(self.panels):
@@ -428,9 +411,6 @@ class Candidate:
             flows,
             1 / resistance,
             float(z),
-            float(demand),
-            float(pass_demand),
-            float(fill_demand),
             profile_measure,
             transmission,
             float(input_power),
@@ -451,8 +431,7 @@ class Candidate:
         boundary: NDArray,
         parameters: Parameters,
         *,
-        compressors: int,
-        frequency: float,
+        drive_enabled: bool = True,
         guess: NDArray | None = None,
     ) -> tuple[NDArray, Evaluation]:
         """Inverts the seven energies with a massless, unloaded clamp balance."""
@@ -479,9 +458,7 @@ class Candidate:
             if cached_coordinate is None or not np.array_equal(coordinate, cached_coordinate):
                 cached_coordinate = coordinate.copy()
                 cached_centers = self._decode(coordinate)
-                cached_evaluation = self.evaluate(
-                    cached_centers, boundary, parameters, compressors=compressors, frequency=frequency
-                )
+                cached_evaluation = self.evaluate(cached_centers, boundary, parameters, drive_enabled=drive_enabled)
             return cached_centers, cached_evaluation
 
         def residual(coordinate: NDArray) -> NDArray:
@@ -512,15 +489,14 @@ class Candidate:
             error = float(np.max(np.abs(residual(solution.x))))
         if error > self.numerics["inversion_temperature_tolerance"]:
             raise ProfileSolveError(f"Energy/profile inversion residual {error:.6g} K.")
-        return centers, self.evaluate(centers, boundary, parameters, compressors=compressors, frequency=frequency)
+        return centers, self.evaluate(centers, boundary, parameters, drive_enabled=drive_enabled)
 
     def equilibrate(
         self,
         boundary: NDArray,
         parameters: Parameters,
         *,
-        compressors: int,
-        frequency: float,
+        drive_enabled: bool = True,
         guess: NDArray | None = None,
     ) -> tuple[NDArray, Evaluation]:
         """Relaxes all matrix energies and the unloaded clamp at held stages."""
@@ -528,9 +504,7 @@ class Candidate:
         initial = self.initial_centers(boundary) if guess is None else guess
 
         def residual(coordinate: NDArray) -> NDArray:
-            evaluation = self.evaluate(
-                self._decode(coordinate), boundary, parameters, compressors=compressors, frequency=frequency
-            )
+            evaluation = self.evaluate(self._decode(coordinate), boundary, parameters, drive_enabled=drive_enabled)
             return np.r_[evaluation.energy_rate, evaluation.flows[6] - evaluation.flows[7]]
 
         solution = root(residual, self._encode(initial), tol=1e-9)
@@ -541,7 +515,7 @@ class Candidate:
         if error > self.numerics["equilibrium_flow_tolerance"]:
             raise ProfileSolveError(f"Held-stage equilibrium residual {error:.6g} W.")
         centers = self._decode(solution.x)
-        return centers, self.evaluate(centers, boundary, parameters, compressors=compressors, frequency=frequency)
+        return centers, self.evaluate(centers, boundary, parameters, drive_enabled=drive_enabled)
 
 
 def build_candidate(config: dict) -> Candidate:

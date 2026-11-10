@@ -1,0 +1,7 @@
+# S0035: selected failed calls from results/S0035_evaluations.jsonl.
+failed_evaluations = [44, 47, 48, 56, 57]
+
+# Zero-based point in data/test_stand/s0035/load_map_2026-09-21.dat.
+load_step_initial_point = 1
+# Nominal 120-minute dwell recorded in that load map.
+load_step_duration = 7200.0 # s
