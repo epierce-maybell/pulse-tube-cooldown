@@ -2,5 +2,7 @@
 __pycache__/
 *.py[cod]
 .ruff_cache/
+.pytest_cache/
+.claude/settings.local.json
 dist/
 simulations/exploration/loadmaps/muenster_figures/
