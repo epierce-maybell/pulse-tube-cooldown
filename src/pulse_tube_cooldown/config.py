@@ -65,15 +65,16 @@ def load_fridge(fridge: Mapping[str, Any]) -> Graph:
             pairs, and an optional array of `links` tables, each accepted by `load_link`.
 
     Returns:
-        The graph of the nodes and links, in configuration order.
+        The graph of the configured nodes followed by each link's internal nodes, and the links, in configuration
+        order.
 
     Raises:
         ConfigurationError: A node or link is missing a key, or a name refers to an unknown material, node, or link
             type.
     """
-    link_configs = fridge.get("links", [])
-    links = tuple(load_link(link) for link in link_configs)
-    nodes = tuple(_load_node(node) for node in fridge["nodes"])
+    links = tuple(load_link(link) for link in fridge.get("links", []))
+    configured = (_load_node(node) for node in fridge["nodes"])
+    nodes = (*configured, *(node for link in links for node in link.internal_nodes))
 
     return Graph(nodes=nodes, links=links)
 

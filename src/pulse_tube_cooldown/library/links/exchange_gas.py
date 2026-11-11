@@ -8,7 +8,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from pulse_tube_cooldown.core.errors import ConfigurationError
-from pulse_tube_cooldown.core.types import EnergyBalanceTerms, Gas
+from pulse_tube_cooldown.core.types import EnergyBalanceTerms, Gas, Link
 from pulse_tube_cooldown.library.gases.load import load_gas
 from pulse_tube_cooldown.library.links.gas_gap_switch import calc_gap_conductance
 
@@ -31,7 +31,7 @@ class FacingSurfaces:
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
-class ExchangeGas:
+class ExchangeGas(Link):
     """Gas at one pressure throughout the vacuum can, set by a cubic in one node's temperature.
 
     Attributes:

@@ -9,7 +9,7 @@ from numpy.typing import NDArray
 from scipy.constants import R
 
 from pulse_tube_cooldown.core.errors import ConfigurationError
-from pulse_tube_cooldown.core.types import EnergyBalanceTerms
+from pulse_tube_cooldown.core.types import EnergyBalanceTerms, Link
 
 __all__ = ["GasPushing", "GasVolume", "load_gas_pushing"]
 
@@ -23,7 +23,7 @@ class GasVolume:
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
-class GasPushing:
+class GasPushing(Link):
     """Heat transfer through an ordered gas path with wave and buffer-pressure limits.
 
     Attributes:

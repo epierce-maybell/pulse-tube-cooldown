@@ -21,6 +21,7 @@ from pulse_tube_cooldown.library.links.gas_gap_switch import load_gas_gap_switch
 from pulse_tube_cooldown.library.links.gas_pushing import load_gas_pushing
 from pulse_tube_cooldown.library.links.joint_contact import load_joint_contact
 from pulse_tube_cooldown.library.links.multi_layer_insulation import load_multi_layer_insulation
+from pulse_tube_cooldown.library.links.pulse_tube import load_pulse_tube_head
 from pulse_tube_cooldown.library.links.radiation import load_radiation
 
 __all__ = ["LINK_TYPES", "load_link"]
@@ -33,6 +34,7 @@ LINK_TYPES: Mapping[str, Callable[[Mapping[str, Any]], Link]] = {
     "joint_contact": load_joint_contact,
     "multi_layer_insulation": load_multi_layer_insulation,
     "radiation": load_radiation,
+    "pulse_tube_head": load_pulse_tube_head,
 }
 
 
