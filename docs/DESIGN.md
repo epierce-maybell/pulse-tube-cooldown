@@ -134,13 +134,22 @@ changed between configurations.
 
 | Location | Contents and role |
 |---|---|
-| `src/pulse_tube_cooldown/` | The reusable simulator, component library, measurement readers, and plotting functions. Packaged property data live with their library loaders. |
+| `src/pulse_tube_cooldown/` | The reusable simulator, component library, measurement readers, and plotting functions. Packaged data live with their library loaders. |
 | `tests/` | Core, engine, component, interface, integration, and acceptance tests. [Test policy](../tests/README.md) describes their responsibilities and authorship rules. |
 | `data/` | Source measurements, hardware records, geometry, and curated physical inputs. [The data map](../data/README.md) identifies their locations and provenance. |
 | `simulations/` | Maintained validation: the head-comparison target and legacy refrigerator baseline, with their selected inputs, retained results, and findings. |
 | `../pulse-tube-research/` | Local, unversioned workspace for exploratory models, fits, diagnostics, and generated research outputs. |
 | `docs/` | Architecture, ADRs, proposals, reference papers, diagrams, and reporting material. Archived ADRs retain earlier decisions. |
 | `CONTEXT.md`, `GLOSSARY.md`, `TASKS.md`, `AGENTS.md` | Detailed navigation, shared language, current work, and contribution rules. |
+
+Library code reads packaged data by name and receives everything else by path.
+Data a library user needs without this repository are packaged in a `data/`
+directory beside the module that loads them: material, gas, and surface
+properties, archetypal component data such as a head model's reduced design and
+calibration, and model defaults. Data specific to one system, serial-numbered
+unit, or run live in the repository's `data/`: measurements, hardware records,
+system configurations, and fits to an individual unit. Derived files record
+their inputs and the command that regenerates them.
 
 Source measurements and prepared physical inputs live in this repository. Fitted
 candidates and exploratory results live in `../pulse-tube-research/`. For example,
