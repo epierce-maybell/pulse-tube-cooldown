@@ -33,3 +33,30 @@ max_time = 20000.0
 save_every = 60.0
 initial_temperature = 295.0
 fixed_boundary_nodes = ["Room temperature"]
+
+[calibration]
+design = "PT1.5"
+stages = ["Stage 1", "Stage 2"]
+
+# Starting values from ADR-06's S0035 calibration.
+[calibration.coefficients]
+stage_1_warm_amplitude = 144.789
+stage_1_warm_exponent = 1.42393
+stage_2_warm_amplitude = 26.5995
+stage_2_warm_exponent = 0.667621
+regenerator_1_exchange_coefficient = 0.0376894
+regenerator_2_exchange_coefficient = 0.120623
+energy_coupling_coefficient = 1.97665
+
+[calibration.fit]
+sample_points = 1001
+
+[calibration.fit.solver]
+rtol = 1e-3
+atol = 1e-5
+
+[calibration.fit.optimizer]
+diff_step = 0.02
+ftol = 0.01
+xtol = 0.1
+gtol = 0.01
