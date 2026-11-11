@@ -9,14 +9,14 @@ from numpy.typing import NDArray
 from scipy.constants import Stefan_Boltzmann
 
 from pulse_tube_cooldown.core.errors import ConfigurationError
-from pulse_tube_cooldown.core.types import EnergyBalanceTerms, Link, Surface
+from pulse_tube_cooldown.core.types import EnergyBalanceTerms, Surface
 from pulse_tube_cooldown.library.surfaces.load import load_surface
 
 __all__ = ["Radiation", "load_radiation"]
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
-class Radiation(Link):
+class Radiation:
     """Gray-body radiation between two nodes, the inner one enclosed by the outer one.
 
     Parallel plates are the case of equal areas.

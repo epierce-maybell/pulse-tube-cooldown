@@ -18,7 +18,7 @@ class RegeneratorSegment:
     span: tuple[float, float]
 
 @dataclass(frozen=True, slots=True, kw_only=True)
-class PulseTubeHead(Link):
+class PulseTubeHead:
     """The pulse tube head, including both stage-1 and stage-2 pulse tubes and the regenerator.
 
     Attributes:

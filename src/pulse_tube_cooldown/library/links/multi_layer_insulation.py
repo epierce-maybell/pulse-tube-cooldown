@@ -17,13 +17,13 @@ from typing import Any
 import numpy as np
 from numpy.typing import NDArray
 
-from pulse_tube_cooldown.core.types import EnergyBalanceTerms, Link
+from pulse_tube_cooldown.core.types import EnergyBalanceTerms
 
 __all__ = ["MultiLayerInsulation", "load_multi_layer_insulation"]
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
-class MultiLayerInsulation(Link):
+class MultiLayerInsulation:
     """A blanket wrapped around the inner node, facing the outer node.
 
     Attributes:

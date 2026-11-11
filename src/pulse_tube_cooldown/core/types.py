@@ -169,11 +169,6 @@ class Link(Protocol):
         """Names of the nodes this link touches, in link-local order."""
         ...
 
-    @property
-    def internal_nodes(self) -> tuple[Node, ...]:
-        """Nodes that belong to this link type and join the graph alongside the configured nodes; none by default."""
-        return ()
-
     def calc_energy_balance_terms(self, temperature: NDArray[np.float64]) -> EnergyBalanceTerms:
         """Calculates this link's terms in the energy balance of each of its nodes.
 

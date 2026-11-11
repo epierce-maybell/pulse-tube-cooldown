@@ -16,13 +16,13 @@ from typing import Any
 import numpy as np
 from numpy.typing import NDArray
 
-from pulse_tube_cooldown.core.types import EnergyBalanceTerms, Link
+from pulse_tube_cooldown.core.types import EnergyBalanceTerms
 
 __all__ = ["JointContact", "load_joint_contact"]
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
-class JointContact(Link):
+class JointContact:
     """A pressed joint between two nodes.
 
     Attributes:

@@ -7,14 +7,14 @@ from typing import Any
 import numpy as np
 from numpy.typing import NDArray
 
-from pulse_tube_cooldown.core.types import EnergyBalanceTerms, Link, Material
+from pulse_tube_cooldown.core.types import EnergyBalanceTerms, Material
 from pulse_tube_cooldown.library.materials.load import load_material
 
 __all__ = ["Conduction", "load_conduction"]
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
-class Conduction(Link):
+class Conduction:
     """Conduction between two nodes through a solid of uniform cross-section.
 
     Attributes:

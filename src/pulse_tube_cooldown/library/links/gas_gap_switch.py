@@ -8,7 +8,7 @@ import numpy as np
 from numpy.typing import NDArray
 from scipy.constants import R
 
-from pulse_tube_cooldown.core.types import EnergyBalanceTerms, Gas, Link, Material
+from pulse_tube_cooldown.core.types import EnergyBalanceTerms, Gas, Material
 from pulse_tube_cooldown.library.gases.load import load_gas
 from pulse_tube_cooldown.library.materials.load import load_material
 
@@ -53,7 +53,7 @@ class SwitchBracket:
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
-class GasGapSwitch(Link):
+class GasGapSwitch:
     """A two-node switch whose sealed gas adsorbs on charcoal as it cools.
 
     Attributes:
