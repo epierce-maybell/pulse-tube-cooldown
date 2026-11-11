@@ -1,0 +1,145 @@
+[meta]
+experiment = "Synthetic fridge for end-to-end acceptance tests"
+source = "Synthetic: four free plates between a room-temperature boundary and a cold sink, using every link type"
+
+[[fridge.nodes]]
+name = "Room"
+composition = [["Al 6061-T6", 10.0]]
+
+[[fridge.nodes]]
+name = "Sink"
+composition = [["OFHC Cu RRR100", 10.0]]
+
+[[fridge.nodes]]
+name = "Upper"
+composition = [["Al 6061-T6", 4.0]]
+
+[[fridge.nodes]]
+name = "Lower"
+composition = [["OFHC Cu RRR100", 2.0], ["304 SS", 0.5]]
+
+[[fridge.nodes]]
+name = "Inner"
+composition = [["OFHC Cu RRR100", 1.0]]
+
+[[fridge.nodes]]
+name = "Cold"
+composition = [["OFHC Cu RRR100", 0.5], ["Pb", 0.1]]
+
+[[fridge.links]]
+name = "Upper contact"
+type = "joint_contact"
+nodes = ["Upper", "Sink"]
+force = 2000.0
+conductance_per_force = 5.0e-4
+reference_temperature = 10.0
+temperature_exponent = 1.0
+source = "Synthetic contact"
+
+[[fridge.links]]
+name = "Lower strap"
+type = "conduction"
+nodes = ["Lower", "Sink"]
+material = "OFHC Cu RRR100"
+area = 2.0e-4
+length = 0.1
+
+[[fridge.links]]
+name = "Blanket"
+type = "multi_layer_insulation"
+nodes = ["Upper", "Room"]
+area = 0.5
+layers = 20
+layer_density = 2000.0
+spacer_coefficient = 1.0e-12
+layer_density_exponent = 2.56
+radiation_coefficient = 5.0e-10
+emissivity = 0.04
+source = "Synthetic blanket"
+
+[[fridge.links]]
+name = "Shield radiation"
+type = "radiation"
+nodes = ["Lower", "Upper"]
+area = [0.2, 0.3]
+surface = ["Gold-plated Cu", "Machined Al"]
+
+[[fridge.links]]
+name = "Upper support"
+type = "conduction"
+nodes = ["Upper", "Lower"]
+material = "304 SS"
+area = 1.0e-5
+length = 0.1
+
+[[fridge.links]]
+name = "Switch"
+type = "gas_gap_switch"
+nodes = ["Lower", "Inner"]
+gas = "He-4"
+fill_pressure = 101325.0
+fill_temperature = 295.0
+gas_volume = 2.5e-6
+gap = 0.5e-3
+area = 4.0e-3
+charcoal_mass = 1.0e-4
+brackets = [{ material = "OFHC Cu RRR100", area = 1.0e-4, length = 0.02 }]
+
+[[fridge.links]]
+name = "Inner support"
+type = "conduction"
+nodes = ["Inner", "Cold"]
+material = "304 SS"
+area = 2.0e-5
+length = 0.05
+
+[[fridge.links]]
+name = "Exchange gas"
+type = "exchange_gas"
+nodes = ["Lower", "Inner", "Cold"]
+gas = "He-4"
+pressure_node = "Lower"
+pressure_coefficients = [0.0, 0.0, 0.0, 1.0]
+surfaces = [
+    { nodes = ["Lower", "Inner"], area = 0.05, gap = 0.002 },
+    { nodes = ["Inner", "Cold"], area = 0.03, gap = 0.002 },
+]
+
+[[fridge.links]]
+name = "Gas pushing"
+type = "gas_pushing"
+nodes = ["Lower", "Inner", "Cold"]
+volumes = [{ nodes = ["Inner"], volume = 1.0e-4 }, { nodes = ["Cold"], volume = 5.0e-5 }]
+warm_volume = 3.0e-3
+buffer_volume = 1.2e-2
+pump_speed = 3.0e-3
+flow_conductance = 1.0e-6
+fill_pressure = 80000.0
+wave_strength = 40000.0
+refill_pressure = 20000.0
+buffer_pressure_cap = 125000.0
+depressurization_time = 1.0
+
+[[procedure.phases]]
+name = "exchange gas"
+disable = ["Gas pushing"]
+until = { condition = "gas_pushing_begins", node = "Lower", threshold = 80.0 }
+
+[[procedure.phases]]
+name = "gas pushing"
+disable = ["Exchange gas"]
+enable = ["Gas pushing"]
+
+[procedure.until]
+condition = "condensing_begins"
+node = "Cold"
+threshold = 30.0
+
+[simulation]
+solver = "Radau"
+max_time = 1.0e6
+save_every = 600.0
+rtol = 1.0e-6
+atol = 1.0e-8
+initial_temperature = [295.0, 25.0, 295.0, 295.0, 295.0, 295.0]
+fixed_boundary_nodes = ["Room", "Sink"]
