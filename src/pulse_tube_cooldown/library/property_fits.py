@@ -6,6 +6,8 @@ Analytic fits evaluate at any temperature; tables hold their end values beyond t
 
 A property's table in a file holds its fit's `form`, its validity `range` in K, an optional `source` citing the data,
 and the form's arguments. An infinite end of the range leaves the fit unbounded on that side.
+An optional `low_temperature` table supplies property points and a `join_temperature` in K. A cubic passes through
+those points and joins the analytic fit with a continuous value and slope at that temperature.
 """
 
 import warnings
@@ -265,6 +267,31 @@ PROPERTY_FITS = {
 }
 
 
+def extend_fit_below(fit: PropertyFit, table: ArrayLike, join_temperature: float) -> PropertyFit:
+    """Continues a fit below a join through tabulated values, matching the fit's value and slope.
+
+    Args:
+        fit: The property function above the join.
+        table: Rows of temperature in K and property value, below the join in increasing temperature order.
+        join_temperature: Temperature in K at which the cubic meets the fit.
+
+    Returns:
+        The cubic below the join and the original fit at and above it.
+    """
+    join_value = fit(np.array(join_temperature)).item()
+    temperature, value = _parse_table([*table, [join_temperature, join_value]])
+    step = 1e-5 * join_temperature
+    end_slope = (fit(np.array(join_temperature + step)) - fit(np.array(join_temperature - step))).item() / (2 * step)
+    interpolant = _make_shape_preserving_interpolant(temperature, value, end_slope=end_slope)
+
+    def extended(temperature: NDArray[np.float64]) -> NDArray[np.float64]:
+        return np.where(
+            temperature < join_temperature, interpolant(temperature), fit(np.maximum(temperature, join_temperature))
+        )
+
+    return extended
+
+
 def make_fit(spec: Mapping[str, Any], label: str) -> PropertyFit:
     """Builds a property table's fit, held at the nearest end of its range, with a warning, outside that range.
 
@@ -272,8 +299,11 @@ def make_fit(spec: Mapping[str, Any], label: str) -> PropertyFit:
         spec: The property's table.
         label: The item and property names, such as "N2 thermal_conductivity", for warnings.
     """
-    arguments = {key: value for key, value in spec.items() if key not in {"form", "range", "source"}}
+    arguments = {key: value for key, value in spec.items() if key not in {"form", "range", "source", "low_temperature"}}
     fit = PROPERTY_FITS[spec["form"]](**arguments)
+    if "low_temperature" in spec:
+        extension = spec["low_temperature"]
+        fit = extend_fit_below(fit, extension["table"], extension["join_temperature"])
     lower, upper = valid_range = tuple(spec["range"])
 
     def clamped_fit(temperature: NDArray[np.float64]) -> NDArray[np.float64]:

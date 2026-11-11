@@ -82,6 +82,11 @@ def _integrate(fit: PropertyFit, spec: Mapping[str, Any], label: str) -> Propert
     valid_range: Sequence[float] = spec["range"]
     lower, upper = valid_range
     point_temperature = np.array(spec.get("table", spec.get("measured", [])), dtype=np.float64).reshape(-1, 2)[:, 0]
+    if "low_temperature" in spec:
+        extension = spec["low_temperature"]
+        point_temperature = np.union1d(
+            point_temperature, [*(row[0] for row in extension["table"]), extension["join_temperature"]]
+        )
     knots = np.union1d(
         np.geomspace(lower, upper, 1025), point_temperature[(lower < point_temperature) & (point_temperature < upper)]
     )
