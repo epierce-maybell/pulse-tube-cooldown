@@ -14,8 +14,9 @@ connect to PRP, CFP, and RGP respectively. Other heat paths include conduction,
 bolted joints, radiation, MLI, gas-gap switches, exchange gas, and gas pushing.
 
 The adopted head formulation is recorded in
-[ADR-06](docs/adrs/06-reduced-head-dynamics.md), including its
-clamp temperature and cooling-power closure. Production implementation is task
+[ADR-06](docs/adrs/06-reduced-head-dynamics.md), including its fixed power-law
+warm response, seven fitted coefficients, and clamp temperature and
+cooling-power closure. Production implementation is task
 3.4. Source head geometry remains in `data/heads/`. Full refrigerator
 configurations are tasks 4.1 and 4.2.
 
@@ -57,6 +58,13 @@ are there. `archive/e40e98a-directory-audit/` preserves the subsequent preparati
 scripts, retired catalogs, head definitions, and legacy comparisons, together
 with their committed inputs and a SHA-256 manifest. Several older scripts
 require a retired cooler implementation from Git history.
+
+The accepted fixed-form head investigation is in
+[`parametric_warm_response/`](../pulse-tube-research/simulations/exploration/parametric_warm_response/README.md).
+Its `crossing_fits/` directory contains the final per-head coefficients,
+six-head results, and comparison figure. Its `diagnostics/` directory records
+the S0035 transient-shape investigation. ADR-06 describes the calibration and
+the scope of that evidence.
 
 The production repository retains the head-comparison figure and legacy baseline.
 Research is promoted into the library against the agreed design and acceptance

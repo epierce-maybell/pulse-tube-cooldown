@@ -164,7 +164,14 @@ The adopted pulse-tube head formulation is a reduced nonlinear dynamical system
 model with seven internal energy states, stage and clamp temperatures as inputs,
 and cooling powers as outputs. [ADR-06](adrs/06-reduced-head-dynamics.md)
 specifies its vector field, output map, calibration, and algebraic clamp
-relation. In the reference fridge, stage 1 connects to PRP, stage 2 to CFP, and
+relation. Each stage's warm correction has the fixed form
+`A_i * (T_i / T0)^b_i`, where `T_i` and `T0` are the stage and warm-flange
+temperatures in K, `A_i` is an amplitude in W, and `b_i` is dimensionless.
+The four warm coefficients, two regenerator exchange coefficients, and one
+internal-energy coupling coefficient are calibrated separately per head and
+drive condition, with the functional form held fixed. ADR-06 records their
+interpretation and the six-head forward calibration results.
+In the reference fridge, stage 1 connects to PRP, stage 2 to CFP, and
 the clamp to RGP.
 The stand condition sets clamp load to zero and solves its free temperature.
 Production implementation and engine integration remain work for task 3.4.

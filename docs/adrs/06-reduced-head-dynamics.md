@@ -17,9 +17,12 @@ Measured performance data determine functions and parameters in the vector field
 and output map, including the cycle-averaged effects of acoustic and gas dynamics.
 
 The head's measured cold load map anchors equilibrium performance and cold
-cross-coupling. Its stand cooldown supplies the warm cooling-power curves and
-calibrates two exchange coefficients and one coefficient for the dependence of
-stage-1 performance on departure from internal equilibrium.
+cross-coupling. A prescribed power law supplies each stage's warm correction.
+Stand cooldowns calibrate seven scalar coefficients: a warm amplitude and
+exponent for each stage, an exchange coefficient for each regenerator, and one
+coefficient coupling stage-1 performance to departure from internal equilibrium.
+The functional form is shared across heads and drive conditions; the seven
+coefficients are fitted separately for each head and drive condition.
 
 Represent clamp loading by a load coordinate, published temperature-response
 tables, loaded regenerator profiles, and a configured external contact
@@ -69,6 +72,7 @@ It is determined by the contact equation below and eliminated when evaluating
 ```text
 q0_i(T1,T2) = q_base,i(T1,T2) + w(T1,T2) * s_i(T_i)
 q_base,i(T1,T2) = H_i(B1(T1),B2(T2)) + L_stand,i(T1,T2)
+s_i(T_i) = A_i * (T_i / T0)^b_i
 ```
 
 For stage `i = 1,2`, `q0_i` is internally equilibrated cooling power at zero clamp load,
@@ -84,14 +88,45 @@ measured range and approaches a finite limit outside it through exponential
 tails tangent to the identity at each boundary. Tail lengths are configured
 relative to the measured temperature spans.
 
-`s_i` is a tabulated warm correction in W, evaluated with shape-preserving cubic
-Hermite interpolation and held at its endpoint values beyond the table.
-`w` is a dimensionless blending function: it is zero throughout the cold-map
-temperature bounding box and approaches one outside it. Its prescribed form is
-one minus the exponential of the negative squared distance from that box,
-with distance normalized by the cold temperature spans and a configured blend
-width. This construction preserves the cold map and its first derivatives
-while supplying a prescribed continuation of coupling into the warm region.
+`s_i` is the warm correction in W. Its positive amplitude `A_i`, in W, is the
+correction at `T_i = T0`; its positive dimensionless exponent `b_i` sets the
+temperature dependence. `T0` is the prescribed warm-flange temperature in K.
+At fixed `T0`, a small fractional change in `T_i` produces `b_i` times that
+fractional change in `s_i`. The power law is monotone for positive temperatures.
+
+The dimensionless blending function `w` is:
+
+```text
+D_i = T_max,i - T_min,i
+outside_i = max(T_min,i - T_i, 0, T_i - T_max,i) / D_i
+w(T1,T2) = 1 - exp(-(outside_1^2 + outside_2^2) / beta^2)
+```
+
+`T_min,i` and `T_max,i` are the measured cold-map temperature bounds in K;
+`D_i` is their span in K; `outside_i` is the dimensionless distance outside that
+stage's interval; and `beta` is a positive dimensionless blend width.
+Thus `w` is zero throughout the cold-map temperature bounding box and approaches
+one outside it. This construction preserves the cold map and its first
+derivatives while supplying a prescribed continuation of coupling into the
+warm region. The demonstrated fits use `beta = 1` and continuation tail lengths
+equal to the respective measured spans, held fixed during calibration.
+
+Throughout that bounding box, including its boundary, `w = 0` and
+`partial(w)/partial(T_j) = 0` for either stage temperature `T_j`, `j = 1,2`.
+Consequently:
+
+```text
+q0_i = q_base,i
+partial(q0_i)/partial(T_j) = partial(q_base,i)/partial(T_j)
+```
+
+The power-law calibration preserves the complete cold surface, all four entries
+of its temperature Jacobian, and the cell-derived responses of the earlier
+cold-map interpolant. This is the relaxed, zero-clamp-load response: internal
+energies follow their equilibrium values and the free clamp temperature follows
+the unloaded condition. At equilibrium the storage rates vanish and `p = 1`,
+so the fitted exchange and internal-energy coupling coefficients also leave
+this response unchanged.
 
 ### Clamp-load response
 
@@ -161,6 +196,11 @@ in J/(kg K). `theta_j` is the temperature with the piece's actual mean specific
 energy, and `theta_eq,j` is its target counterpart. `dm` is an element of matrix
 mass in kg. `g_r` is the positive fitted exchange coefficient for the piece's
 regenerator `r = 1,2`, in W/(kg K).
+
+Each `g_r` is effective thermal exchange per unit matrix mass. Near a fixed
+target temperature, the local relaxation time is approximately
+`tau_j = c_j(theta_eq,j) / g_r`, in s. The two coefficients allow the two
+regenerators to exchange stored energy at different rates.
 
 Positive `c_j` makes the relation between `E_j` and `theta_j` invertible.
 The caloric temperatures `theta_j` are alternative coordinates for the same
@@ -246,12 +286,20 @@ Q2 =     q0_2(u1,u2) + sum_j A_2j * dE_j/dt
 
 `Delta_E_R1` is excess regenerator-1 energy in J. The nonnegative fitted
 coefficient `k` and performance multiplier `p` are dimensionless. `E_scale` is
-a positive energy normalization in J, stored with the calibration. It is the
-regenerator-1 energy difference between the uniform initial state and the
-target profile at the selected cooldown's measured final temperatures.
+a fixed positive energy normalization in J, stored with the calibration. The
+demonstrated fits use `E_scale = 70289.80061191239 J` for all six heads. This
+reference comes from the S0035 regenerator-1 energy difference between its
+uniform initial state and the target profile at its measured final temperatures.
+It remains fixed when fitting or evaluating another record.
+
+For `k > 0`, the equivalent energy scale `E_penalty = E_scale / k`, in J,
+gives `p = exp(-Delta_E_R1 / E_penalty)`. An excess energy of `E_penalty`
+reduces this stage-1 cooling contribution to `exp(-1)` of its internally
+equilibrated value. At `k = 0`, `p = 1`.
 
 `A_ij` is the dimensionless fraction of piece `j`'s energy rate assigned to
-stage `i`. For a piece centered at normalized position `x_bar,j`, use:
+stage `i`; the single-index `A_i` above is a warm-correction amplitude in W.
+For a piece centered at normalized position `x_bar,j`, use:
 
 ```text
 Regenerator 1: A_1j = x_bar,j;     A_2j = 0
@@ -334,31 +382,118 @@ external clamp temperature follows the stage temperatures through that condition
 
 ## Calibration and use
 
-Fit `g_1`, `g_2`, and `k` against the cold portion of the stand cooldown while
-holding the measured cold map fixed and imposing `ell=0`. During calibration,
-the measured stage trajectory supplies the temperature inputs to the state
-equations. The stand energy balance supplies required delivered cooling;
-removing the matrix-storage contribution and the stage-1 multiplier gives the
-internally equilibrated cooling powers. Their differences from the continued
-cold baseline supply the warm correction tables.
+### Seven fitted coefficients
 
-The calibration includes both the three fitted scalar coefficients and the
-tabulated warm response. The S0035 realization has 39 table values. Table
-resolution, blend and continuation scales, derivative smoothing, and treatment
-of missing or unreliable readings are recorded calibration inputs.
+The following table gives the physical interpretation and the final S0035
+calibration to temperature-crossing times. Values are rounded here; the linked
+calibration artifact retains full precision.
+
+| Coefficient | Units | Meaning | S0035 |
+|---|---|---|---:|
+| `A_1` | W | Stage-1 warm-correction scale at `T1 = T0`. | 144.789 |
+| `b_1` | dimensionless | Stage-1 warm-correction temperature exponent. | 1.42393 |
+| `A_2` | W | Stage-2 warm-correction scale at `T2 = T0`. | 26.5995 |
+| `b_2` | dimensionless | Stage-2 warm-correction temperature exponent. | 0.667621 |
+| `g_1` | W/(kg K) | Effective exchange per unit mass in regenerator 1. | 0.0376894 |
+| `g_2` | W/(kg K) | Effective exchange per unit mass in regenerator 2. | 0.120623 |
+| `k` | dimensionless | Sensitivity of stage-1 performance to excess regenerator-1 energy. | 1.97665 |
+
+The four warm coefficients set the scale and shape of each stage's dependence
+on `T_i / T0`. The amplitudes describe the correction before blending, internal
+state effects, and storage loads are applied. The exchange and coupling
+coefficients describe effective behavior of the reduced system. Their physical
+interpretations do not establish that a cooldown uniquely identifies each one.
+
+### Forward calibration
+
+Fit the seven coefficients by integrating the unloaded stand equations with
+`ell = 0`, starting from a uniform initial temperature. The measured cold map,
+material inventories, target profiles, routing fractions, stand loads, blend
+and continuation scales, and energy normalization remain fixed. The simulated
+temperatures and internal energies determine cooling power throughout the
+integration. Measured temperatures supply comparison targets.
+
+For the demonstrated fits, set `T_init = T0` using the last available prestart
+pulse-tube thermometer reading as the initial room-temperature proxy. Exclude
+nonfinite readings, stage-1 readings at or above 219 K, and stage-2 readings
+above `T0` from the comparison. The source records and reader supply timing and
+channel selection. The pulse-tube thermometer and the modeled clamp remain
+distinct quantities.
+
+Calibrate to the first downward crossings of these temperatures:
+
+- Stage 1: 200, 150, 100, 80, 65, 55, and 50 K.
+- Stage 2: 200, 100, 50, 30, 10, 5, and 3 K.
+
+Crossing times use linear interpolation between the retained samples. For each
+crossing `n`, minimize the sum of squared relative timing residuals:
+
+```text
+r_n = (t_model,n - t_measured,n) / t_measured,n
+objective = sum_over_14_crossings(r_n^2)
+```
+
+`t_model,n` and `t_measured,n` are predicted and measured elapsed times in s;
+`r_n` and the objective are dimensionless. Each crossing receives equal relative
+weight. Earlier fits to the temperature traces supply initial coefficient
+guesses. Full temperature traces are also compared after calibration.
 
 The cold map constrains the equilibrium input-output relation and its measured
-slopes. Cooldown traces constrain state evolution and the dependence of cooling
-power on departure from equilibrium. Forward integration evaluates `f` and `g`
-on the simulated state. The calibrated coefficients, tables, profiles, and
-energy normalization are stored head data. A comparison with the cooldown used
-to reconstruct the tables is a forward calibration check.
+slopes. The cooldown constrains state evolution and the dependence of cooling
+power on departure from equilibrium. The fitted coefficients, prescribed
+profiles, and energy normalization are stored head data. All heads use the
+same equations with separately calibrated coefficients.
 
 The clamp temperature-response tables and loaded profile shapes are prescribed
 design data with their published source and digitization recorded. The external
-contact resistance is a system input. The stand calibration still fits three
-scalar coefficients and the warm tables. It supplies the full model's unloaded
-limit independently of the chosen contact resistance.
+contact resistance is a system input. The unloaded stand calibration determines
+the seven scalar coefficients independently of the chosen contact resistance.
+
+### Demonstrated calibration results
+
+The six selected head records give the following forward results with their
+own fitted coefficients. Temperature errors are root mean square differences
+over the retained observations; the timing column is the largest absolute
+relative error among that head's fourteen crossings.
+
+| Head | Stage-1 temperature error (K) | Stage-2 temperature error (K) | Worst crossing-time error |
+|---|---:|---:|---:|
+| S0007 | 4.05 | 4.62 | 8.4% |
+| S0009 | 1.65 | 5.62 | 12.5% |
+| S0019 | 1.64 | 3.88 | 3.3% |
+| S0028 | 2.86 | 6.73 | 7.8% |
+| S0035 | 1.82 | 4.66 | 3.4% |
+| S0038 | 0.98 | 6.11 | 2.7% |
+
+Of the 84 crossings, 83 are within 10% of the measured time. The remaining
+crossing is S0009 stage 2 at 10 K: 6197.8 s predicted against 7083.2 s measured,
+12.5% early. Reconstructed cold-map fixed-point temperatures differ from the
+measured knots by at most `7.2e-14 K`. These are calibration checks on the fitted
+records. Generalization to other records, loaded-clamp operation, and assembled
+refrigerators requires separate validation against the human-authored criteria.
+
+The S0028 fit places `A_1` at about 1999.5 W, close to the optimizer's 2000 W
+upper search bound. Its successful timing fit leaves that coefficient poorly
+established. Search bounds and optimizer settings are recorded with the research
+scripts and are numerical calibration choices.
+
+### Transient shape and coefficient interpretation
+
+The small stage-2 shoulders examined in the earlier S0035 temperature fit are
+changes in cooling rate while temperature continues to fall. The power-law
+corrections themselves are monotone. The shoulders arise in the coupled model
+as matrix-storage loads change and the warm correction blends into the cold
+response. An independent, tighter DOP853 integration agreed with LSODA to within
+`5.5e-5 K` across both stage traces.
+
+Changing the prescribed blend width moved the fine transient features. Refitting
+the same seven coefficients while omitting 5100-6600 s from the temperature
+objective changed the stage-2 prediction in that interval by less than 0.9 K,
+while some individual coefficients changed substantially. These diagnostics
+support the usefulness of the fixed functional form for cooldown prediction;
+the detailed shoulders and individual coefficient values have more limited
+physical identification. The diagnostic artifacts apply to the earlier
+temperature fit; the table above reports the final crossing-time fits.
 
 ## Scope and implementation
 
@@ -372,10 +507,12 @@ response, local thermal memory, loaded target profiles, and external contact
 closure. The current prescribed clamp data come from Falter's integrated heat
 exchanger; an external clamp is represented through its configured contact
 resistance. The transfer of those published response shapes and their
-continuation into the warm region remain model assumptions. The unloaded
-forward check establishes recovery of the accepted stage behavior. Loaded
-equation-consistency checks establish the contact and storage balances at
-specified loads.
+continuation into the warm region remain model assumptions. The algebraic
+zero-load limit recovers the unloaded stage equations for every internal state.
+The six-head results above evaluate that unloaded model with the power-law warm
+response. The earlier three-port consistency report used the preceding
+tabulated warm response and documents the clamp construction at that stage of
+the investigation.
 
 Task 3.3 is complete with this accepted formulation. Task 3.4 implements it
 against the human-authored acceptance tests; task 3.5 supplies the archetypal
@@ -386,11 +523,18 @@ library data with their sources.
 
 - [Head comparison records](../../simulations/validation/head_comparison/records.toml)
   and [stand records](../../data/test_stand.md).
-- [S0035 realization](../../../pulse-tube-research/simulations/exploration/empirical_head/run.py),
-  [calibration report](../../../pulse-tube-research/simulations/exploration/empirical_head/results/report.json),
-  and [comparison figure](../../../pulse-tube-research/simulations/exploration/empirical_head/results/comparison.png).
-- [Three-port realization and zero-load verification](../../../pulse-tube-research/simulations/exploration/empirical_head/clamp_extension/verify_clamp.py)
-  and [verification report](../../../pulse-tube-research/simulations/exploration/empirical_head/clamp_extension/results/report.json).
+- [Power-law model and forward integration](../../../pulse-tube-research/simulations/exploration/parametric_warm_response/run.py)
+  and [crossing-time calibration](../../../pulse-tube-research/simulations/exploration/parametric_warm_response/fit_crossings.py).
+- [Investigation guide](../../../pulse-tube-research/simulations/exploration/parametric_warm_response/README.md),
+  including artifact locations, calibration settings, and reproduction commands.
+- [Six-head results](../../../pulse-tube-research/simulations/exploration/parametric_warm_response/crossing_fits/summary.json),
+  [comparison figure](../../../pulse-tube-research/simulations/exploration/parametric_warm_response/crossing_fits/comparison.png),
+  and [S0035 fitted coefficients](../../../pulse-tube-research/simulations/exploration/parametric_warm_response/crossing_fits/S0035/fit.json).
+- [S0035 transient diagnostics](../../../pulse-tube-research/simulations/exploration/parametric_warm_response/diagnostics/),
+  including solver, structural-sensitivity, and omitted-interval checks.
+- [Supporting inventory, profile, and cold-map implementation](../../../pulse-tube-research/simulations/exploration/empirical_head/run.py).
+- [Earlier three-port realization](../../../pulse-tube-research/simulations/exploration/empirical_head/clamp_extension/verify_clamp.py)
+  and [consistency report with tabulated warm response](../../../pulse-tube-research/simulations/exploration/empirical_head/clamp_extension/results/report.json).
 - [Falter et al. (2024), Cryogenics 144, 103976](https://doi.org/10.1016/j.cryogenics.2024.103976),
   Fig. 4: measured loaded temperature response; Fig. 7: simulated regenerator-2
   profiles at zero and finite clamp load.
