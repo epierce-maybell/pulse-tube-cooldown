@@ -1,4 +1,4 @@
-"""Compile test-stand objectives with absolute tolerances. Units are s, K, W, and W/K."""
+"""Compile test-stand conditions and objectives with absolute tolerances. Units are s, K, W, and W/K."""
 
 import os
 import tomllib
@@ -48,8 +48,9 @@ class CouplingObjective:
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class Objectives:
-    """Acceptance objectives for one compressor count. Stages are numbered 1 and 2."""
+    """Objectives and mean initial TPR room temperature in K for one compressor count."""
 
+    room_temperature: float
     cooldown: tuple[CooldownObjective, ...]
     load_map: tuple[LoadMapObjective, ...]
     coupling: tuple[CouplingObjective, ...]
@@ -70,18 +71,20 @@ def compile_records(
 
     maps: dict[int, list[NDArray[np.float64]]] = defaultdict(list)
     traces: dict[int, list[NDArray[np.float64]]] = defaultdict(list)
+    room_temperatures: dict[int, list[float]] = defaultdict(list)
     for entry in records["load_maps"]:
         maps[int(entry["compressors"])].append(_load_temperatures(path.parent / entry["file"], powers))
     for entry in records["cooldowns"]:
-        traces[int(entry["compressors"])].append(
-            _crossing_times(
-                path.parent / entry["file"],
-                gates,
-                start=entry["compressor_start"],
-                end=entry["end"],
-                heater_start=entry.get("heater_start"),
-            )
+        room_temperature, crossing_times = _load_cooldown(
+            path.parent / entry["file"],
+            gates,
+            start=entry["compressor_start"],
+            end=entry["end"],
+            heater_start=entry.get("heater_start"),
         )
+        count = int(entry["compressors"])
+        room_temperatures[count].append(room_temperature)
+        traces[count].append(crossing_times)
 
     coupling = {count: np.array([_coupling(t, powers) for t in temperatures]) for count, temperatures in maps.items()}
     coupling_tolerance = deviations * coupling[1].std(axis=0, ddof=1)
@@ -97,6 +100,7 @@ def compile_records(
         )
         coupling_target = coupling[count].mean(axis=0)
         objectives[count] = Objectives(
+            room_temperature=float(np.mean(room_temperatures[count])),
             cooldown=tuple(
                 CooldownObjective(
                     stage=stage + 1,
@@ -143,15 +147,17 @@ def _load_temperatures(path: Path, powers: Sequence[tuple[float, float]]) -> NDA
     return np.array(temperatures)
 
 
-def _crossing_times(
+def _load_cooldown(
     path: Path,
     gates: Sequence[Sequence[float]],
     *,
     start: datetime,
     end: datetime,
     heater_start: datetime | None,
-) -> NDArray[np.float64]:
+) -> tuple[float, NDArray[np.float64]]:
+    """Return initial TPR room temperature in K and stage crossing times in s."""
     trace = read_cooldown(path)
+    room_temperature = float(trace.TPR.values[0])
     trace = trace.sel(time=slice(np.datetime64(start), np.datetime64(end)))
     if heater_start is not None:
         trace = trace.where(trace.time < np.datetime64(heater_start), drop=True)
@@ -166,7 +172,7 @@ def _crossing_times(
                 raise ValueError(f"{path.name}: stage {stage} never crosses {gate} K before cutoff.")
             crossings.append(seconds[below[0]])
         times.append(crossings)
-    return np.array(times)
+    return room_temperature, np.array(times)
 
 
 def _coupling(temperatures: NDArray[np.float64], powers: Sequence[tuple[float, float]]) -> NDArray[np.float64]:
