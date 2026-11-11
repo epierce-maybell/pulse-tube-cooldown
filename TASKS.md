@@ -19,9 +19,8 @@ Claim tasks with [o], mark finished tasks with [x], and update each section to h
 
 ## 1. Rebuild test suite (11/13)
 #### [x] 1.1 Public/user interface tests
-#### [-] 1.2 End-to-end acceptance tests
-             Waiting on full simulation configs (4.1, 4.2)
-#### [o] 1.3 Pulse tube head acceptance tests
+#### [ A ] 1.2 End-to-end acceptance tests
+#### [ B ] 1.3 Pulse tube head acceptance tests
 #### [x] 1.5 Conduction acceptance tests
 #### [x] 1.6 Radiation acceptance tests
 #### [x] 1.7 Joint-contact resistance acceptance tests
@@ -44,8 +43,8 @@ Claim tasks with [o], mark finished tasks with [x], and update each section to h
 #### [x] 3.1 Retire ADR-03
 #### [x] 3.2 Plot pulse tube data
 #### [x] 3.3 Derive reduced pulse tube model
-#### [ ] 3.4 Implement dynamical systems approach
-#### [ ] 3.5 Build archetypal pulse tube head
+#### [ D ] 3.4 Implement dynamical systems approach
+#### [ E ] 3.5 Build archetypal pulse tube head
 
 ## 4. Transient simulations (0/6)
 #### [ ] 4.1 Build canonical configuration file for SN09
