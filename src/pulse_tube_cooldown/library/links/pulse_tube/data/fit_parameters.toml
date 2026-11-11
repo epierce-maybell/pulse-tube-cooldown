@@ -1,0 +1,33 @@
+stage_1_crossings = [200.0, 150.0, 100.0, 80.0, 65.0, 55.0, 50.0]
+stage_2_crossings = [200.0, 100.0, 50.0, 30.0, 10.0, 5.0, 3.0]
+stage_1_max_temperature = 219.0
+sample_points = 5001
+record_duration_multiplier = 1.25
+crossing_duration_multiplier = 1.4
+
+[solver]
+method = "LSODA"
+rtol = 1e-05
+atol = 1e-07
+max_step = 80.0
+
+[final_solver]
+rtol = 2e-07
+atol = 2e-09
+max_step = 20.0
+
+[optimizer]
+diff_step = 0.002
+max_nfev = 65
+ftol = 2e-05
+xtol = 2e-05
+gtol = 2e-05
+
+[bounds]
+stage_1_warm_amplitude = [1.0, 2000.0]
+stage_1_warm_exponent = [0.1, 5.0]
+stage_2_warm_amplitude = [0.1, 500.0]
+stage_2_warm_exponent = [0.1, 5.0]
+regenerator_1_exchange_coefficient = [0.002, 3.0]
+regenerator_2_exchange_coefficient = [0.002, 3.0]
+energy_coupling_coefficient = [0.0, 50.0]

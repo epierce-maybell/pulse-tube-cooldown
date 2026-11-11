@@ -2,18 +2,26 @@
 
 import os
 import tomllib
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
+from functools import partial
 from typing import Any
 
 import numpy as np
 
 from pulse_tube_cooldown.core.errors import ConfigurationError
-from pulse_tube_cooldown.core.types import Graph, Model, Node, Phase, Procedure
+from pulse_tube_cooldown.core.types import Graph, Link, Model, Node, Phase, Procedure
 from pulse_tube_cooldown.library.conditions import load_condition
-from pulse_tube_cooldown.library.links.load import load_link
+from pulse_tube_cooldown.library.links.conduction import load_conduction
+from pulse_tube_cooldown.library.links.exchange_gas import load_exchange_gas
+from pulse_tube_cooldown.library.links.gas_gap_switch import load_gas_gap_switch
+from pulse_tube_cooldown.library.links.gas_pushing import load_gas_pushing
+from pulse_tube_cooldown.library.links.joint_contact import load_joint_contact
+from pulse_tube_cooldown.library.links.multi_layer_insulation import load_multi_layer_insulation
+from pulse_tube_cooldown.library.links.pulse_tube import load_pulse_tube_head
+from pulse_tube_cooldown.library.links.radiation import load_radiation
 from pulse_tube_cooldown.library.materials.load import load_material
 
-__all__ = ["configure_model", "load_fridge", "load_procedure"]
+__all__ = ["LINK_TYPES", "configure_model", "load_fridge", "load_link", "load_procedure"]
 
 
 def configure_model(path_to_config: str | os.PathLike[str]) -> Model:
@@ -77,6 +85,50 @@ def load_fridge(fridge: Mapping[str, Any]) -> Graph:
     nodes = (*configured, *(node for link in links for node in getattr(link, "internal_nodes", ())))
 
     return Graph(nodes=nodes, links=links)
+
+
+LINK_TYPES: Mapping[str, Callable[[Mapping[str, Any]], Link]] = {
+    "conduction": load_conduction,
+    "exchange_gas": load_exchange_gas,
+    "gas_gap_switch": load_gas_gap_switch,
+    "gas_pushing": load_gas_pushing,
+    "joint_contact": load_joint_contact,
+    "multi_layer_insulation": load_multi_layer_insulation,
+    "radiation": load_radiation,
+    "pulse_tube_head": partial(load_pulse_tube_head, load_graph=load_fridge),
+}
+
+
+def load_link(config: Mapping[str, Any]) -> Link:
+    """Builds a link from its configuration table with the loader registered for its type.
+
+    Args:
+        config: The link's `type`, a key of `LINK_TYPES`, and the fields that type's loader reads:
+
+            name = "Rod"
+            type = "conduction"
+            nodes = ["CFP", "STP"]
+            material = "304 SS"
+            area = 1.0e-4
+            length = 0.1
+
+    Returns:
+        The link.
+
+    Raises:
+        ConfigurationError: The type is unknown, a key is missing, or the type's loader rejects the table.
+    """
+    link_type = config.get("type")
+
+    if link_type not in LINK_TYPES:
+        raise ConfigurationError(
+            f"Link {config.get('name')!r} has unknown type {link_type!r}; known types are {', '.join(LINK_TYPES)}."
+        )
+
+    try:
+        return LINK_TYPES[link_type](config)
+    except KeyError as error:
+        raise ConfigurationError(f"Link {config.get('name')!r} is missing {error}.") from error
 
 
 def load_procedure(procedure: Mapping[str, Any], graph: Graph) -> Procedure:

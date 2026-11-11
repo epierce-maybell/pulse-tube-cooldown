@@ -9,6 +9,10 @@ Shared terminology for the pulse-tube cooldown project.
 ## Language
 **Model**: A general term for a representation of a system or process.
 
+**Coefficient**: A value fitted to data, such as a head's warm-correction amplitude.
+
+**Parameter**: A value specified as part of a model's configuration, such as a regenerator layer's mass.
+
 **Material**: A named substance with temperature-dependent specific heat and thermal conductivity.
 
 **Node**: A thermal mass with a single temperature, made of materials, each with a mass.
@@ -40,6 +44,10 @@ Shared terminology for the pulse-tube cooldown project.
 **Manifold**: The compressors and heads sharing one gas supply.
 
 **Stage 1, stage 2, clamp**: The head's two cold stages and its regenerator clamp.
+
+**Regenerator layer**: One material fill of a regenerator, with its mass and fraction of the regenerator's length.
+
+**Regenerator node**: A part of a regenerator layer whose stored energy is one internal state of the head model. A layer that spans the clamp is split into two regenerator nodes.
 
 **PRP**: Primary plate.
 

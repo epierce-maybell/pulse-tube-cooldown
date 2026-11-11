@@ -5,9 +5,9 @@ from functools import partial
 import numpy as np
 import pytest
 
+from pulse_tube_cooldown.config import load_link
 from pulse_tube_cooldown.core.errors import ConfigurationError
 from pulse_tube_cooldown.library.links import radiation
-from pulse_tube_cooldown.library.links.load import load_link
 from pulse_tube_cooldown.library.surfaces.load import load_surface
 
 _ROD = {

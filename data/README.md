@@ -7,7 +7,6 @@ candidates live in [`../pulse-tube-research/`](../../pulse-tube-research/README.
 | Location | Contents |
 |---|---|
 | `sn09/`, `fp1/` | Refrigerator cooldown records and comparison conventions, BoM exports and node assignments, and geometry. |
-| `heads/pt1_1/geometry.csv`, `heads/pt1_5/geometry.csv` | Head geometry from CAD and stated estimates. PT1.5 records what its CAD shows; other quantities, including matrix filling, come from PT1.1. |
 | `test_stand/<serial>/` | Measured cooldowns and load maps grouped by cold-head serial. |
 | `test_stand/load_map_index_2026-11-05.csv` | Supplied draft index of load-map tests and setup changes. |
 | `test_stand/pt_performance_overview_2026-10-30.pdf` | Supplied manufacturer overview: source for digitized maps and transcribed settings. |

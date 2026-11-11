@@ -1,0 +1,22 @@
+energy_scale = 1e5
+cold_blend_width = 1.0
+cold_tail_span_multiplier = [1.0, 1.0]
+energy_temperature_range = [1.0, 350.0]
+energy_knots = 4097
+quadrature_order = 48
+
+[unloaded_profile]
+source = "Digitized from Falter et al. (2024), Fig. 7"
+reference_stage_temperature = [45.0, 3.0]
+file = "falter_2024/unloaded_profile.csv"
+
+[clamp_response]
+source = "Digitized from Falter et al. (2024), Fig. 4, blue curve"
+file = "falter_2024/clamp_response.csv"
+
+[loaded_profiles]
+source = "Digitized from Falter et al. (2024), Fig. 7"
+source_clamp_fraction = 0.73
+reference_stage_temperature = [45.0, 3.0]
+load = [0.0, 1.0, 2.0, 3.0]
+file = "falter_2024/loaded_profiles.csv"

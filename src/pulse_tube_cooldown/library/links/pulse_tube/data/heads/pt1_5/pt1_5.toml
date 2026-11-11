@@ -1,0 +1,14 @@
+name = "PT1.5"
+clamp_fraction = 0.619
+source = "geometry.csv; ../pt1_1/geometry.csv"
+regenerate = "uv run python -m pulse_tube_cooldown.library.links.pulse_tube.prepare"
+regenerator_1 = [
+    { material = "304 SS", mass = 0.9758, length_fraction = 0.72 },
+    { material = "Pb", mass = 1.112, length_fraction = 0.28 },
+]
+regenerator_2 = [
+    { material = "Pb", mass = 0.2212, length_fraction = 0.16 },
+    { material = "Er3Ni", mass = 0.353, length_fraction = 0.32 },
+    { material = "HoCu2", mass = 0.3597, length_fraction = 0.32 },
+    { material = "Gd2O2S", mass = 0.1791, length_fraction = 0.2 },
+]

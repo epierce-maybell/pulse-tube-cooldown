@@ -13,6 +13,7 @@ dependencies = [
     "netcdf4>=1.7.5",
     "numpy>=2.5.4",
     "scipy>=1.18.1",
+    "tomli-w>=1.2.0",
     "xarray>=2026.9.0",
 ]
 

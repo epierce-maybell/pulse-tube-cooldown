@@ -6,11 +6,11 @@ import numpy as np
 import pytest
 from scipy.constants import R
 
+from pulse_tube_cooldown.config import load_link
 from pulse_tube_cooldown.core.errors import ConfigurationError
 from pulse_tube_cooldown.core.types import Gas
 from pulse_tube_cooldown.library.gases.load import load_gas
 from pulse_tube_cooldown.library.links.exchange_gas import ExchangeGas, FacingSurfaces
-from pulse_tube_cooldown.library.links.load import load_link
 
 # monitor_ovc.yaml's mbar coefficients times 100, in Pa / K^3, Pa / K^2, Pa / K, and Pa.
 _MONITOR_OVC_COEFFICIENTS = (3.16030871e-07, -1.32989499e-04, 1.90126130e-02, -7.78545808e-01)

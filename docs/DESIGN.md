@@ -117,8 +117,8 @@ significant modeling decisions and their assumptions.
 
 Materials, gases, and surfaces have named library data files.
 Published source coefficients used to derive a library property live with that
-property's data. Source head geometry and recorded material filling live in
-`data/heads/`.
+property's data. Head designs, with their source geometry and material filling,
+are packaged in `library/links/pulse_tube/data/heads/`.
 Property loaders construct temperature-dependent functions and integrals from
 sourced fits or tables. Validity ranges accompany the data; values outside them
 use the endpoint behavior and warnings described by the loaders. Real-helium
@@ -145,8 +145,8 @@ changed between configurations.
 Library code reads packaged data by name and receives everything else by path.
 Data a library user needs without this repository are packaged in a `data/`
 directory beside the module that loads them: material, gas, and surface
-properties, archetypal component data such as a head model's reduced design and
-calibration, and model defaults. Data specific to one system, serial-numbered
+properties, archetypal component data such as head designs, the head model's
+shared parameters, and an archetypal head's calibration, and model defaults. Data specific to one system, serial-numbered
 unit, or run live in the repository's `data/`: measurements, hardware records,
 system configurations, and fits to an individual unit. Derived files record
 their inputs and the command that regenerates them.

@@ -285,12 +285,8 @@ Q2 =     q0_2(u1,u2) + sum_j A_2j * dE_j/dt
 ```
 
 `Delta_E_R1` is excess regenerator-1 energy in J. The nonnegative fitted
-coefficient `k` and performance multiplier `p` are dimensionless. `E_scale` is
-a fixed positive energy normalization in J, stored with the calibration. The
-demonstrated fits use `E_scale = 70289.80061191239 J` for all six heads. This
-reference comes from the S0035 regenerator-1 energy difference between its
-uniform initial state and the target profile at its measured final temperatures.
-It remains fixed when fitting or evaluating another record.
+coefficient `k` and performance multiplier `p` are dimensionless. `E_scale`
+is a fixed positive energy normalization in J, shared by every head.
 
 For `k > 0`, the equivalent energy scale `E_penalty = E_scale / k`, in J,
 gives `p = exp(-Delta_E_R1 / E_penalty)`. An excess energy of `E_penalty`
@@ -396,7 +392,7 @@ calibration artifact retains full precision.
 | `b_2` | dimensionless | Stage-2 warm-correction temperature exponent. | 0.667621 |
 | `g_1` | W/(kg K) | Effective exchange per unit mass in regenerator 1. | 0.0376894 |
 | `g_2` | W/(kg K) | Effective exchange per unit mass in regenerator 2. | 0.120623 |
-| `k` | dimensionless | Sensitivity of stage-1 performance to excess regenerator-1 energy. | 1.97665 |
+| `k` | dimensionless | Sensitivity of stage-1 performance to excess regenerator-1 energy. | 2.81214 |
 
 The four warm coefficients set the scale and shape of each stage's dependence
 on `T_i / T0`. The amplitudes describe the correction before blending, internal
@@ -440,9 +436,10 @@ guesses. Full temperature traces are also compared after calibration.
 
 The cold map constrains the equilibrium input-output relation and its measured
 slopes. The cooldown constrains state evolution and the dependence of cooling
-power on departure from equilibrium. The fitted coefficients, prescribed
-profiles, and energy normalization are stored head data. All heads use the
-same equations with separately calibrated coefficients.
+power on departure from equilibrium. A calibration stores the fitted
+coefficients, measured load map, and test stand for one head and drive
+condition; designs and shared parameters come from the library's packaged
+data. All heads use the same equations with separately calibrated coefficients.
 
 The clamp temperature-response tables and loaded profile shapes are prescribed
 design data with their published source and digitization recorded. The external

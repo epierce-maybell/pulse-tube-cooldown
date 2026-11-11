@@ -1,0 +1,31 @@
+quantity,value,unit,material,packing,source,notes
+prp_to_clamp,163.4,mm,,,"STEP export of CAD 910-000018, 2026-11-03","Reg2 tube top (z 1572.3, at the PRP underside) to the center of CLAMP, REGENERATOR (z 1402.5-1415.2) under BRACKET, REGENERATOR on the RGP plate; replaces 149.6 (5.891 in) measured to the bracket top"
+clamp_to_cfp,81.1,mm,,,"STEP export of CAD 910-000018, 2026-11-03","clamp center to the Reg2 tube bottom (z 1327.8), 19.1 mm below the CFP top; replaces 77.8 (3.062 in) measured to the CFP top"
+clamp_fraction_x_R,0.668,,,,"STEP export of CAD 910-000018, 2026-11-03","prp_to_clamp / (prp_to_clamp + clamp_to_cfp), the regenerator tube length; Falter 2024 puts the PTD 420RX intermediate stage at 0.73 by the same convention"
+stage1_regenerator_outer_radius,32.11,mm,,,CAD 910-000018,1.264 in; the widest tube; warm flange to PRP
+stage1_regenerator_length,180.0,mm,,,CAD 910-000018,7.087 in
+stage1_pulse_tube_outer_radius,21.5,mm,,,"STEP export of CAD 910-000018, 2026-11-03","PR1: cylindrical faces at 21.0 and 21.5 mm radius over 181 mm, a 43 mm OD tube; the 0.846 in previously recorded as the diameter is this radius"
+stage1_pulse_tube_length,181.0,mm,,,CAD 910-000018,7.126 in
+stage2_regenerator_outer_radius,16.51,mm,,,CAD 910-000018,0.65 in; the shorter tube; carries the RGP clamp
+stage2_regenerator_length,244.3,mm,,,CAD 910-000018,cylindrical face area 39.289 in^2 / (2 pi r)
+stage2_pulse_tube_outer_radius,12.50,mm,,,CAD 910-000018,0.492 in; the longer tube
+stage2_pulse_tube_length,444.1,mm,,,CAD 910-000018,cylindrical face area 54.051 in^2 / (2 pi r); runs from CFP past PRP to the warm flange
+stage2_pulse_tube_t3_below_stage1,0.0508,m,,,human 2026-11-02,approximately 2 inches below stage 1 on the main pulse tube reaching stage 2; sensor attachment unspecified
+tube_wall_thickness,0.5,mm,,,estimate,typical thin-wall cryocooler tube; not in CAD
+tube_wall_material,304 stainless steel,,,,Falter 2024,stainless regenerator tube; grade assumed
+stage1_regenerator_layer_SS,0.72,fraction of length,304 SS,screens,Falter 2024 Fig. 2,warm end; schematic measured to about 0.05
+stage1_regenerator_layer_Pb,0.28,fraction of length,Pb,spheres,Falter 2024 Fig. 2,cold end; production filling assumed to match the paper
+stage2_regenerator_layer_Pb,0.16,fraction of length,Pb,spheres,Falter 2024 Fig. 2,from PRP
+stage2_regenerator_layer_Er3Ni,0.32,fraction of length,Er3Ni,spheres,Falter 2024 Fig. 2,ends at 0.48 from PRP
+stage2_regenerator_layer_HoCu2,0.32,fraction of length,HoCu2,spheres,Falter 2024 Fig. 2,ends at 0.80 from PRP
+stage2_regenerator_layer_GOS,0.20,fraction of length,Gd2O2S,spheres,Falter 2024 Fig. 2,to CFP
+matrix_porosity_spheres,0.38,,,,estimate,random close packing
+matrix_porosity_screens,0.70,,,,estimate,stainless screen stack
+stage1_regenerator_gas_volume,344.9,cm^3,,,derived,pi (r - wall)^2 x length x (0.72 porosity_screens + 0.28 porosity_spheres); linear profile Ta to T1
+stage1_pulse_tube_gas_volume,250.8,cm^3,,,derived,pi (r - wall)^2 x length; linear profile Ta to T1
+stage2_regenerator_gas_volume_prp_to_clamp,50.0,cm^3,,,derived,pi (r - wall)^2 x length x x_R x porosity_spheres; linear profile T1 to TR
+stage2_regenerator_gas_volume_clamp_to_cfp,24.8,cm^3,,,derived,pi (r - wall)^2 x length x (1 - x_R) x porosity_spheres; linear profile TR to T2
+stage2_pulse_tube_gas_volume,200.9,cm^3,,,derived,pi (r - wall)^2 x length; linear profile Ta to T2
+reservoir_volume,5258,cm^3,,,"STEP export of CAD 910-000018, 2026-11-03","TANK, BUFFER 350-000175 (BOM line 326), one per pulse tube; bore radius 76.5 mm over 286 mm; lid and bottom pockets under 0.06 L neglected"
+reservoir_hose_volume,34,cm^3,,,"STEP export of CAD 910-000018, 2026-11-03","HOSE, BUFFER (BOM lines 714-715), one per reservoir; bore radius 4.763 mm over 482.6 mm"
+valve_to_head_dead_volume,45,cm^3,,,"STEP export of CAD 910-000018, 2026-11-03","rough sum of bores: VH inlet tube, isolator, isolator-to-hose tube, 24 in hose 400-000132 (7.04 mm bore), glands and elbow; rotary valve ports are not in the CAD"
