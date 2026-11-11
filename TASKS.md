@@ -15,9 +15,9 @@ There are three kinds of entry. If a task does not specify, default to **Discuss
 
 Claim tasks with [o], mark finished tasks with [x], and update each section to have a running count of open vs. completed items, like (5/10). If a task was started and then later put on hold, mark it as [-] with a note for the blocker and do not update progress. If a task is unclear or has unsettled decisions, interview the user relentlessly until you are aligned on all decisions, before doing the work. Do not use this file as a dumping-ground for notes or reporting. Agents may not add tasks to the list.
 
-## Progress `[####################---------------]` 55.6% (20/36)
+## Progress `[#####################---------------]` 58.3% (21/36)
 
-## 1. Rebuild test suite (11/13)
+## 1. Rebuild test suite (12/13)
 #### [x] 1.1 Public/user interface tests
 #### [o] 1.2 End-to-end acceptance tests
 #### [x] 1.3 Pulse tube head acceptance tests
