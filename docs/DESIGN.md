@@ -11,8 +11,7 @@ areas to code, tests, and data. [GLOSSARY.md](../GLOSSARY.md) defines shared ter
 The simulator is a design tool for understanding cooldown time, node temperatures,
 and heat flows in individual refrigerators. Different refrigerator architectures
 are represented by different graphs, material inventories, and procedures.
-SN09 and FP1 are the reference systems for the v1 release; the release work is
-tracked in [TASKS.md](../TASKS.md).
+SN09 and FP1 are the reference systems.
 
 A useful prediction follows from physics we understand. Component behavior is
 checked against physical invariants and known solutions, and assembled models
@@ -48,11 +47,10 @@ each node's material heat capacity and energy balance. Names identify nodes and
 links in configuration and results; the graph maps link-local order to the
 engine's array indices.
 
-The current engine integrates node temperatures. Boundary nodes retain their
+The engine integrates node temperatures. Boundary nodes retain their
 initial temperatures while links continue to exchange heat with them. The
-adopted head model carries seven material-piece energy entries, specified in
-[ADR-06](adrs/06-reduced-head-dynamics.md). Their engine
-integration is task 3.4.
+head's seven material-piece energies, specified in
+[ADR-06](adrs/06-reduced-head-dynamics.md), are carried as regenerator nodes.
 
 ## How a run proceeds
 
@@ -119,6 +117,10 @@ Materials, gases, and surfaces have named library data files.
 Published source coefficients used to derive a library property live with that
 property's data. Head designs, with their source geometry and material filling,
 are packaged in `library/links/pulse_tube/data/heads/`.
+The archetypal head is the packaged `data/archetype.toml`, a PT1.5 on one
+compressor fitted to the mean one-compressor stand records. Select it with
+`from_archetype = true` or `HeadCalibration.from_archetype()`; regenerate it with
+`uv run pytest tests/acceptance/test_pulse_tube_fit.py`.
 Property loaders construct temperature-dependent functions and integrals from
 sourced fits or tables. Validity ranges accompany the data; values outside them
 use the endpoint behavior and warnings described by the loaders. Real-helium
@@ -164,10 +166,9 @@ Historical BoM, CAD, and data-export preparation is preserved in
 
 Acceptance tests express required physical behavior and public interfaces.
 Component tests and assembled simulations provide complementary evidence about
-the model. Current coverage and unfinished validation work are tracked in
-[TASKS.md](../TASKS.md).
+the model.
 
-## Open decisions
+## Pulse-tube head
 
 The adopted pulse-tube head formulation is a reduced nonlinear dynamical system
 model with seven internal energy states, stage and clamp temperatures as inputs,
@@ -183,10 +184,8 @@ interpretation and the six-head forward calibration results.
 In the reference fridge, stage 1 connects to PRP, stage 2 to CFP, and
 the clamp to RGP.
 The stand condition sets clamp load to zero and solves its free temperature.
-Production implementation and engine integration remain work for task 3.4.
 
 The retired cooler implementation, head-design loader, generated inventories,
 and experiments from [archived ADR-03](adrs/archive/03-coupled-capacity-maps.md),
 together with subsequent candidate investigations, are preserved in
 `../pulse-tube-research/`, with original paths and a hashed snapshot manifest.
-The replacement work and the archetypal head are tracked in [TASKS.md](../TASKS.md).

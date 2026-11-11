@@ -242,6 +242,11 @@ class HeadCalibration:
     warm_flange_temperature: float
     provenance: Mapping[str, str] = field(default_factory=dict)
 
+    @classmethod
+    def from_archetype(cls) -> "HeadCalibration":
+        """Returns the archetypal PT1.5 on one compressor."""
+        return read_head_calibration(DATA_DIRECTORY / "archetype.toml")
+
 
 def load_head_design(
     name: str, /, *, directory: str | os.PathLike[str] = DATA_DIRECTORY / "heads"

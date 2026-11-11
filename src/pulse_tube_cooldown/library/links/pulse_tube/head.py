@@ -299,9 +299,7 @@ def load_pulse_tube_head(
     """Loads a calibrated head from a link table.
 
     Args:
-        config: `name`, `data` (a calibration file path relative to the working directory), `stages` in stage order,
-            and `warm_flange_temperature` in K. A mounted head also has a `clamp` node and a `contact_resistance` in
-            K/W.
+        config: A `pulse_tube_head` link table.
         load_graph: Builds the calibration's test stand from its `fridge` table.
 
     Raises:
@@ -311,7 +309,10 @@ def load_pulse_tube_head(
     resistance = config.get("contact_resistance")
     if (clamp is None) != (resistance is None) or (resistance is not None and resistance <= 0):
         raise ConfigurationError("A mounted head needs both a clamp node and a positive contact_resistance.")
-    calibration = read_head_calibration(config["data"])
+    if config.get("from_archetype"):
+        calibration = HeadCalibration.from_archetype()
+    else:
+        calibration = read_head_calibration(config["data"])
     first, second = config["stages"]
     return build_pulse_tube_head(
         calibration,

@@ -1,0 +1,88 @@
+design = "PT1.5"
+test_stand_stages = [
+    "Stage 1",
+    "Stage 2",
+]
+warm_flange_temperature = 297.81649277207674
+
+[coefficients]
+stage_1_warm_amplitude = 100.71308917044682
+stage_1_warm_exponent = 1.3099516874079062
+stage_2_warm_amplitude = 27.740287899324148
+stage_2_warm_exponent = 0.7133878553136751
+regenerator_1_exchange_coefficient = 0.04619169729949183
+regenerator_2_exchange_coefficient = 0.10218383077472924
+energy_coupling_coefficient = 2.9364475589384447
+
+[provenance]
+source = "tests/acceptance/fixtures/pulse_tube_cooler/"
+regenerate = "uv run pytest tests/acceptance/test_pulse_tube_fit.py"
+
+[[test_stand.nodes]]
+name = "Room temperature"
+composition = [
+    [
+        "304 SS",
+        1.0,
+    ],
+]
+
+[[test_stand.nodes]]
+name = "Stage 1"
+composition = [
+    [
+        "OFHC Cu RRR100",
+        1.5838,
+    ],
+    [
+        "Al 6061-T6",
+        0.4536,
+    ],
+    [
+        "304 SS",
+        0.0709,
+    ],
+]
+
+[[test_stand.nodes]]
+name = "Stage 2"
+composition = [
+    [
+        "304 SS",
+        0.4218,
+    ],
+    [
+        "OFHC Cu RRR100",
+        0.0397,
+    ],
+]
+
+[[test_stand.links]]
+name = "Shield radiation"
+type = "radiation"
+nodes = [
+    "Stage 1",
+    "Room temperature",
+]
+area = [
+    0.0831,
+    0.5,
+]
+surface = [
+    "Gold-plated Cu",
+    "Machined Al",
+]
+
+[load_map]
+columns = [
+    "stage_1_temperature_K",
+    "stage_2_temperature_K",
+    "stage_1_heater_power_W",
+    "stage_2_heater_power_W",
+]
+table = [
+    [39.33719286038501, 2.340778158529209, 0.0, 0.0],
+    [41.18969933597521, 3.4806863482881925, 0.0, 0.5],
+    [54.122805761006546, 2.426785814064935, 20.0, 0.0],
+    [54.91787790126285, 3.5016361076129514, 20.0, 0.5],
+]
