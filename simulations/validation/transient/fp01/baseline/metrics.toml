@@ -1,0 +1,33 @@
+# Times in s since compressor start.
+[provenance]
+commit = "888b70e4056e7629c3a673c2b68de97bf6ff072d"
+uncommitted_changes = true
+
+[condensing_time]
+measured = 151860.0
+model = nan
+legacy = nan
+
+[model]
+condensing_error = nan
+scoring_end = 151860.0
+rms = 0.9443598069995417
+
+[model.rms_by_node]
+PRP = 0.6280214759102978
+RGP = 0.7467733077435015
+CFP = 1.5118346663665765
+STP = 0.9637893115039291
+"DHX 1" = 0.5407975430985089
+
+[legacy]
+condensing_error = nan
+scoring_end = 151860.0
+rms = 0.40399965710663344
+
+[legacy.rms_by_node]
+PRP = 0.394965283506822
+RGP = 0.570821500439087
+CFP = 0.2875255667293342
+STP = 0.4079614169274542
+"DHX 1" = 0.29178825361510197
