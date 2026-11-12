@@ -4,7 +4,7 @@ A run is a directory holding a `config.toml`. Its `[validation]` table names, re
 `measured` cooldown conventions and an optional legacy `baseline` trace. Its optional `comparison_nodes` maps a
 measured or baseline node name to the model node it is compared with. Its optional `[layout]` table maps each node
 name to its `[column, row]` in the graph drawing. Run from the repository root:
-    uv run python -m simulations.validation.transient.run simulations/validation/transient/fp01/calibration
+    uv run python -m simulations.validation.transient.run simulations/validation/transient/fp01/baseline
 """
 
 import argparse
