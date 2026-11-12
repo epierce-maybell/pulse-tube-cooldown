@@ -3,6 +3,7 @@ archive_root = "../../data/test_stand"
 notes_source = "data/test_stand/load_map_index_2026-11-05.csv"
 
 [objectives]
+stage_1_max_temperature = 219.0 # K; measured T1 is unreliable at or above this value.
 heater_powers = [[0.0, 0.0], [0.0, 0.5], [20.0, 0.0], [20.0, 0.5]]
 stage_1_gates = [200.0, 150.0, 100.0, 80.0, 65.0, 55.0, 50.0]
 stage_2_gates = [200.0, 100.0, 50.0, 30.0, 10.0, 5.0, 3.0]

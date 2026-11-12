@@ -81,6 +81,7 @@ def compile_records(
             start=entry["compressor_start"],
             end=entry["end"],
             heater_start=entry.get("heater_start"),
+            stage_1_max_temperature=float(settings["stage_1_max_temperature"]),
         )
         count = int(entry["compressors"])
         room_temperatures[count].append(room_temperature)
@@ -154,10 +155,14 @@ def _load_cooldown(
     start: datetime,
     end: datetime,
     heater_start: datetime | None,
+    stage_1_max_temperature: float,
 ) -> tuple[float, NDArray[np.float64]]:
-    """Return initial TPR room temperature in K and stage crossing times in s."""
+    """Return the last finite prestart TPR reading in K and interpolated downward crossing times in s."""
     trace = read_cooldown(path)
-    room_temperature = float(trace.TPR.values[0])
+    prestart = trace.TPR.values[(trace.time.values < np.datetime64(start)) & np.isfinite(trace.TPR.values)]
+    if not prestart.size:
+        raise ValueError(f"{path.name}: no finite prestart TPR reading.")
+    room_temperature = float(prestart[-1])
     trace = trace.sel(time=slice(np.datetime64(start), np.datetime64(end)))
     if heater_start is not None:
         trace = trace.where(trace.time < np.datetime64(heater_start), drop=True)
@@ -165,12 +170,25 @@ def _load_cooldown(
     times = []
     for stage, thresholds in enumerate(gates, start=1):
         readings = trace[f"T{stage}"].values
+        valid = np.isfinite(readings)
+        valid &= readings < stage_1_max_temperature if stage == 1 else readings <= room_temperature
+        retained = readings[valid]
+        retained_seconds = seconds[valid]
         crossings = []
         for gate in thresholds:
-            below = np.flatnonzero(np.isfinite(readings) & (readings <= gate))
-            if not below.size:
+            downward = np.flatnonzero((retained[:-1] > gate) & (retained[1:] <= gate))
+            if not downward.size:
                 raise ValueError(f"{path.name}: stage {stage} never crosses {gate} K before cutoff.")
-            crossings.append(seconds[below[0]])
+            index = downward[0]
+            crossings.append(
+                float(
+                    np.interp(
+                        gate,
+                        retained[index : index + 2][::-1],
+                        retained_seconds[index : index + 2][::-1],
+                    )
+                )
+            )
         times.append(crossings)
     return room_temperature, np.array(times)
 
