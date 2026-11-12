@@ -1,0 +1,111 @@
+design = "PT1.5"
+test_stand_stages = [
+    "Stage 1",
+    "Stage 2",
+]
+warm_flange_temperature = 294.1209913684476
+source = "S0028 baseline accepted for FP01; ../pulse-tube-research/simulations/exploration/fp01_head_reference/baseline.toml"
+
+[coefficients]
+# source = 'S0028 baseline accepted for FP01; ../pulse-tube-research/simulations/exploration/fp01_head_reference/baseline.toml'
+stage_1_warm_amplitude = 1999.506957912695
+stage_1_warm_exponent = 2.2399780275889696
+stage_2_warm_amplitude = 24.174786781583453
+stage_2_warm_exponent = 0.682003696191073
+regenerator_1_exchange_coefficient = 0.7432573361387808
+regenerator_2_exchange_coefficient = 0.17450785634576005
+energy_coupling_coefficient = 39.11149476218225
+
+[provenance]
+source = "data/test_stand/s0028/cooldown_2026-06-30.dat; data/test_stand/s0028/load_map_2026-07-02.dat"
+compressors = "2"
+purpose = "Reference performance for both FP01 heads, each operated on two compressors"
+regenerate = ".venv/Scripts/python -B C:\\Users\\EthanPierce\\Documents\\projects\\pulse-tube-research\\simulations\\exploration\\fp01_head_reference\\check_s0028.py baseline"
+
+[test_stand]
+source = "S0028 baseline accepted for FP01; ../pulse-tube-research/simulations/exploration/fp01_head_reference/baseline.toml"
+
+[[test_stand.nodes]]
+name = "Room temperature"
+composition = [
+    [
+        "304 SS",
+        1.0,
+    ],
+]
+source = "S0028 baseline accepted for FP01; ../pulse-tube-research/simulations/exploration/fp01_head_reference/baseline.toml"
+
+[[test_stand.nodes]]
+name = "Stage 1"
+composition = [
+    [
+        "OFHC Cu RRR100",
+        1.5838,
+    ],
+    [
+        "Al 6061-T6",
+        0.4536,
+    ],
+    [
+        "304 SS",
+        0.0709,
+    ],
+]
+source = "S0028 baseline accepted for FP01; ../pulse-tube-research/simulations/exploration/fp01_head_reference/baseline.toml"
+
+[[test_stand.nodes]]
+name = "Stage 2"
+composition = [
+    [
+        "304 SS",
+        0.4218,
+    ],
+    [
+        "OFHC Cu RRR100",
+        0.0397,
+    ],
+]
+source = "S0028 baseline accepted for FP01; ../pulse-tube-research/simulations/exploration/fp01_head_reference/baseline.toml"
+
+[[test_stand.links]]
+name = "Shield radiation"
+type = "radiation"
+nodes = [
+    "Stage 1",
+    "Room temperature",
+]
+area = [
+    0.0831,
+    0.5,
+]
+surface = [
+    "Gold-plated Cu",
+    "Machined Al",
+]
+source = "S0028 baseline accepted for FP01; ../pulse-tube-research/simulations/exploration/fp01_head_reference/baseline.toml"
+
+[load_map]
+source = "data/test_stand/s0028/load_map_2026-07-02.dat"
+columns = ["stage_1_temperature_K", "stage_2_temperature_K", "stage_1_heater_power_W", "stage_2_heater_power_W"]
+table = [
+    [58.61247615568821, 4.49574579435692, 30.0, 2.0],
+    [58.161706783524245, 4.161998406768408, 30.0, 1.5],
+    [57.610582740645825, 3.7290604935804432, 30.0, 1.0],
+    [56.997408997901985, 3.2358514499779303, 30.0, 0.5],
+    [56.46566539935768, 2.7004603387053967, 30.0, 0.0],
+    [52.56993348515515, 4.451544750809153, 20.0, 2.0],
+    [51.783129643581375, 4.080052354327938, 20.0, 1.5],
+    [51.049050134599284, 3.6836214654137, 20.0, 1.0],
+    [49.32437074982736, 3.250423215418176, 20.0, 0.5],
+    [48.441570160798136, 2.723617195152144, 20.0, 0.0],
+    [45.998416702141654, 4.398358167762408, 10.0, 2.0],
+    [45.42309247813994, 4.071788641962881, 10.0, 1.5],
+    [44.55783715558946, 3.655900143544899, 10.0, 1.0],
+    [43.89759833107482, 3.1822319434652075, 10.0, 0.5],
+    [43.218542122000294, 2.6703757285653986, 10.0, 0.0],
+    [40.831116412506994, 4.391756777073029, 0.0, 2.0],
+    [40.12248643274567, 4.02142119249522, 0.0, 1.5],
+    [39.5568837628476, 3.614948270436593, 0.0, 1.0],
+    [38.880447706799494, 3.1594976560945462, 0.0, 0.5],
+    [38.33942796835595, 2.5992161932891107, 0.0, 0.0],
+]
