@@ -69,7 +69,7 @@ def test_specific_heat_traversal_matches_constant_power_cooling(material, materi
         expected_times.append(mass * specific_energy / cooling_power)
 
     def cooling_rate(time, temperature):
-        heat_capacity = mass * material.specific_heat(temperature)
+        heat_capacity = mass * material.specific_heat(np.maximum(temperature, final_temperature))
         return -cooling_power / heat_capacity
 
     solution = _cool(cooling_rate, temperatures, max_time=1.1 * sum(expected_times))
