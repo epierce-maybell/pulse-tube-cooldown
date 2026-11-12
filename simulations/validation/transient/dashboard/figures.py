@@ -11,11 +11,13 @@ import plotly.graph_objects as go
 import xarray as xr
 from plotly.subplots import make_subplots
 
-from simulations.validation.transient.dashboard.runs import Measured, Run, residual
+from simulations.validation.transient.dashboard.runs import Measured, Run, heat_sources, residual
 
 SECONDS_PER_HOUR = 3600.0
 COLUMNS = 3
-OTHER = "Other"
+HEAT_DECADES = 5
+HEAT_FLOW_HEIGHT = 760
+HEAT_FLOW_LEGEND_WIDTH = 280
 LOG_TICKS = [scale * decade for decade in (1.0, 10.0, 100.0) for scale in (1, 2, 5)] + [1000.0]
 TIME_TITLE = "Time since compressor start (h)"
 PANEL_HEIGHT = 240
@@ -84,82 +86,81 @@ def residual_by_node(runs: list[Run], measured: Measured) -> go.Figure:
     return style(figure, height=panels_height(len(measured.nodes)), top=PANELS_TOP)
 
 
-def budget(run: Run, node: str, shown: list[str]) -> xr.DataArray:
-    """Returns the heat flow(time, link) into `node` from each link in `shown` and from all its other links as one.
+def heat_flow(run: Run, measured: Measured, node: str) -> go.Figure:
+    """Plots a node's temperature and net heat inflow above the heat flowing into it from each source.
 
-    Inactive links carry zero.
+    Both heat flow axes are signed log scales spanning `HEAT_DECADES` decades below the largest flow.
     """
-    flows = run.data.heat_flow.sel(node=node, link=run.data.connected.sel(node=node)).fillna(0.0)
-    links = [str(link) for link in flows.link.values]
-    rest = [link for link in links if link not in shown]
-    series = flows.sel(link=[link for link in shown if link in links])
-    if rest:
-        other = flows.sel(link=rest).sum("link").expand_dims(link=[OTHER])
-        series = xr.concat([series, other], dim="link")
-    return series.transpose("time", "link")
-
-
-def largest_links(run: Run, node: str, count: int) -> list[str]:
-    """Returns the `count` links with the largest mean absolute heat flow into `node`, in descending order."""
-    flows = run.data.heat_flow.sel(node=node, link=run.data.connected.sel(node=node)).fillna(0.0)
-    size = np.abs(flows).mean("time")
-    return [str(link) for link in size.sortby(size, ascending=False).link.values[:count]]
-
-
-def budget_extent(flows: xr.DataArray) -> tuple[float, float]:
-    """Returns the 1st percentile of stacked cooling and 99th percentile of stacked heating in W.
-
-    Percentiles keep a brief start-up transient from setting the scale.
-    """
-    cooling = flows.clip(max=0.0).sum("link").values
-    heating = flows.clip(min=0.0).sum("link").values
-    return float(np.percentile(cooling, 1.0)), float(np.percentile(heating, 99.0))
-
-
-def heat_flow_budget(flows: xr.DataArray, extent: tuple[float, float]) -> go.Figure:
-    """Plots a node's heat flows stacked above zero for heating and below for cooling, with their net.
-
-    Args:
-        flows: The node's heat flow(time, link) in W, from `budget`.
-        extent: The y range in W.
-    """
-    hours = flows.time.values / SECONDS_PER_HOUR
-    colors = dict(zip([str(link) for link in flows.link.values if link != OTHER], CATEGORICAL[:-1], strict=False))
-    colors[OTHER] = NEUTRAL
-    figure = go.Figure()
-    for link in flows.link.values:
-        values = flows.sel(link=link).values
-        for stack, part in (("heating", np.clip(values, 0.0, None)), ("cooling", np.clip(values, None, 0.0))):
-            figure.add_trace(
-                go.Scatter(
-                    x=hours,
-                    y=part,
-                    name=str(link),
-                    legendgroup=str(link),
-                    showlegend=stack == "heating",
-                    stackgroup=stack,
-                    line={"width": 0.5, "color": colors[str(link)]},
-                    fillcolor=colors[str(link)],
-                    customdata=values,
-                    hovertemplate="%{customdata:.3g} W" if stack == "heating" else None,
-                    hoverinfo=None if stack == "heating" else "skip",
-                )
-            )
-    figure.add_trace(
-        go.Scatter(
-            x=hours,
-            y=flows.sum("link").values,
-            name="Net",
-            line={"width": 2.5, "color": NET_COLOR},
-            hovertemplate="%{y:.3g} W",
-        )
+    sources = heat_sources(run, node)
+    net = sources.sum("source")
+    scale, ticks, labels = signed_log_axis(float(max(np.abs(sources).max(), np.abs(net).max())))
+    figure = make_subplots(
+        rows=2,
+        cols=1,
+        shared_xaxes=True,
+        row_heights=[0.4, 0.6],
+        vertical_spacing=0.05,
+        specs=[[{"secondary_y": True}], [{}]],
     )
-    low, high = extent
-    margin = 0.05 * (high - low)
-    figure.update_yaxes(title_text="Heat flow (W)", range=[low - margin, high + margin])
-    figure.update_xaxes(title_text=TIME_TITLE)
-    figure.add_hline(y=0.0, line={"color": NEUTRAL, "width": 1})
-    return style(figure, height=500, top=SINGLE_TOP)
+    if node in measured.nodes:
+        band = measured_trace(measured.cooldown.temperature.sel(node=node), MEASURED_COLOR, "Measured")
+        figure.add_trace(band, row=1, col=1)
+    figure.add_trace(line(run.data.temperature.sel(node=node), RUN_COLORS[0], run.label), row=1, col=1)
+    figure.add_trace(signed_log_line(net, scale, NET_COLOR, "Net heat in"), row=1, col=1, secondary_y=True)
+    colors = CATEGORICAL[: sources.sizes["source"]]
+    for source, color in zip(map(str, sources.source.values), colors, strict=True):
+        trace = signed_log_line(sources.sel(source=source), scale, color, source).update(legend="legend2")
+        figure.add_trace(trace, row=2, col=1)
+    figure.add_hline(y=0.0, line={"color": NEUTRAL, "width": 1}, row=2, col=1)
+    figure.update_yaxes(type="log", tickvals=LOG_TICKS, title_text="Temperature (K)", row=1, col=1, secondary_y=False)
+    heat_axis = {"tickvals": ticks, "ticktext": labels}
+    figure.update_yaxes(heat_axis, showgrid=False, title_text=f"Net heat into {node}", row=1, col=1, secondary_y=True)
+    figure.update_yaxes(heat_axis, title_text=f"Heat into {node}", row=2, col=1)
+    figure.update_xaxes(title_text=TIME_TITLE, row=2, col=1)
+    style(figure, height=HEAT_FLOW_HEIGHT, top=SINGLE_TOP)
+    legend = {"orientation": "v", "xref": "container", "x": 1.0, "xanchor": "right", "yref": "paper", "yanchor": "top"}
+    sources_top = figure.get_subplot(2, 1).yaxis.domain[1]
+    figure.update_layout(
+        margin={"r": HEAT_FLOW_LEGEND_WIDTH},
+        legend=legend | {"y": 1.0},
+        legend2=legend | {"y": sources_top, "title": f"Heat into {node} from"},
+    )
+    return figure
+
+
+def signed_log_axis(largest: float) -> tuple[float, list[float], list[str]]:
+    """Returns the linear scale in W, tick positions, and tick labels of a signed log axis reaching `largest` W.
+
+    The axis plots asinh(Q / scale), which is linear within `scale` of zero and logarithmic beyond it. Ticks fall on
+    zero and on each power of ten from `HEAT_DECADES` decades below `largest` up to it, with either sign.
+    """
+    top = math.ceil(math.log10(largest))
+    scale = 10.0 ** (top - HEAT_DECADES)
+    powers = [10.0**exponent for exponent in range(top - HEAT_DECADES + 1, top + 1)]
+    values = [-power for power in reversed(powers)] + [0.0] + powers
+    return scale, [float(np.arcsinh(value / scale)) for value in values], [watts(value) for value in values]
+
+
+def watts(power: float) -> str:
+    """Formats zero or a signed power of ten in W with an SI prefix, such as "−10 mW"."""
+    if power == 0.0:
+        return "0"
+    exponent = round(math.log10(abs(power)))
+    thousands = 3 * math.floor(exponent / 3)
+    prefix = {-9: "n", -6: "µ", -3: "m", 0: "", 3: "k", 6: "M"}[thousands]
+    return f"{'−' if power < 0 else '+'}{10 ** (exponent - thousands)} {prefix}W"
+
+
+def signed_log_line(values: xr.DataArray, scale: float, color: str, name: str) -> go.Scatter:
+    """Returns a 2 px line of heat flow over time on a signed log axis of linear scale `scale` W."""
+    return go.Scatter(
+        x=values.time.values / SECONDS_PER_HOUR,
+        y=np.arcsinh(values.values / scale),
+        name=name,
+        line={"width": 2, "color": color},
+        customdata=values.values,
+        hovertemplate="%{customdata:.3g} W",
+    )
 
 
 def node_panels(nodes: list[str], *, shared_y: bool) -> go.Figure:

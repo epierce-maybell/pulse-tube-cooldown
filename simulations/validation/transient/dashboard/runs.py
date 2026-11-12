@@ -6,6 +6,7 @@ from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import xarray as xr
 
 from pulse_tube_cooldown.measurements import log_temperature_ratio, read_refrigerator_cooldown
@@ -107,6 +108,34 @@ def plotted_nodes(run: Run, measured: Measured) -> list[str]:
 def residual(temperature: xr.DataArray, measured: Measured) -> xr.DataArray:
     """Returns ln(T / T_measured)(time, node) at the measured samples."""
     return log_temperature_ratio(temperature.reindex(node=measured.cooldown.node.values), measured.cooldown)
+
+
+def heat_sources(run: Run, node: str) -> xr.DataArray:
+    """Returns the heat flow(time, source) into `node` in W, largest mean magnitude first.
+
+    A link between `node` and one other node belongs to the source named for that node. A link to several nodes is
+    its own source, and such links that carry the same flow into `node` are one source named "A + B". Inactive links
+    carry zero.
+    """
+    flows = run.data.heat_flow.sel(node=node, link=run.data.connected.sel(node=node)).fillna(0.0)
+    sources: dict[str, list[str]] = {}
+    shared: list[list[str]] = []
+    for link in map(str, flows.link.values):
+        connected = run.data.connected.sel(link=link)
+        neighbors = [str(other) for other in connected.node.values[connected.values] if other != node]
+        if len(neighbors) == 1:
+            sources.setdefault(neighbors[0], []).append(link)
+            continue
+        match = next((group for group in shared if np.allclose(flows.sel(link=group[0]), flows.sel(link=link))), None)
+        if match:
+            match.append(link)
+        else:
+            shared.append([link])
+    sources |= {" + ".join(group): group for group in shared}
+    data = xr.concat([flows.sel(link=links).sum("link") for links in sources.values()], dim="source")
+    data = data.assign_coords(source=list(sources))
+    size = np.abs(data).mean("time")
+    return data.sortby(size, ascending=False)
 
 
 def config_differences(a: Any, b: Any, path: str = "") -> Iterator[tuple[str, Any, Any]]:

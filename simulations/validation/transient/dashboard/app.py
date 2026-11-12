@@ -21,7 +21,6 @@ from simulations.validation.transient.dashboard.runs import (
 
 RUNS = Path(__file__).parents[1]
 ROOT = Path(__file__).parents[4]
-LARGEST_LINKS = 7
 
 
 @st.cache_data
@@ -105,24 +104,19 @@ def describe(value: Any) -> str:
 
 
 def heat_flow(runs: list[Run], measured: Measured) -> None:
-    """Shows one node's heat-flow budget for each run, side by side on a shared scale."""
+    """Shows one node's temperature and heat inflow by source for each run, one run below the other."""
     plotted = plotted_nodes(runs[0], measured)
     ordered = plotted + [str(node) for node in runs[0].data.node.values if node not in plotted]
     node = st.selectbox("Node", ordered, key="node", bind="query-params")
-    shown = figures.largest_links(runs[0], node, LARGEST_LINKS)
-    budgets = [figures.budget(run, node, shown) for run in runs]
-    extents = [figures.budget_extent(flows) for flows in budgets]
-    extent = (min(low for low, _ in extents), max(high for _, high in extents))
-    for column, run, flows in zip(st.columns(len(runs)), runs, budgets, strict=True):
-        with column:
-            if len(runs) > 1:
-                st.subheader(run.label, divider=False)
-            st.plotly_chart(
-                figures.heat_flow_budget(flows, extent),
-                config={"displaylogo": False},
-                key=f"heat flow {run.label}",
-                alt=f"Heat flows into {node} in {run.label}",
-            )
+    for run in runs:
+        if len(runs) > 1:
+            st.subheader(run.label, divider=False)
+        st.plotly_chart(
+            figures.heat_flow(run, measured, node),
+            config={"displaylogo": False},
+            key=f"heat flow {run.label}",
+            alt=f"Temperature of and heat flows into {node} in {run.label}",
+        )
 
 
 def main() -> None:
