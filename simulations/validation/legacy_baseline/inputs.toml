@@ -5,11 +5,6 @@ base_system = "Fridge"
 # The legacy commit every run uses, on `Advanced_Feature_SIM`.
 legacy_commit = "83c1e78a5aed86a1ffb474d45c7ad1d7eac4b39b"
 
-# Each system's baseline run: its best legacy score over committed legacy inputs.
-[baselines]
-sn09 = "sn09_tuned"
-fp1 = "fp1_generous"
-
 # Each archived run's system, and whether it replaces `Fridge`'s masses and coolers with the system's BOM masses and
 # coolers below. `sn09_tuned` is `Fridge` as saved. `gas_gap_tables = false` removes every gas gap's tabulated
 # conductance (`k_table`); `linked_mass_gas_links` replaces a linked mass's gas links.

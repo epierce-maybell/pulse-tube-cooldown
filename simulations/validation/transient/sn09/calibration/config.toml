@@ -674,3 +674,8 @@ rtol = 1.0e-6
 atol = 1.0e-6
 initial_temperature = 294.97
 fixed_boundary_nodes = ["Fixed boundary"]
+
+[validation]
+measured = "data/sn09/cooldown.toml"
+baseline = "simulations/validation/legacy_baseline/sn09_tuned.nc"
+comparison_nodes = { DHX = "DHX 1" }

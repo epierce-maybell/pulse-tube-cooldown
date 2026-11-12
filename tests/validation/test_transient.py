@@ -2,16 +2,17 @@
 
 import math
 import shutil
+import tomllib
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
+import tomli_w
 import xarray as xr
 
 import simulations.validation.transient.run as transient
 from pulse_tube_cooldown import configure_model
-from pulse_tube_cooldown.__main__ import main as ptc_main
 from pulse_tube_cooldown.library.conditions import condensing_begins
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -142,32 +143,32 @@ def test_compare_legacy_missing_a_model_node(two_node_model, measured, model_dat
 
 @pytest.fixture(scope="module")
 def harness_output(tmp_path_factory):
-    """`run` on a directory holding the conduction-only SN09 configuration and the result `run-ptc` made from it."""
+    """`run` on a directory holding the conduction-only SN09 configuration."""
     plt.switch_backend("Agg")
     directory = tmp_path_factory.mktemp("transient")
     shutil.copy(CONDUCTION, directory / "config.toml")
-    code = ptc_main(
-        [
-            "--config",
-            str(directory / "config.toml"),
-            "--output",
-            str(directory / "result.nc"),
-            "--ignore-stop-condition",
-        ]
-    )
-    assert code == 0
-    return directory, transient.run("sn09", directory)
+    return directory, transient.run(directory)
 
 
 def test_run_writes_outputs(harness_output):
-    """`run` writes its metrics and three figures into the directory.
+    """`run` writes its result, metrics, and three figures into the directory.
 
     Catches a missing output file.
     """
     directory, _ = harness_output
 
-    for name in ["metrics.toml", "graph.png", "temperature.png", "heat_flow.png"]:
+    for name in ["result.nc", "metrics.toml", "graph.png", "temperature.png", "heat_flow.png"]:
         assert (directory / name).stat().st_size > 0
+
+
+def test_run_simulates_past_the_stop_condition(harness_output):
+    """The saved result runs to the configured time limit.
+
+    Catches stopping at the procedure's stop condition, which would leave the measured window unscored.
+    """
+    directory, _ = harness_output
+
+    assert float(xr.load_dataset(directory / "result.nc").time[-1]) == pytest.approx(240000.0)
 
 
 def test_run_scores_against_sn09_record(harness_output):
@@ -187,14 +188,47 @@ def test_run_scores_against_sn09_record(harness_output):
 def test_run_depends_only_on_the_directory(harness_output, tmp_path):
     """A copy of the directory's config and result gives the same metrics.
 
-    Catches `run` reading state from anywhere but `config.toml` and `result.nc`.
+    Catches `run` reading state from anywhere but `config.toml`, `result.nc`, and the inputs the config names.
     """
     directory, _ = harness_output
-    again = tmp_path / "again"
-    again.mkdir()
     for name in ["config.toml", "result.nc"]:
-        shutil.copy(directory / name, again / name)
+        shutil.copy(directory / name, tmp_path / name)
 
-    transient.run("sn09", again)
+    transient.run(tmp_path, plot_only=True)
 
-    assert (again / "metrics.toml").read_text() == (directory / "metrics.toml").read_text()
+    assert (tmp_path / "metrics.toml").read_text() == (directory / "metrics.toml").read_text()
+
+
+def test_run_without_baseline(harness_output, tmp_path):
+    """A config without a baseline scores only the model.
+
+    Catches requiring a baseline.
+    """
+    directory, metrics = harness_output
+    config = tomllib.loads((directory / "config.toml").read_text(encoding="utf-8"))
+    del config["validation"]["baseline"]
+    (tmp_path / "config.toml").write_text(tomli_w.dumps(config), encoding="utf-8")
+    shutil.copy(directory / "result.nc", tmp_path / "result.nc")
+
+    alone = transient.run(tmp_path, plot_only=True)
+
+    assert "legacy" not in alone
+    assert alone["model"] == metrics["model"]
+
+
+def test_run_scores_comparison_nodes_under_model_names(harness_output, tmp_path):
+    """A model whose DHX node is named DHX 1 scores the measured and legacy DHX against it with `comparison_nodes`.
+
+    Catches renaming only one of the measured and legacy traces, or scoring under the measured name.
+    """
+    directory, metrics = harness_output
+    text = (directory / "config.toml").read_text(encoding="utf-8").replace('"DHX"', '"DHX 1"')
+    config = tomllib.loads(text)
+    config["validation"]["comparison_nodes"] = {"DHX": "DHX 1"}
+    (tmp_path / "config.toml").write_text(tomli_w.dumps(config), encoding="utf-8")
+
+    renamed = transient.run(tmp_path)
+
+    for trace in ["model", "legacy"]:
+        want = {("DHX 1" if node == "DHX" else node): rms for node, rms in metrics[trace]["rms_by_node"].items()}
+        assert renamed[trace]["rms_by_node"] == pytest.approx(want)

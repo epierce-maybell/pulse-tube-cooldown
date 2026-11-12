@@ -1,14 +1,19 @@
-"""Compares a transient cooldown with its system's measurements and legacy baseline.
+"""Simulates a transient validation run and compares it with its measured cooldown and legacy baseline.
 
-Simulate `<system>/<label>/config.toml` into `<system>/<label>/result.nc` with `run-ptc --ignore-stop-condition`,
-then run from the repository root:
-    python -m simulations.validation.transient.run --system sn09 --label best
+A run is a directory holding a `config.toml`. Its `[validation]` table names, relative to the repository root, the
+`measured` cooldown conventions and an optional legacy `baseline` trace. Its optional `comparison_nodes` maps a
+measured or baseline node name to the model node it is compared with. Its optional `[layout]` table maps each node
+name to its `[column, row]` in the graph drawing. Run from the repository root:
+    uv run python -m simulations.validation.transient.run simulations/validation/transient/fp01/calibration
 """
 
 import argparse
+import dataclasses
 import math
+import subprocess
+import sys
 import tomllib
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -19,7 +24,7 @@ from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
 from numpy.typing import NDArray
 
-from pulse_tube_cooldown import configure_model
+from pulse_tube_cooldown import configure_model, save_output, simulate_cooldown
 from pulse_tube_cooldown.config import load_fridge
 from pulse_tube_cooldown.core.types import Model
 from pulse_tube_cooldown.measurements import log_temperature_residual, read_refrigerator_cooldown
@@ -47,14 +52,19 @@ def condensing_time(temperature: xr.DataArray, condition: Callable[[float, NDArr
     return float(np.interp(0.0, [values[i], values[i - 1]], [time[i], time[i - 1]]))
 
 
+def rename_nodes[T: (xr.Dataset, xr.DataArray)](data: T, names: Mapping[str, str]) -> T:
+    """Returns `data` with each node in `names` renamed to its value."""
+    return data.assign_coords(node=[names.get(str(node), str(node)) for node in data.node.values])
+
+
 def compare(
     model: Model,
     data: xr.Dataset,
     measured: xr.Dataset,
     measured_condensing: float,
-    legacy: xr.DataArray,
+    legacy: xr.DataArray | None = None,
 ) -> dict[str, dict]:
-    """Returns the condensing times and scores of the model and the legacy baseline.
+    """Returns the condensing times and scores of the model and, if given, the legacy baseline.
 
     Each trace is scored up to the earlier of its condensing time and the measured one.
 
@@ -66,8 +76,9 @@ def compare(
         legacy: The legacy baseline's temperatures.
     """
     condition = model.procedure.stop_condition
-    names = [node.name for node in model.nodes]
-    traces = {"model": data.temperature, "legacy": legacy.reindex(node=names)}
+    traces = {"model": data.temperature}
+    if legacy is not None:
+        traces["legacy"] = legacy.reindex(node=[node.name for node in model.nodes])
 
     metrics: dict[str, dict] = {"condensing_time": {"measured": measured_condensing}}
     for name, temperature in traces.items():
@@ -84,6 +95,15 @@ def compare(
     return metrics
 
 
+def provenance(root: Path) -> dict[str, str | bool]:
+    """Returns the repository's commit and whether its working tree has uncommitted changes."""
+
+    def git(*args: str) -> str:
+        return subprocess.run(["git", *args], cwd=root, capture_output=True, text=True, check=True).stdout.strip()
+
+    return {"commit": git("rev-parse", "HEAD"), "uncommitted_changes": bool(git("status", "--porcelain"))}
+
+
 def write_metrics(metrics: dict[str, dict], path: Path) -> None:
     """Writes the metrics as TOML."""
     path.write_text("# Times in s since compressor start.\n" + tomli_w.dumps(metrics), encoding="utf-8")
@@ -91,10 +111,11 @@ def write_metrics(metrics: dict[str, dict], path: Path) -> None:
 
 def format_metrics(metrics: dict[str, dict]) -> str:
     """Returns the metrics as a table with times in h."""
+    traces = [name for name in metrics["condensing_time"] if name != "measured"]
     nodes = list(metrics["model"]["rms_by_node"])
     columns = ["condensing (h)", "error (h)", "rms", *nodes]
     rows = [["measured", f"{metrics['condensing_time']['measured'] / 3600.0:.2f}", "", "", *[""] * len(nodes)]]
-    for name in ["model", "legacy"]:
+    for name in traces:
         trace = metrics[name]
         rows.append(
             [
@@ -111,15 +132,17 @@ def format_metrics(metrics: dict[str, dict]) -> str:
 
 
 def plot_temperature(
-    data: xr.Dataset, measured: xr.Dataset, legacy: xr.DataArray, condensing: dict[str, float]
+    data: xr.Dataset, measured: xr.Dataset, legacy: xr.DataArray | None, condensing: dict[str, float]
 ) -> Figure:
-    """Plots the model, measured, and legacy temperatures of each thermometer, marking each condensing time."""
+    """Plots the model, measured, and any legacy temperatures of each thermometer, marking each condensing time."""
     line_styles = {"model": "-", "measured": ":", "legacy": "-."}
+    if legacy is None:
+        del line_styles["legacy"]
     figure = plot_measured_temperature(data, measured)
     axes = figure.axes
     axes[0].get_legend().remove()
     for ax, node in zip(axes, measured.node.values, strict=True):
-        if node in legacy.node.values:
+        if legacy is not None and node in legacy.node.values:
             color = ax.get_lines()[0].get_color()
             hours = legacy.time.values / 3600.0
             ax.plot(hours, legacy.sel(node=node).values, color=color, linestyle=line_styles["legacy"])
@@ -147,41 +170,55 @@ def plot_heat_flows(data: xr.Dataset, nodes: list[str]) -> Figure:
     return figure
 
 
-def run(system: str, directory: Path) -> dict[str, dict]:
-    """Compares `directory`'s result with `system`'s measurements and legacy baseline.
+def simulate(model: Model, path: Path) -> None:
+    """Simulates `model` to its time limit, ignoring its stop condition, and saves the Result to `path`."""
+    procedure = dataclasses.replace(model.procedure, stop_condition=None)
+    result = simulate_cooldown(dataclasses.replace(model, procedure=procedure))
+    save_output(result, path)
+    if result.status == "solver_failure":
+        print(f"The solver failed: {result.data.attrs['message']}", file=sys.stderr)
 
-    Reads `config.toml` and the `result.nc` it produced from `directory`, and writes `metrics.toml`, `graph.png`,
-    `temperature.png`, and `heat_flow.png` there. The graph is drawn with `directory`'s `layout.toml`, which maps
-    each node name to its `[column, row]`, if there is one.
+
+def run(directory: Path, *, plot_only: bool = False) -> dict[str, dict]:
+    """Simulates and compares the run in `directory`.
+
+    Writes `result.nc`, `metrics.toml`, `graph.png`, `temperature.png`, and `heat_flow.png` into `directory`.
+
+    Args:
+        directory: The run directory.
+        plot_only: Reuse the directory's `result.nc` instead of simulating.
 
     Returns:
         The metrics.
     """
     root = Path(__file__).parents[3]
-    legacy_baseline = Path(__file__).parents[1] / "legacy_baseline"
-    config = directory / "config.toml"
-    model = configure_model(config)
-    data = xr.load_dataset(directory / "result.nc")
+    config_path = directory / "config.toml"
+    with config_path.open("rb") as file:
+        config = tomllib.load(file)
+    validation = config["validation"]
+    model = configure_model(config_path)
 
-    conventions_path = root / "data" / system / "cooldown.toml"
+    result_path = directory / "result.nc"
+    if not plot_only:
+        simulate(model, result_path)
+    data = xr.load_dataset(result_path)
+
+    comparison_nodes = validation.get("comparison_nodes", {})
+    conventions_path = root / validation["measured"]
     with conventions_path.open("rb") as file:
         conventions = tomllib.load(file)
-    measured = read_refrigerator_cooldown(conventions_path)
+    measured = rename_nodes(read_refrigerator_cooldown(conventions_path), comparison_nodes)
     measured_condensing = (conventions["condensing_begins"] - conventions["compressor_start"]).total_seconds()
-    with (legacy_baseline / "inputs.toml").open("rb") as file:
-        baseline = tomllib.load(file)["baselines"][system]
-    legacy = xr.load_dataset(legacy_baseline / f"{baseline}.nc").temperature
+    legacy = None
+    if "baseline" in validation:
+        legacy = rename_nodes(xr.load_dataset(root / validation["baseline"]).temperature, comparison_nodes)
 
     metrics = compare(model, data, measured, measured_condensing, legacy)
-    write_metrics(metrics, directory / "metrics.toml")
+    write_metrics({"provenance": provenance(root), **metrics}, directory / "metrics.toml")
     print(format_metrics(metrics))
 
-    with config.open("rb") as file:
-        graph = load_fridge(tomllib.load(file)["fridge"])
-    layout_path = directory / "layout.toml"
-    layout = tomllib.loads(layout_path.read_text(encoding="utf-8")) if layout_path.exists() else None
     figures = {
-        "graph": plot_graph(graph, layout),
+        "graph": plot_graph(load_fridge(config["fridge"]), config.get("layout")),
         "temperature": plot_temperature(data, measured, legacy, metrics["condensing_time"]),
         "heat_flow": plot_heat_flows(data, list(measured.node.values)),
     }
@@ -193,8 +230,8 @@ def run(system: str, directory: Path) -> dict[str, dict]:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--system", required=True, help="system data directory name, such as sn09")
-    parser.add_argument("--label", required=True, help="run directory name under the system's directory")
+    parser.add_argument("directory", type=Path, help="run directory holding config.toml")
+    parser.add_argument("--plot-only", action="store_true", help="reuse result.nc instead of simulating")
     args = parser.parse_args()
     plt.switch_backend("Agg")
-    run(args.system, Path(__file__).parent / args.system / args.label)
+    run(args.directory, plot_only=args.plot_only)
