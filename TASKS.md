@@ -15,7 +15,7 @@ There are three kinds of entry. If a task does not specify, default to **Discuss
 
 Claim tasks with [o], mark finished tasks with [x], and update each section to have a running count of open vs. completed items, like (5/10). If a task was started and then later put on hold, mark it as [-] with a note for the blocker and do not update progress. If a task is unclear or has unsettled decisions, interview the user relentlessly until you are aligned on all decisions, before doing the work. Do not use this file as a dumping-ground for notes or reporting. Agents may not add tasks to the list.
 
-## Progress `[#######################-------------]` 63.9% (23/36)
+## Progress `[##########################----------]` 72.2% (26/36)
 
 ## 1. Rebuild test suite (13/13)
 #### [x] 1.1 Public/user interface tests
@@ -37,7 +37,7 @@ Claim tasks with [o], mark finished tasks with [x], and update each section to h
 #### [x] 2.2 Revise DESIGN.md
 #### [x] 2.3 Clean up directory structure
 #### [x] 2.4 Prune data/, docs/, and simulations/
-#### [ ] 2.5 Document how to use/modify/extend
+#### [o] 2.5 Document how to use/modify/extend
 
 ## 3. Pulse tube model (5/5)
 #### [x] 3.1 Retire ADR-03
@@ -46,12 +46,12 @@ Claim tasks with [o], mark finished tasks with [x], and update each section to h
 #### [x] 3.4 Implement dynamical systems approach
 #### [x] 3.5 Build archetypal pulse tube head
 
-## 4. Transient simulations (1/6)
-#### [o] 4.1 Build canonical configuration file for SN09
-#### [o] 4.2 Build canonical configuration file for FP01
+## 4. Transient simulations (4/6)
+#### [x] 4.1 Build canonical configuration file for SN09
+#### [x] 4.2 Build canonical configuration file for FP01
 #### [x] 4.3 Write runner for transient simulations
-#### [ ] 4.4 Run transient simulations, record results
-#### [ ] 4.5 Build cal/val dashboard
+#### [x] 4.4 Run transient simulations, record results
+#### [o] 4.5 Build cal/val dashboard
 #### [ ] 4.6 Calibrate **honestly**, revise as needed
 
 ## 5. Reporting (0/4)
