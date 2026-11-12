@@ -11,7 +11,7 @@ from pulse_tube_cooldown import configure_model, simulate_cooldown
 from pulse_tube_cooldown.core.types import Model, Node, Phase, Result
 from pulse_tube_cooldown.engine.steady_state import solve_steady_state
 
-pytestmark = pytest.mark.filterwarnings("error")
+pytestmark = [pytest.mark.slow, pytest.mark.filterwarnings("error")]
 
 
 @pytest.fixture(scope="module")
@@ -28,7 +28,7 @@ def result(model):
 
 @pytest.fixture(scope="module")
 def passive_model(model):
-    """Return the synthetic fridge with only links that carry heat from hot to cold."""
+    """Return the synthetic fridge with only links that carry heat from hot to cold, starting between 30 and 295 K."""
     with (Path(__file__).parent / "fixtures" / "synthetic_fridge.toml").open("rb") as file:
         links = tomllib.load(file)["fridge"]["links"]
     passive_types = {
@@ -44,7 +44,11 @@ def passive_model(model):
         Phase(phase.name, tuple(link for link in phase.links if link.name in passive), phase.until)
         for phase in model.procedure.phases
     )
-    return replace(model, procedure=replace(model.procedure, phases=phases))
+    return replace(
+        model,
+        procedure=replace(model.procedure, phases=phases),
+        initial_temperature=np.linspace(30.0, 295.0, len(model.nodes)),
+    )
 
 
 @pytest.fixture(scope="module")

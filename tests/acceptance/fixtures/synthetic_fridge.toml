@@ -1,14 +1,14 @@
 [meta]
 experiment = "Synthetic fridge for end-to-end acceptance tests"
-source = "Synthetic: four free plates between a room-temperature boundary and a cold sink, using every link type"
+source = "Synthetic: an archetypal head cooling four plates and a shield inside a room-temperature boundary, using every link type"
 
 [[fridge.nodes]]
 name = "Room"
 composition = [["Al 6061-T6", 10.0]]
 
 [[fridge.nodes]]
-name = "Sink"
-composition = [["OFHC Cu RRR100", 10.0]]
+name = "Shield"
+composition = [["Al 6061-T6", 2.0]]
 
 [[fridge.nodes]]
 name = "Upper"
@@ -27,22 +27,23 @@ name = "Cold"
 composition = [["OFHC Cu RRR100", 0.5], ["Pb", 0.1]]
 
 [[fridge.links]]
-name = "Upper contact"
+name = "Head"
+type = "pulse_tube_head"
+from_archetype = true
+stages = ["Upper", "Lower"]
+clamp = "Inner"
+contact_resistance = 1.0
+warm_flange_temperature = 295.0
+
+[[fridge.links]]
+name = "Cold contact"
 type = "joint_contact"
-nodes = ["Upper", "Sink"]
+nodes = ["Lower", "Cold"]
 force = 2000.0
 conductance_per_force = 5.0e-4
 reference_temperature = 10.0
 temperature_exponent = 1.0
 source = "Synthetic contact"
-
-[[fridge.links]]
-name = "Lower strap"
-type = "conduction"
-nodes = ["Lower", "Sink"]
-material = "OFHC Cu RRR100"
-area = 2.0e-4
-length = 0.1
 
 [[fridge.links]]
 name = "Blanket"
@@ -60,7 +61,7 @@ source = "Synthetic blanket"
 [[fridge.links]]
 name = "Shield radiation"
 type = "radiation"
-nodes = ["Lower", "Upper"]
+nodes = ["Shield", "Room"]
 area = [0.2, 0.3]
 surface = ["Gold-plated Cu", "Machined Al"]
 
@@ -75,7 +76,7 @@ length = 0.1
 [[fridge.links]]
 name = "Switch"
 type = "gas_gap_switch"
-nodes = ["Lower", "Inner"]
+nodes = ["Shield", "Upper"]
 gas = "He-4"
 fill_pressure = 101325.0
 fill_temperature = 295.0
@@ -133,7 +134,7 @@ enable = ["Gas pushing"]
 [procedure.until]
 condition = "condensing_begins"
 node = "Cold"
-threshold = 30.0
+threshold = 10.0
 
 [simulation]
 solver = "Radau"
@@ -141,5 +142,5 @@ max_time = 1.0e6
 save_every = 600.0
 rtol = 1.0e-6
 atol = 1.0e-8
-initial_temperature = [295.0, 25.0, 295.0, 295.0, 295.0, 295.0]
-fixed_boundary_nodes = ["Room", "Sink"]
+initial_temperature = 295.0
+fixed_boundary_nodes = ["Room"]
