@@ -32,36 +32,32 @@ NET_COLOR = "#e66767"
 NEUTRAL = "#898781"
 
 
-def temperature_by_node(runs: list[Run], measured: Measured) -> go.Figure:
-    """Plots each measured node's temperature in its own panel, against its measurement and legacy baseline."""
-    figure = node_panels(measured.nodes, shared_y=False)
-    for i, node in enumerate(measured.nodes):
+def temperature_by_node(runs: list[Run], measured: Measured, nodes: list[str]) -> go.Figure:
+    """Plots each node's temperature in its own panel, with its measurement and legacy baseline where they exist."""
+    figure = node_panels(nodes, shared_y=False)
+    for i, node in enumerate(nodes):
         row, col = panel(i)
-        first = i == 0
-        figure.add_trace(
-            measured_trace(measured.cooldown.temperature.sel(node=node), MEASURED_COLOR, "Measured", first),
-            row=row,
-            col=col,
-        )
-        if measured.legacy is not None:
-            figure.add_trace(legacy_trace(measured.legacy.sel(node=node), first), row=row, col=col)
+        if node in measured.nodes:
+            band = measured_trace(measured.cooldown.temperature.sel(node=node), MEASURED_COLOR, "Measured")
+            figure.add_trace(band, row=row, col=col)
+        if measured.legacy is not None and node in measured.legacy.node:
+            figure.add_trace(legacy_trace(measured.legacy.sel(node=node)), row=row, col=col)
         for run, color in zip(runs, RUN_COLORS, strict=False):
-            figure.add_trace(
-                line(run.data.temperature.sel(node=node), color, run.label, legendgroup=run.label, showlegend=first),
-                row=row,
-                col=col,
-            )
+            figure.add_trace(line(run.data.temperature.sel(node=node), color, run.label), row=row, col=col)
+    one_legend_entry_per_series(figure)
     figure.update_yaxes(type="log", tickvals=LOG_TICKS)
-    label_panels(figure, measured.nodes, "Temperature (K)")
-    return style(figure, height=panels_height(len(measured.nodes)), top=PANELS_TOP)
+    label_panels(figure, nodes, "Temperature (K)")
+    return style(figure, height=panels_height(len(nodes)), top=PANELS_TOP)
 
 
-def temperature_overlay(run: Run, measured: Measured) -> go.Figure:
-    """Plots every measured node's simulated and measured temperatures in one panel, one color per node."""
+def temperature_overlay(run: Run, measured: Measured, nodes: list[str]) -> go.Figure:
+    """Plots every node's simulated and any measured temperatures in one panel, one color per node."""
     figure = go.Figure()
-    for node, color in zip(measured.nodes, CATEGORICAL, strict=False):
-        figure.add_trace(measured_trace(measured.cooldown.temperature.sel(node=node), color, node, False))
-        figure.add_trace(line(run.data.temperature.sel(node=node), color, node, legendgroup=node, showlegend=True))
+    for node, color in zip(nodes, CATEGORICAL, strict=False):
+        if node in measured.nodes:
+            band = measured_trace(measured.cooldown.temperature.sel(node=node), color, f"{node} measured", node)
+            figure.add_trace(band.update(showlegend=False))
+        figure.add_trace(line(run.data.temperature.sel(node=node), color, node))
     figure.update_yaxes(type="log", tickvals=LOG_TICKS, title_text="Temperature (K)")
     figure.update_xaxes(title_text=TIME_TITLE)
     return style(figure, height=560, top=SINGLE_TOP)
@@ -75,16 +71,12 @@ def residual_by_node(runs: list[Run], measured: Measured) -> go.Figure:
     figure = node_panels(measured.nodes, shared_y=True)
     for i, node in enumerate(measured.nodes):
         row, col = panel(i)
-        first = i == 0
         if measured.legacy is not None:
-            figure.add_trace(legacy_trace(legacy.sel(node=node), first), row=row, col=col)
+            figure.add_trace(legacy_trace(legacy.sel(node=node), unit=""), row=row, col=col)
         for (label, ratio), color in zip(traces.items(), RUN_COLORS, strict=False):
-            figure.add_trace(
-                line(ratio.sel(node=node), color, label, legendgroup=label, showlegend=first, unit=""),
-                row=row,
-                col=col,
-            )
+            figure.add_trace(line(ratio.sel(node=node), color, label, unit=""), row=row, col=col)
         figure.add_hline(y=0.0, line={"color": NEUTRAL, "width": 1}, row=row, col=col)
+    one_legend_entry_per_series(figure)
     ratios = [*traces.values(), *([legacy] if measured.legacy is not None else [])]
     extent = max(float(np.nanmax(np.abs(ratio.values))) for ratio in ratios)
     figure.update_yaxes(range=[-1.05 * extent, 1.05 * extent])
@@ -214,45 +206,49 @@ def panels_height(count: int) -> int:
     return plotting_height(math.ceil(count / COLUMNS)) + PANELS_TOP + BOTTOM
 
 
-def line(
-    values: xr.DataArray, color: str, name: str, *, legendgroup: str, showlegend: bool, unit: str = " K"
-) -> go.Scatter:
-    """Returns a 2 px line over time."""
+def one_legend_entry_per_series(figure: go.Figure) -> None:
+    """Shows each series name once in the legend, at its first trace, keeping hidden traces hidden."""
+    shown: set[str] = set()
+    for trace in figure.data:
+        if trace.showlegend is not False:
+            trace.showlegend = trace.name not in shown
+            shown.add(trace.name)
+
+
+def line(values: xr.DataArray, color: str, name: str, *, unit: str = " K") -> go.Scatter:
+    """Returns a 2 px line over time, grouped in the legend by `name`."""
     return go.Scatter(
         x=values.time.values / SECONDS_PER_HOUR,
         y=values.values,
         name=name,
-        legendgroup=legendgroup,
-        showlegend=showlegend,
+        legendgroup=name,
         line={"width": 2, "color": color},
         hovertemplate=f"%{{y:.3g}}{unit}",
     )
 
 
-def measured_trace(values: xr.DataArray, color: str, name: str, showlegend: bool) -> go.Scatter:
-    """Returns a wide translucent band for a measured trace."""
+def measured_trace(values: xr.DataArray, color: str, name: str, legendgroup: str | None = None) -> go.Scatter:
+    """Returns a wide translucent band for a measured trace, grouped in the legend by `legendgroup` or `name`."""
     return go.Scatter(
         x=values.time.values / SECONDS_PER_HOUR,
         y=values.values,
         name=name,
-        legendgroup=name if showlegend else None,
-        showlegend=showlegend,
+        legendgroup=legendgroup or name,
         line={"width": 6, "color": color},
         opacity=0.45,
-        hoverinfo="skip",
+        hovertemplate="%{y:.3g} K",
     )
 
 
-def legacy_trace(values: xr.DataArray, showlegend: bool) -> go.Scatter:
+def legacy_trace(values: xr.DataArray, *, unit: str = " K") -> go.Scatter:
     """Returns a dotted line for a legacy baseline trace."""
     return go.Scatter(
         x=values.time.values / SECONDS_PER_HOUR,
         y=values.values,
         name="Legacy",
         legendgroup="Legacy",
-        showlegend=showlegend,
         line={"width": 2, "color": LEGACY_COLOR, "dash": "dot"},
-        hovertemplate="%{y:.3g}",
+        hovertemplate=f"%{{y:.3g}}{unit}",
     )
 
 

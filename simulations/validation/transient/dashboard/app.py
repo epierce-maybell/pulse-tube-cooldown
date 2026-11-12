@@ -2,6 +2,7 @@
 
 import math
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
 import streamlit as st
@@ -14,6 +15,8 @@ from simulations.validation.transient.dashboard.runs import (
     find_runs,
     load_measured,
     load_run,
+    named_tables,
+    plotted_nodes,
 )
 
 RUNS = Path(__file__).parents[1]
@@ -81,19 +84,30 @@ def scorecard(runs: list[Run], measured: Measured) -> None:
 
 def differences(a: Run, b: Run) -> None:
     """Shows the configuration values that differ between two runs."""
-    rows = config_differences(a.config, b.config)
+    rows = list(config_differences(a.config, b.config))
     with st.expander(f"{len(rows)} configuration differences", expanded=bool(rows)):
         table = pd.DataFrame(
-            [(path, str(value_a), str(value_b)) for path, value_a, value_b in rows],
+            [(path, describe(value_a), describe(value_b)) for path, value_a, value_b in rows],
             columns=["Parameter", a.label, b.label],
         )
-        st.dataframe(table, hide_index=True, width="stretch")
+        st.dataframe(
+            table, hide_index=True, width="stretch", alt=f"Configuration differences between {a.label} and {b.label}"
+        )
+
+
+def describe(value: Any) -> str:
+    """Returns a configuration value as text, naming a whole table only by whether it is present."""
+    if value is None:
+        return "absent"
+    if isinstance(value, dict) or named_tables(value):
+        return "present"
+    return str(value)
 
 
 def heat_flow(runs: list[Run], measured: Measured) -> None:
     """Shows one node's heat-flow budget for each run, side by side on a shared scale."""
-    nodes = [str(node) for node in runs[0].data.node.values]
-    ordered = measured.nodes + [node for node in nodes if node not in measured.nodes]
+    plotted = plotted_nodes(runs[0], measured)
+    ordered = plotted + [str(node) for node in runs[0].data.node.values if node not in plotted]
     node = st.selectbox("Node", ordered, key="node", bind="query-params")
     shown = figures.largest_links(runs[0], node, LARGEST_LINKS)
     budgets = [figures.budget(run, node, shown) for run in runs]
@@ -160,7 +174,7 @@ def main() -> None:
             bind="query-params",
         )
         if view == "Temperature":
-            nodes = st.segmented_control(
+            layout = st.segmented_control(
                 "Nodes",
                 ["By node", "All nodes"],
                 default="By node",
@@ -169,17 +183,17 @@ def main() -> None:
                 key="nodes",
                 bind="query-params",
             )
-    if view == "Temperature" and nodes == "All nodes":
+    if view == "Temperature" and layout == "All nodes":
         st.plotly_chart(
-            figures.temperature_overlay(runs[0], measured),
+            figures.temperature_overlay(runs[0], measured, plotted_nodes(runs[0], measured)),
             config={"displaylogo": False},
-            alt=f"Simulated and measured temperatures of every measured node in {runs[0].label}",
+            alt=f"Simulated and measured temperatures of every plotted node in {runs[0].label}",
         )
     elif view == "Temperature":
         st.plotly_chart(
-            figures.temperature_by_node(runs, measured),
+            figures.temperature_by_node(runs, measured, plotted_nodes(runs[0], measured)),
             config={"displaylogo": False},
-            alt="Simulated, measured, and legacy temperatures for each measured node",
+            alt="Simulated, measured, and legacy temperatures for each plotted node",
         )
     elif view == "Residuals":
         st.plotly_chart(

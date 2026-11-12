@@ -28,6 +28,11 @@ class Run:
     data: xr.Dataset
     metrics: dict[str, Any]
 
+    @property
+    def cooldown_node(self) -> str:
+        """The node whose temperature ends the procedure, and so defines the cooldown time."""
+        return self.config["procedure"]["until"]["node"]
+
 
 @dataclasses.dataclass(frozen=True)
 class Measured:
@@ -36,7 +41,7 @@ class Measured:
     Attributes:
         cooldown: The measured temperature(time, node) dataset with its scored(node) mask.
         condensing_time: The measured condensing time in s since compressor start.
-        legacy: The legacy baseline's temperature(time, node) over the measured nodes, if the run names one.
+        legacy: The legacy baseline's temperature(time, node), if the run names one.
     """
 
     cooldown: xr.Dataset
@@ -87,9 +92,16 @@ def load_measured(config: dict[str, Any], root: Path) -> Measured:
     condensing = (conventions["condensing_begins"] - conventions["compressor_start"]).total_seconds()
     legacy = None
     if "baseline" in validation:
-        baseline = rename_nodes(xr.load_dataset(root / validation["baseline"]).temperature, names)
-        legacy = baseline.reindex(node=cooldown.node.values)
+        legacy = rename_nodes(xr.load_dataset(root / validation["baseline"]).temperature, names)
     return Measured(cooldown, condensing, legacy)
+
+
+def plotted_nodes(run: Run, measured: Measured) -> list[str]:
+    """Returns the measured nodes followed by the run's cooldown node if it is unmeasured."""
+    nodes = measured.nodes
+    if run.cooldown_node not in nodes:
+        nodes.append(run.cooldown_node)
+    return nodes
 
 
 def residual(temperature: xr.DataArray, measured: Measured) -> xr.DataArray:
@@ -97,24 +109,23 @@ def residual(temperature: xr.DataArray, measured: Measured) -> xr.DataArray:
     return log_temperature_ratio(temperature.reindex(node=measured.cooldown.node.values), measured.cooldown)
 
 
-def config_differences(a: dict[str, Any], b: dict[str, Any]) -> list[tuple[str, Any, Any]]:
-    """Returns each configuration value that differs between `a` and `b`, as its path and both values.
+def config_differences(a: Any, b: Any, path: str = "") -> Iterator[tuple[str, Any, Any]]:
+    """Yields each configuration value that differs between `a` and `b`, as its dotted path and both values.
 
-    Named tables in arrays, such as nodes and links, are matched by name. A value missing from one configuration is
-    None there.
+    Tables present in both are compared value by value. Named tables in arrays, such as nodes and links, are matched
+    by name. A value or table present in only one configuration is one difference, with None on the other side.
     """
-    flat_a, flat_b = dict(flatten(a)), dict(flatten(b))
-    paths = list(flat_a) + [path for path in flat_b if path not in flat_a]
-    return [(path, flat_a.get(path), flat_b.get(path)) for path in paths if flat_a.get(path) != flat_b.get(path)]
+    if isinstance(a, dict) and isinstance(b, dict):
+        for key in [*a, *(key for key in b if key not in a)]:
+            yield from config_differences(a.get(key), b.get(key), f"{path}.{key}" if path else key)
+    elif named_tables(a) and named_tables(b):
+        by_name_a, by_name_b = {item["name"]: item for item in a}, {item["name"]: item for item in b}
+        for name in [*by_name_a, *(name for name in by_name_b if name not in by_name_a)]:
+            yield from config_differences(by_name_a.get(name), by_name_b.get(name), f"{path}[{name}]")
+    elif a != b:
+        yield path, a, b
 
 
-def flatten(value: Any, path: str = "") -> Iterator[tuple[str, Any]]:
-    """Yields each leaf of a TOML value with its dotted path. Named tables in arrays are keyed by name."""
-    if isinstance(value, dict):
-        for key, item in value.items():
-            yield from flatten(item, f"{path}.{key}" if path else key)
-    elif isinstance(value, list) and value and all(isinstance(item, dict) and "name" in item for item in value):
-        for item in value:
-            yield from flatten({key: entry for key, entry in item.items() if key != "name"}, f"{path}[{item['name']}]")
-    else:
-        yield path, value
+def named_tables(value: Any) -> bool:
+    """Returns whether `value` is a non-empty array of tables that each have a name."""
+    return isinstance(value, list) and bool(value) and all(isinstance(item, dict) and "name" in item for item in value)
