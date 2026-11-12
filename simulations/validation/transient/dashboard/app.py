@@ -119,6 +119,16 @@ def heat_flow(runs: list[Run], measured: Measured) -> None:
         )
 
 
+def network(system: str, runs: list[Run]) -> None:
+    """Shows each run's thermal network side by side, drawn for the app's light or dark theme."""
+    theme = "dark" if st.context.theme.type == "dark" else "light"
+    for column, run in zip(st.columns(len(runs)), runs, strict=True):
+        with column:
+            if len(runs) > 1:
+                st.subheader(run.label, divider=False)
+            st.image(RUNS / system / run.label / f"graph_{theme}.svg", alt=f"Thermal network of {run.label}")
+
+
 def main() -> None:
     """Lays out the selected runs' scorecard, configuration differences, and comparison figures."""
     st.set_page_config(page_title="Cal/val", page_icon=":material/ac_unit:", layout="wide")
@@ -160,7 +170,7 @@ def main() -> None:
     with st.container(horizontal=True):
         view = st.segmented_control(
             "View",
-            ["Temperature", "Residuals", "Heat flow"],
+            ["Temperature", "Residuals", "Heat flow", "Network"],
             default="Temperature",
             required=True,
             label_visibility="collapsed",
@@ -195,8 +205,10 @@ def main() -> None:
             config={"displaylogo": False},
             alt="Log-temperature residuals against the measurement for each measured node",
         )
-    else:
+    elif view == "Heat flow":
         heat_flow(runs, measured)
+    else:
+        network(system, runs)
 
 
 main()

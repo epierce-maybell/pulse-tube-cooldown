@@ -10,13 +10,14 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
+from matplotlib.colors import to_hex
 from matplotlib.patches import Patch
 from matplotlib.text import Text
 from numpy.typing import NDArray
 
 from pulse_tube_cooldown.config import load_link
 from pulse_tube_cooldown.core.types import EnergyBalanceTerms, Material, Model, Node, Phase, Procedure
-from pulse_tube_cooldown.plot.graph import plot_graph
+from pulse_tube_cooldown.plot.graph import GraphColors, plot_graph
 
 _TOY = Material(
     name="Toy",
@@ -203,6 +204,20 @@ def test_sensor_nodes_have_heavier_outline_and_fixed_nodes_are_hatched():
         assert box["PRP"].get_linewidth() > box["RGP"].get_linewidth()
         assert box["CFP"].get_hatch()
         assert not box["RGP"].get_hatch() and not box["PRP"].get_hatch()
+    finally:
+        plt.close(figure)
+
+
+def test_colors_set_text_and_node_boxes():
+    """Catches `colors` ignored for text, node fills, or node outlines."""
+    model = _model((Strap("Rod", ("PRP", "RGP")),))
+    colors = GraphColors(ink="#ffffff", fill="#000000", edge="#808080", hatch="#404040", rod="#c0c0c0")
+    figure = plot_graph(model, _LAYOUT, colors=colors)
+    try:
+        box = _patches(figure, "RGP")[0]
+        assert to_hex(box.get_facecolor()) == colors.fill
+        assert to_hex(box.get_edgecolor()) == colors.edge
+        assert {to_hex(text.get_color()) for text in _texts(figure)} == {colors.ink}
     finally:
         plt.close(figure)
 

@@ -1,5 +1,6 @@
 """Schematic drawing of a Model's thermal network."""
 
+import dataclasses
 import inspect
 import re
 from collections.abc import Callable, Collection, Mapping, Sequence
@@ -16,11 +17,36 @@ from pulse_tube_cooldown.config import LINK_TYPES
 from pulse_tube_cooldown.core.types import Link, Model
 from pulse_tube_cooldown.library.links.pulse_tube.head import PulseTubeHead
 
-__all__ = ["plot_graph"]
+__all__ = ["GraphColors", "plot_graph"]
+
+
+@dataclasses.dataclass(frozen=True)
+class GraphColors:
+    """Colors of a schematic's text, nodes, and heads, for a light background by default.
+
+    Attributes:
+        ink: Text and thermometer outlines.
+        fill: Node boxes.
+        edge: Outlines of nodes without thermometers.
+        hatch: Hatching of fixed-temperature nodes.
+        rod: Pulse-tube head rods.
+    """
+
+    ink: str = "#1f1e1c"
+    fill: str = "#f4f3f0"
+    edge: str = "#a3a29c"
+    hatch: str = "#cfcec7"
+    rod: str = "#46453f"
+
+
+LIGHT = GraphColors()
 
 
 def plot_graph(
-    model: Model, layout: Mapping[str, tuple[int, int]] | None = None, sensors: Collection[str] = ()
+    model: Model,
+    layout: Mapping[str, tuple[int, int]] | None = None,
+    sensors: Collection[str] = (),
+    colors: GraphColors = LIGHT,
 ) -> Figure:
     """Draws a model's nodes and links as a schematic.
 
@@ -35,6 +61,7 @@ def plot_graph(
         layout: Column and row of each node, from the top left. Nodes internal to a link are drawn within it. If
             omitted, nodes form one column in model order.
         sensors: Names of nodes with thermometers.
+        colors: Colors of the text, nodes, and heads.
 
     Returns:
         A figure sized to fit the drawing. Each node's box has the node's name as its `gid`. Each head's regenerator
@@ -66,9 +93,9 @@ def plot_graph(
         kinds.sort(key=order.index)
     routes = {pair: route(pair, layout) for pair in pairs}
 
+    ink, fill, edge, hatch, rod = colors.ink, colors.fill, colors.edge, colors.hatch, colors.rod
     palette = ("#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948")
-    colors = {kind: palette[i % len(palette)] for i, kind in enumerate(order)}
-    ink, fill, edge, hatch, rod = "#1f1e1c", "#f4f3f0", "#a3a29c", "#cfcec7", "#46453f"
+    link_colors = {kind: palette[i % len(palette)] for i, kind in enumerate(order)}
 
     figure = plt.figure(figsize=(1.0, 1.0))
     ax = figure.add_axes((0.0, 0.0, 1.0, 1.0))
@@ -204,7 +231,7 @@ def plot_graph(
         ax.text(x + band + em, y, name, ha="left", va="center", fontproperties=name_font, color=ink, zorder=5)
 
     for link in pipes:
-        color = colors[type(link).__name__]
+        color = link_colors[type(link).__name__]
         x = right(link.nodes[0]) - 1.2 * em - pipe_slot[link.name] * pipe_pitch
         heights = [y_of(name) for name in link.nodes]
         ax.plot(
@@ -223,7 +250,7 @@ def plot_graph(
         ax.plot(
             xs,
             ys,
-            color=colors[kind],
+            color=link_colors[kind],
             linewidth=line_width * 72.0,
             solid_capstyle="butt",
             solid_joinstyle="miter",
@@ -304,7 +331,7 @@ def plot_graph(
                 box.height + label_height,
                 boxstyle=f"round,pad=0,rounding_size={em}",
                 facecolor="none",
-                edgecolor=colors[type(link).__name__],
+                edgecolor=link_colors[type(link).__name__],
                 linewidth=1.2,
                 linestyle=(0, (5, 3)),
                 gid=link.name,
@@ -334,20 +361,20 @@ def plot_graph(
     for kind in order:
         if any(kind in kinds for kinds in pairs.values()):
 
-            def line_swatch(x: float, y: float, color: str = colors[kind]) -> None:
+            def line_swatch(x: float, y: float, color: str = link_colors[kind]) -> None:
                 ax.plot([x, x + 1.6 * em], [y, y], color=color, linewidth=2.0, solid_capstyle="butt")
 
             entries.append((line_swatch, words(kind)))
     for link in pipes:
 
-        def pipe_swatch(x: float, y: float, color: str = colors[type(link).__name__]) -> None:
+        def pipe_swatch(x: float, y: float, color: str = link_colors[type(link).__name__]) -> None:
             ax.plot([x + 0.8 * em] * 2, [y - 0.9 * em, y + 0.9 * em], color=color, linewidth=pipe_width * 72.0)
             ax.add_patch(Circle((x + 0.8 * em, y), joint_radius, facecolor=color, linewidth=0))
 
         entries.append((pipe_swatch, link.name))
     for link in regions:
 
-        def region_swatch(x: float, y: float, color: str = colors[type(link).__name__]) -> None:
+        def region_swatch(x: float, y: float, color: str = link_colors[type(link).__name__]) -> None:
             ax.add_patch(
                 Rectangle(
                     (x, y - 0.5 * em),

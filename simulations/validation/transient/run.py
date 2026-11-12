@@ -13,7 +13,7 @@ import math
 import subprocess
 import sys
 import tomllib
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Collection, Mapping
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -27,8 +27,10 @@ from numpy.typing import NDArray
 from pulse_tube_cooldown import configure_model, save_output, simulate_cooldown
 from pulse_tube_cooldown.core.types import Model
 from pulse_tube_cooldown.measurements import log_temperature_residual, read_refrigerator_cooldown
-from pulse_tube_cooldown.plot.graph import plot_graph
+from pulse_tube_cooldown.plot.graph import GraphColors, plot_graph
 from pulse_tube_cooldown.plot.result import plot_heat_flow, plot_measured_temperature
+
+DARK_GRAPH = GraphColors(ink="#ecebe7", fill="#2b2a27", edge="#5c5b56", hatch="#45443f", rod="#bdbbb3")
 
 
 def condensing_time(temperature: xr.DataArray, condition: Callable[[float, NDArray[np.float64]], float]) -> float:
@@ -178,10 +180,28 @@ def simulate(model: Model, path: Path) -> None:
         print(f"The solver failed: {result.data.attrs['message']}", file=sys.stderr)
 
 
+def save_graphs(
+    model: Model, layout: Mapping[str, tuple[int, int]] | None, sensors: Collection[str], directory: Path
+) -> None:
+    """Writes the model's schematic on a transparent background as `graph_light.svg` and `graph_dark.svg`.
+
+    Args:
+        model: The model to draw.
+        layout: Column and row of each node, as for `plot_graph`.
+        sensors: Names of nodes with thermometers.
+        directory: The run directory.
+    """
+    for theme, colors in (("light", GraphColors()), ("dark", DARK_GRAPH)):
+        figure = plot_graph(model, layout, sensors, colors)
+        figure.savefig(directory / f"graph_{theme}.svg", transparent=True)
+        plt.close(figure)
+
+
 def run(directory: Path, *, plot_only: bool = False) -> dict[str, dict]:
     """Simulates and compares the run in `directory`.
 
-    Writes `result.nc`, `metrics.toml`, `graph.png`, `temperature.png`, and `heat_flow.png` into `directory`.
+    Writes `result.nc`, `metrics.toml`, `graph_light.svg`, `graph_dark.svg`, `temperature.png`, and `heat_flow.png`
+    into `directory`.
 
     Args:
         directory: The run directory.
@@ -216,8 +236,8 @@ def run(directory: Path, *, plot_only: bool = False) -> dict[str, dict]:
     write_metrics({"provenance": provenance(root), **metrics}, directory / "metrics.toml")
     print(format_metrics(metrics))
 
+    save_graphs(model, config.get("layout"), measured.node.values, directory)
     figures = {
-        "graph": plot_graph(model, config.get("layout"), sensors=measured.node.values),
         "temperature": plot_temperature(data, measured, legacy, metrics["condensing_time"]),
         "heat_flow": plot_heat_flows(data, list(measured.node.values)),
     }

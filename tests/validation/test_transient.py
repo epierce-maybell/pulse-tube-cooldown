@@ -151,13 +151,13 @@ def harness_output(tmp_path_factory):
 
 
 def test_run_writes_outputs(harness_output):
-    """`run` writes its result, metrics, and three figures into the directory.
+    """`run` writes its result, metrics, light and dark graphs, and two figures into the directory.
 
     Catches a missing output file.
     """
     directory, _ = harness_output
 
-    for name in ["result.nc", "metrics.toml", "graph.png", "temperature.png", "heat_flow.png"]:
+    for name in ["result.nc", "metrics.toml", "graph_light.svg", "graph_dark.svg", "temperature.png", "heat_flow.png"]:
         assert (directory / name).stat().st_size > 0
 
 
