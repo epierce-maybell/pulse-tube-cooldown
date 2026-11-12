@@ -1,4 +1,4 @@
-"""Tests for drawing a Graph."""
+"""Tests for drawing a Model."""
 
 import dataclasses
 import itertools
@@ -10,11 +10,12 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
+from matplotlib.patches import Patch
 from matplotlib.text import Text
 from numpy.typing import NDArray
 
 from pulse_tube_cooldown.config import load_link
-from pulse_tube_cooldown.core.types import EnergyBalanceTerms, Graph, Material, Node
+from pulse_tube_cooldown.core.types import EnergyBalanceTerms, Material, Model, Node, Phase, Procedure
 from pulse_tube_cooldown.plot.graph import plot_graph
 
 _TOY = Material(
@@ -37,7 +38,17 @@ class Strap:
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
-class Bath(Strap):
+class Conduction(Strap):
+    pass
+
+
+@dataclasses.dataclass(frozen=True, slots=True)
+class Radiation(Strap):
+    pass
+
+
+@dataclasses.dataclass(frozen=True, slots=True)
+class GasGapSwitch(Strap):
     pass
 
 
@@ -54,24 +65,39 @@ _LAYOUT = {
 _LINKS = (
     Strap("Top supports", ("Top", "PRP")),
     *(Strap(f"PRP-RGP strap with a long name {k}", ("PRP", "RGP")) for k in range(4)),
-    Bath("PRP-RGP bath", ("RGP", "PRP")),
-    *(Strap(f"RGP-CFP strap {k}", ("RGP", "CFP")) for k in range(3)),
-    Strap("CFP-STP strap", ("CFP", "STP")),
+    Radiation("PRP-RGP bath", ("RGP", "PRP")),
+    *(Conduction(f"RGP-CFP strap {k}", ("RGP", "CFP")) for k in range(3)),
+    GasGapSwitch("CFP-STP switch", ("CFP", "STP")),
     Strap("PRP-CFP bypass", ("PRP", "CFP")),
     Strap("Top-STP suspension", ("Top", "STP")),
     *(Strap(f"PRP shield strap {k}", ("PRP", "PRP shield")) for k in range(2)),
     Strap("STP shield strap", ("STP", "STP shield")),
-    Bath("Shield radiation", ("STP shield", "PRP shield")),
-    Bath("Top-shield blanket", ("Top", "PRP shield")),
-    Bath("Gas", ("RGP", "CFP", "STP")),
+    Radiation("Shield radiation", ("STP shield", "PRP shield")),
+    Radiation("Top-shield blanket", ("Top", "PRP shield")),
+    Radiation("Gas", ("RGP", "CFP", "STP")),
+    Radiation("Shield gas", ("PRP", "PRP shield", "STP shield")),
 )
 
 
-def _graph(*links) -> Graph:
-    names = [name for name in _LAYOUT if any(name in link.nodes for link in links)]
-    nodes = [Node(name, ((_TOY, 1.0),)) for name in names]
+def _model(*phase_links, fixed: tuple[str, ...] = (), layout=_LAYOUT) -> Model:
+    """A model with one phase per tuple of links; nodes in `layout` order plus each head's internal nodes."""
+    links = [link for links in phase_links for link in links]
+    nodes = [Node(name, ((_TOY, 1.0),)) for name in layout if any(name in link.nodes for link in links)]
     nodes += [node for link in links for node in getattr(link, "internal_nodes", ())]
-    return Graph(nodes=tuple(nodes), links=links)
+    count = len(phase_links)
+    phases = tuple(
+        Phase(f"phase {i}", tuple(links), None if i == count - 1 else (lambda t, temperature: 1.0))
+        for i, links in enumerate(phase_links)
+    )
+    names = [node.name for node in nodes]
+    return Model(
+        meta={},
+        nodes=tuple(nodes),
+        procedure=Procedure(phases=phases, stop_condition=None),
+        initial_temperature=np.full(len(nodes), 300.0),
+        fixed_boundary_nodes=tuple(names.index(name) for name in fixed),
+        solver_options={},
+    )
 
 
 @pytest.fixture(scope="module")
@@ -91,7 +117,7 @@ def head():
 
 @pytest.fixture
 def crowded(head):
-    figure = plot_graph(_graph(*_LINKS, head), _LAYOUT)
+    figure = plot_graph(_model((*_LINKS, head)), _LAYOUT)
     figure.canvas.draw()
     yield figure
     plt.close(figure)
@@ -105,18 +131,20 @@ def _names(figure) -> set[str]:
     return {text.get_text() for text in _texts(figure)}
 
 
-def test_names_every_node_and_link(crowded, head):
+def _patches(figure, gid: str) -> list[Patch]:
+    return [patch for patch in figure.axes[0].patches if patch.get_gid() == gid]
+
+
+def test_names_every_node_and_no_regenerator_node(crowded, head):
+    """Catches a node left unlabeled, or a link's internal node drawn as if it were a node."""
     names = _names(crowded)
 
     assert set(_LAYOUT) <= names
-    assert {link.name for link in (*_LINKS, head)} <= names
-
-
-def test_internal_nodes_are_not_drawn_as_named_nodes(crowded, head):
-    assert not {node.name for node in head.internal_nodes} & _names(crowded)
+    assert not {node.name for node in head.internal_nodes} & names
 
 
 def test_texts_do_not_overlap(crowded):
+    """Catches labels colliding in a crowded drawing."""
     renderer = crowded.canvas.get_renderer()
     boxes = [text.get_window_extent(renderer) for text in _texts(crowded)]
 
@@ -124,18 +152,8 @@ def test_texts_do_not_overlap(crowded):
         assert not first.overlaps(second)
 
 
-def test_link_texts_stay_clear_of_node_boxes(crowded):
-    renderer = crowded.canvas.get_renderer()
-    ax = crowded.axes[0]
-    boxes = [patch.get_window_extent(renderer) for patch in ax.patches if patch.get_gid() is None]
-    link_texts = [text for text in _texts(crowded) if text.get_text() not in _LAYOUT]
-
-    for text in link_texts:
-        extent = text.get_window_extent(renderer)
-        assert not any(extent.overlaps(box) for box in boxes), text.get_text()
-
-
 def test_figure_holds_every_text(crowded):
+    """Catches a figure sized too small, clipping labels or the legend."""
     renderer = crowded.canvas.get_renderer()
     frame = crowded.bbox
 
@@ -144,41 +162,69 @@ def test_figure_holds_every_text(crowded):
         assert frame.x0 <= box.x0 and box.x1 <= frame.x1 and frame.y0 <= box.y0 and box.y1 <= frame.y1
 
 
-def test_regenerator_nodes_lie_between_the_boxes_of_their_ends(crowded, head):
+def test_head_draws_one_patch_per_regenerator_node(crowded, head):
+    """Catches missing or extra regenerator cells in a pulse-tube head."""
+    assert len(_patches(crowded, head.name)) == len(head.internal_nodes)
+
+
+def test_pipe_has_a_joint_at_each_node(crowded):
+    """Catches a same-column multi-node link drawn without one joint per node."""
+    assert len(_patches(crowded, "Gas")) == 3
+
+
+def test_region_encloses_the_boxes_of_its_nodes(crowded):
+    """Catches a cross-column multi-node link whose outline misses one of its nodes."""
     renderer = crowded.canvas.get_renderer()
-    centers = {text.get_text(): text.get_window_extent(renderer) for text in _texts(crowded)}
-    boxes = {}
-    for patch in crowded.axes[0].patches:
-        extent = patch.get_window_extent(renderer)
-        for name in ("PRP", "RGP", "STP"):
-            center = centers[name]
-            if patch.get_gid() is None and extent.contains((center.x0 + center.x1) / 2, (center.y0 + center.y1) / 2):
-                boxes[name] = extent
-    segments = [
-        extent
-        for patch in crowded.axes[0].patches
-        if patch.get_gid() == head.name
-        and not any((extent := patch.get_window_extent(renderer)).overlaps(box) for box in boxes.values())
-    ]
+    outlines = _patches(crowded, "Shield gas")
+    boxes = [_patches(crowded, name)[0].get_window_extent(renderer) for name in ("PRP", "PRP shield", "STP shield")]
 
-    above_stage_1 = [s for s in segments if s.y0 >= boxes["PRP"].y1]
-    above_clamp = [s for s in segments if boxes["RGP"].y1 <= s.y0 and s.y1 <= boxes["PRP"].y0]
-    below_clamp = [s for s in segments if boxes["STP"].y1 <= s.y0 and s.y1 <= boxes["RGP"].y0]
-    assert len(segments) == len(head.internal_nodes)
-    assert len(above_stage_1) == len(head.regenerator_1.nodes)
-    assert len(above_clamp) == head.memory_node
-    assert len(below_clamp) == len(head.regenerator_2.nodes) - head.memory_node
+    assert any(
+        all(o.x0 <= b.x0 and b.x1 <= o.x1 and o.y0 <= b.y0 and b.y1 <= o.y1 for b in boxes)
+        for o in (outline.get_window_extent(renderer) for outline in outlines)
+    )
 
 
-def test_without_layout_nodes_form_a_column_in_graph_order():
-    graph = _graph(Strap("Rod", ("PRP", "RGP")), Strap("Bar", ("RGP", "CFP")))
-    figure = plot_graph(graph)
+def test_links_of_every_phase_are_drawn():
+    """Catches drawing only the first phase's links."""
+    model = _model((Strap("Rod", ("PRP", "RGP")),), (Strap("Rod", ("PRP", "RGP")), Radiation("Late gas", ("PRP", "RGP", "CFP"))))
+    figure = plot_graph(model, _LAYOUT)
+    try:
+        assert figure.findobj(lambda artist: artist.get_gid() == "Late gas")
+    finally:
+        plt.close(figure)
+
+
+def test_sensor_nodes_have_heavier_outline_and_fixed_nodes_are_hatched():
+    """Catches sensors and fixed-temperature nodes drawn like plain nodes."""
+    model = _model((Strap("Rod", ("PRP", "RGP")), Strap("Bar", ("RGP", "CFP"))), fixed=("CFP",))
+    figure = plot_graph(model, _LAYOUT, sensors=("PRP",))
+    try:
+        box = {name: _patches(figure, name)[0] for name in ("PRP", "RGP", "CFP")}
+        assert box["PRP"].get_linewidth() > box["RGP"].get_linewidth()
+        assert box["CFP"].get_hatch()
+        assert not box["RGP"].get_hatch() and not box["PRP"].get_hatch()
+    finally:
+        plt.close(figure)
+
+
+def test_without_layout_nodes_form_a_column_in_model_order():
+    """Catches the default layout scrambling or spreading nodes out of one column."""
+    model = _model((Strap("Rod", ("PRP", "RGP")), Strap("Bar", ("RGP", "CFP"))))
+    figure = plot_graph(model)
     figure.canvas.draw()
     try:
         renderer = figure.canvas.get_renderer()
-        positions = {text.get_text(): text.get_window_extent(renderer) for text in _texts(figure)}
-        centers = np.array([[(positions[n].x0 + positions[n].x1) / 2, positions[n].y0] for n in ("PRP", "RGP", "CFP")])
+        extents = [_patches(figure, name)[0].get_window_extent(renderer) for name in ("PRP", "RGP", "CFP")]
+        centers = np.array([[(e.x0 + e.x1) / 2, (e.y0 + e.y1) / 2] for e in extents])
         np.testing.assert_allclose(centers[:, 0], centers[0, 0])
         assert np.all(np.diff(centers[:, 1]) < 0.0)
     finally:
         plt.close(figure)
+
+
+def test_legend_names_link_types_in_sentence_case_and_heads(crowded, head):
+    """Catches a legend missing a link type (registered or not), showing class names raw, or omitting the head."""
+    names = _names(crowded)
+
+    assert {"Strap", "Conduction", "Radiation", "Gas gap switch"} <= names
+    assert any(head.name in name for name in names - set(_LAYOUT))

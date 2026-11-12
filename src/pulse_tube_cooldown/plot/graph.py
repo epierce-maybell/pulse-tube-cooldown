@@ -1,55 +1,74 @@
-"""Schematic drawing of a Graph."""
+"""Schematic drawing of a Model's thermal network."""
 
+import inspect
 import re
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Collection, Mapping, Sequence
 
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.artist import Artist
-from matplotlib.colors import to_rgba
 from matplotlib.figure import Figure
 from matplotlib.font_manager import FontProperties
-from matplotlib.lines import Line2D
-from matplotlib.patches import FancyBboxPatch, Patch, Rectangle
+from matplotlib.patches import Circle, FancyBboxPatch, Rectangle
 from matplotlib.transforms import Bbox
 from numpy.typing import NDArray
 
-from pulse_tube_cooldown.core.types import Graph
+from pulse_tube_cooldown.config import LINK_TYPES
+from pulse_tube_cooldown.core.types import Link, Model
 from pulse_tube_cooldown.library.links.pulse_tube.head import PulseTubeHead
 
 __all__ = ["plot_graph"]
 
 
-def plot_graph(graph: Graph, layout: Mapping[str, tuple[int, int]] | None = None) -> Figure:
-    """Draws a graph as a schematic of its nodes and links.
+def plot_graph(
+    model: Model, layout: Mapping[str, tuple[int, int]] | None = None, sensors: Collection[str] = ()
+) -> Figure:
+    """Draws a model's nodes and links as a schematic.
 
-    Parallel links share a bundle, pulse-tube heads are rods through their stages, and links on more than two nodes
-    are regions.
+    Each pair of nodes joined by two-node links has one line per link type, colored by type in the order types are
+    registered in `LINK_TYPES`, followed by unregistered types in the order they first appear. A link on more than two
+    nodes is a pipe with a joint at each of its nodes if they share a column, and a dashed region around them
+    otherwise. Pulse-tube heads are rods through their stages with one cell per regenerator node, named in the legend
+    from left to right. Fixed-temperature nodes are hatched and nodes with thermometers have a heavy outline.
 
     Args:
-        graph: The graph to draw.
+        model: The model to draw, with the links of every phase.
         layout: Column and row of each node, from the top left. Nodes internal to a link are drawn within it. If
-            omitted, nodes form one column in graph order.
+            omitted, nodes form one column in model order.
+        sensors: Names of nodes with thermometers.
 
     Returns:
-        A figure sized to fit the drawing, with each link's artists given the link's name as their `gid`.
+        A figure sized to fit the drawing. Each node's box has the node's name as its `gid`. Each head's regenerator
+        node cells, each pipe's line and joints, and each region's outline have the link's name as their `gid`.
     """
-    internal = {node.name for link in graph.links for node in getattr(link, "internal_nodes", ())}
+    links: dict[str, Link] = {}
+    for phase in model.procedure.phases:
+        for link in phase.links:
+            links.setdefault(link.name, link)
+    internal = {node.name for link in links.values() for node in getattr(link, "internal_nodes", ())}
     if layout is None:
-        drawn = [node.name for node in graph.nodes if node.name not in internal]
+        drawn = [node.name for node in model.nodes if node.name not in internal]
         layout = {name: (0, row) for row, name in enumerate(drawn)}
-    members = [tuple(name for name in link.nodes if name not in internal) for link in graph.links]
-    rods, bundles, regions = classify(graph, members, layout)
-    routes = {pair: route(pair, layout) for pair in bundles}
+    boundary = {model.nodes[i].name for i in model.fixed_boundary_nodes}
+    heads = [link for link in links.values() if isinstance(link, PulseTubeHead)]
+    shared = [link for link in links.values() if len(link.nodes) > 2 and not isinstance(link, PulseTubeHead)]
+    pipes = [link for link in shared if len({layout[name][0] for name in link.nodes}) == 1]
+    regions = [link for link in shared if link not in pipes]
+    order = link_type_order()
+    order += [kind for kind in dict.fromkeys(type(link).__name__ for link in links.values()) if kind not in order]
 
-    class_names = [type(link).__name__ for link in graph.links]
+    pairs: dict[tuple[str, str], list[str]] = {}
+    for link in links.values():
+        if len(link.nodes) == 2:
+            kinds = pairs.setdefault(tuple(sorted(link.nodes, key=lambda name: layout[name][::-1])), [])
+            if type(link).__name__ not in kinds:
+                kinds.append(type(link).__name__)
+    for kinds in pairs.values():
+        kinds.sort(key=order.index)
+    routes = {pair: route(pair, layout) for pair in pairs}
+
     palette = ("#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948")
-    colors = {name: palette[i % len(palette)] for i, name in enumerate(dict.fromkeys(class_names))}
-    rank = {name: i for i, name in enumerate(colors)}
-    ink, muted, fill, edge = "#0b0b0b", "#52514e", "#f0efec", "#8a8984"
-
-    def in_order(indices: Sequence[int]) -> list[int]:
-        return sorted(indices, key=lambda i: (rank[class_names[i]], i))
+    colors = {kind: palette[i % len(palette)] for i, kind in enumerate(order)}
+    ink, fill, edge, hatch, rod = "#1f1e1c", "#f4f3f0", "#a3a29c", "#cfcec7", "#46453f"
 
     figure = plt.figure(figsize=(1.0, 1.0))
     ax = figure.add_axes((0.0, 0.0, 1.0, 1.0))
@@ -57,309 +76,336 @@ def plot_graph(graph: Graph, layout: Mapping[str, tuple[int, int]] | None = None
     ax.set_ylim(0.0, 1.0)
     ax.set_axis_off()
     renderer = figure.canvas.get_renderer()
-    name_font = FontProperties(size="medium", weight="bold")
+    name_font = FontProperties(size="medium")
     label_font = FontProperties(size="small")
-    title_font = FontProperties(size="large", weight="bold")
+    em = label_font.get_size_in_points() / 72.0
+    point = 1.0 / 72.0
 
     def width(text: str, font: FontProperties) -> float:
         return renderer.get_text_width_height_descent(text, font, ismath=False)[0] / figure.dpi
 
-    em = label_font.get_size_in_points() / 72.0
-    line = 1.4 * em
-    spacing = 0.5 * em
-    swatch = 1.2 * em
-    slab_height = 2.4 * em
-    rod_width = 1.1 * em
-    rod_pitch = 2.0 * em
-    rod_gap = 0.35 * em
+    line_width, line_gap = 1.4 * point, 2.2 * point
 
-    def list_width(indices: Sequence[int]) -> float:
-        return swatch + 0.6 * em + max(width(graph.links[i].name, label_font) for i in indices)
+    def thickness(pair: tuple[str, str]) -> float:
+        count = len(pairs[pair])
+        return count * line_width + (count - 1) * line_gap
 
-    rod_columns = [layout[members[i][0]][0] for i in rods]
-    rod_slots = [rod_columns[:k].count(column) for k, column in enumerate(rod_columns)]
-    rod_band = em + (max(rod_slots) + 1) * rod_pitch if rods else 0.0
-    name_band = max(width(name, name_font) for name in layout) + 3.0 * em
-    slab_width = rod_band + name_band
+    def offsets(pair: tuple[str, str]) -> NDArray[np.float64]:
+        return (np.arange(len(pairs[pair])) - (len(pairs[pair]) - 1) / 2.0) * (line_width + line_gap)
 
-    def spine(name: str) -> float:
-        return rod_band + name_band / 2.0 if layout[name][0] in rod_columns else slab_width / 2.0
+    rod_width, rod_pitch = 1.1 * em, 1.8 * em
+    rod_columns = {layout[head.stages[0]][0] for head in heads}
+    rod_band = 0.8 * em + len(heads) * rod_pitch if heads else 0.0
+    pipe_width, pipe_pitch, joint_radius = 2.0 * point, 1.4 * em, 0.38 * em
+    columns = max(column for column, _ in layout.values()) + 1
+    pipe_column = {link.name: layout[link.nodes[0]][0] for link in pipes}
+    pipe_slot = {
+        link.name: [pipe_column[other.name] for other in pipes[:k]].count(pipe_column[link.name])
+        for k, link in enumerate(pipes)
+    }
+    pipe_band = [list(pipe_column.values()).count(column) * pipe_pitch for column in range(columns)]
+    bar_width = [0.0] * columns
+    for name, (column, _) in layout.items():
+        band = rod_band if column in rod_columns else 0.0
+        bar_width[column] = max(bar_width[column], band + width(name, name_font) + pipe_band[column] + 3.0 * em)
+
+    def spine_offset(column: int) -> float:
+        band = rod_band if column in rod_columns else 0.0
+        return band + (bar_width[column] - band) / 2.0
 
     brackets = [pair for pair, kind in routes.items() if kind == "bracket"]
-    lanes = dict(zip(brackets, bracket_lanes([tuple(layout[name] for name in pair) for pair in brackets]), strict=True))
-    lane_pitch = 1.5 * em + max((len(bundles[pair]) * spacing for pair in brackets), default=0.0)
-    column_lanes = {
-        layout[pair[0]][0]: max(lane + 1 for other, lane in lanes.items() if layout[other[0]][0] == layout[pair[0]][0])
-        for pair in brackets
-    }
+    spans = [(layout[upper][0], layout[upper][1], layout[lower][1]) for upper, lower in brackets]
+    lanes = dict(zip(brackets, interval_lanes(spans), strict=True))
+    lane_pitch = max((thickness(pair) for pair in brackets), default=0.0) + 1.2 * em
+    elbows = {pair: elbow_ends(pair, layout) for pair, kind in routes.items() if kind == "elbow"}
 
-    columns = max(column for column, _ in layout.values()) + 1
-    right, left = [0.0] * columns, [0.0] * columns
-    gap = 3.0 * em
-    for pair, indices in bundles.items():
-        (first_column, _), (second_column, _) = layout[pair[0]], layout[pair[1]]
-        match routes[pair]:
-            case "down":
-                extent = spine(pair[0]) + len(indices) * spacing / 2.0 + em + list_width(indices) - slab_width
-                right[first_column] = max(right[first_column], extent)
-                gap = max(gap, len(indices) * line + 2.0 * em)
+    terminals: dict[tuple[str, str], list[tuple[float, tuple[str, str]]]] = {}
+    for pair, kind in routes.items():
+        upper, lower = pair
+        match kind:
             case "bracket":
-                extent = (column_lanes[first_column] + 0.5) * lane_pitch + em + list_width(indices)
-                left[first_column] = max(left[first_column], extent)
-            case _:
-                column = max(first_column, second_column)
-                left[column] = max(left[column], em + list_width(indices))
-                gap = max(gap, len(indices) * line + 3.0 * em)
-    for i in rods:
-        gap = max(gap, width(graph.links[i].name, label_font) + 2.0 * em)
-    pitch = slab_height + gap
-    column_x = [0.0]
+                terminals.setdefault((upper, "left"), []).append((lanes[pair] - len(brackets), pair))
+                terminals.setdefault((lower, "left"), []).append((len(brackets) - lanes[pair], pair))
+            case "across":
+                west, east = sorted(pair, key=lambda name: layout[name][0])
+                terminals.setdefault((west, "right"), []).append((0.0, pair))
+                terminals.setdefault((east, "left"), []).append((0.0, pair))
+            case "elbow":
+                entered, start = elbows[pair]
+                side = "right" if layout[start][0] < layout[entered][0] else "left"
+                rank = 1.0 if layout[entered][1] < layout[start][1] else -1.0
+                terminals.setdefault((start, side), []).append((rank, pair))
+
+    stack_gap = 0.6 * em
+    terminal_y: dict[tuple[str, tuple[str, str]], float] = {}
+    edge_height: dict[str, float] = {}
+    for (name, _), entries in terminals.items():
+        entries.sort(key=lambda entry: -entry[0])
+        heights = [thickness(pair) for _, pair in entries]
+        total = sum(heights) + stack_gap * (len(heights) - 1)
+        edge_height[name] = max(edge_height.get(name, 0.0), total)
+        y = total / 2.0
+        for height, (_, pair) in zip(heights, entries, strict=True):
+            terminal_y[(name, pair)] = y - height / 2.0
+            y -= height + stack_gap
+
+    minimum = 2.2 * em
+    bar_height = {name: max(minimum, edge_height.get(name, 0.0) + em) for name in layout}
+    rows = max(row for _, row in layout.values()) + 1
+    row_height = [
+        max((bar_height[name] for name, (_, r) in layout.items() if r == row), default=minimum) for row in range(rows)
+    ]
+    gap = 2.4 * em
+    row_y = [0.0]
+    for row in range(1, rows):
+        row_y.append(row_y[-1] - row_height[row - 1] / 2.0 - gap - row_height[row] / 2.0)
+
+    left_room = [0.0] * columns
+    for pair in brackets:
+        column = layout[pair[0]][0]
+        left_room[column] = max(left_room[column], (lanes[pair] + 1) * lane_pitch)
+    column_x = [left_room[0]]
     for column in range(1, columns):
-        column_x.append(column_x[-1] + slab_width + max(right[column - 1] + left[column] + 2.0 * em, 4.0 * em))
+        column_x.append(column_x[-1] + bar_width[column - 1] + max(left_room[column], 7.0 * em))
 
     def x_of(name: str) -> float:
         return column_x[layout[name][0]]
 
     def y_of(name: str) -> float:
-        return -layout[name][1] * pitch
+        return row_y[layout[name][1]]
 
-    node_artists: dict[str, list[Artist]] = {}
-    link_artists: dict[int, list[Artist]] = {i: [] for i in range(len(graph.links))}
+    def right(name: str) -> float:
+        return x_of(name) + bar_width[layout[name][0]]
 
-    for name in layout:
-        x, y = x_of(name), y_of(name)
-        box = FancyBboxPatch(
-            (x, y - slab_height / 2.0),
-            slab_width,
-            slab_height,
-            boxstyle=f"round,pad=0,rounding_size={0.4 * em}",
+    def top(name: str) -> float:
+        return y_of(name) + bar_height[name] / 2.0
+
+    def bottom(name: str) -> float:
+        return y_of(name) - bar_height[name] / 2.0
+
+    node_boxes: dict[str, FancyBboxPatch] = {}
+    for name, (column, _) in layout.items():
+        x, y, height = x_of(name), y_of(name), bar_height[name]
+        hatching = {"hatch": "////", "hatchcolor": hatch} if name in boundary else {}
+        outline = {"edgecolor": ink, "linewidth": 1.6} if name in sensors else {"edgecolor": edge, "linewidth": 0.8}
+        node_boxes[name] = FancyBboxPatch(
+            (x, y - height / 2.0),
+            bar_width[column],
+            height,
+            boxstyle=f"round,pad=0,rounding_size={0.3 * em}",
             facecolor=fill,
-            edgecolor=edge,
-            linewidth=1.0,
+            gid=name,
             zorder=3,
+            **outline,
+            **hatching,
         )
-        ax.add_patch(box)
-        text = ax.text(
-            x + spine(name), y, name, ha="center", va="center", fontproperties=name_font, color=ink, zorder=5
-        )
-        node_artists[name] = [box, text]
+        ax.add_patch(node_boxes[name])
+        band = rod_band if column in rod_columns else 0.0
+        ax.text(x + band + em, y, name, ha="left", va="center", fontproperties=name_font, color=ink, zorder=5)
 
-    def strand(i: int, xs: Sequence[float], ys: Sequence[float]) -> None:
-        (artist,) = ax.plot(
+    for link in pipes:
+        color = colors[type(link).__name__]
+        x = right(link.nodes[0]) - 1.2 * em - pipe_slot[link.name] * pipe_pitch
+        heights = [y_of(name) for name in link.nodes]
+        ax.plot(
+            [x, x],
+            [max(heights), min(heights)],
+            color=color,
+            linewidth=pipe_width * 72.0,
+            solid_capstyle="butt",
+            gid=link.name,
+            zorder=2,
+        )
+        for y in heights:
+            ax.add_patch(Circle((x, y), joint_radius, facecolor=color, linewidth=0, gid=link.name, zorder=5))
+
+    def strand(kind: str, xs: Sequence[float], ys: Sequence[float]) -> None:
+        ax.plot(
             xs,
             ys,
-            color=colors[class_names[i]],
-            linewidth=1.5,
+            color=colors[kind],
+            linewidth=line_width * 72.0,
             solid_capstyle="butt",
             solid_joinstyle="miter",
-            gid=graph.links[i].name,
             zorder=1,
         )
-        link_artists[i].append(artist)
 
-    def listing(indices: Sequence[int], x: float, y: float, align: str, anchor: str) -> None:
-        rows = in_order(indices)
-        top = y + (len(rows) - 1) * line / (2.0 if anchor == "center" else 1.0)
-        sign = 1.0 if align == "left" else -1.0
-        for n, i in enumerate(rows):
-            row_y = top - n * line
-            (mark,) = ax.plot(
-                [x, x + sign * swatch],
-                [row_y, row_y],
-                color=colors[class_names[i]],
-                linewidth=2.2,
-                solid_capstyle="butt",
-                gid=graph.links[i].name,
-            )
-            text = ax.text(
-                x + sign * (swatch + 0.6 * em),
-                row_y,
-                graph.links[i].name,
-                ha=align,
-                va="center",
-                fontproperties=label_font,
-                color=ink,
-            )
-            link_artists[i] += [mark, text]
-
-    bracket_y: dict[tuple[str, str], float] = {}
-    lowest: dict[int, float] = {}
-    for pair in sorted(brackets, key=lambda pair: -(y_of(pair[0]) + y_of(pair[1]))):
-        column, height = layout[pair[0]][0], len(bundles[pair]) * line
-        center = min((y_of(pair[0]) + y_of(pair[1])) / 2.0, lowest.get(column, np.inf) - height / 2.0)
-        bracket_y[pair] = center
-        lowest[column] = center - height / 2.0
-
-    for pair, indices in bundles.items():
+    for pair, kind in routes.items():
         upper, lower = pair
-        rows = in_order(indices)
-        offsets = (np.arange(len(rows)) - (len(rows) - 1) / 2.0) * spacing
-        half = len(rows) * spacing / 2.0
-        top, bottom = y_of(upper), y_of(lower)
-        match routes[pair]:
+        strands = list(zip(pairs[pair], offsets(pair), strict=True))
+        match kind:
             case "down":
-                x = x_of(upper) + spine(upper)
-                for i, offset in zip(rows, offsets, strict=True):
-                    strand(i, [x + offset] * 2, [top - slab_height / 2.0, bottom + slab_height / 2.0])
-                listing(rows, x + half + em, (top + bottom) / 2.0, "left", "center")
+                x = x_of(upper) + spine_offset(layout[upper][0])
+                for link_type, offset in strands:
+                    strand(link_type, [x + offset] * 2, [bottom(upper), top(lower)])
             case "bracket":
-                x = x_of(upper)
-                lane_x = x - (lanes[pair] + 1) * lane_pitch
-                for i, offset in zip(rows, offsets, strict=True):
-                    xs = [x, lane_x + offset, lane_x + offset, x]
-                    strand(i, xs, [top - offset, top - offset, bottom + offset, bottom + offset])
-                label_x = x - (column_lanes[layout[upper][0]] + 0.5) * lane_pitch
-                listing(rows, label_x, bracket_y[pair], "right", "center")
+                lane_x = x_of(upper) - (lanes[pair] + 0.5) * lane_pitch
+                start, end = y_of(upper) + terminal_y[(upper, pair)], y_of(lower) + terminal_y[(lower, pair)]
+                for link_type, offset in strands:
+                    xs = [x_of(upper), lane_x + offset, lane_x + offset, x_of(lower)]
+                    strand(link_type, xs, [start - offset, start - offset, end + offset, end + offset])
             case "across":
                 west, east = sorted(pair, key=lambda name: layout[name][0])
-                for i, offset in zip(rows, offsets, strict=True):
-                    strand(i, [x_of(west) + slab_width, x_of(east)], [top - offset] * 2)
-                listing(rows, x_of(east) - em, top + half + 0.6 * em, "right", "bottom")
+                start, end = y_of(west) + terminal_y[(west, pair)], y_of(east) + terminal_y[(east, pair)]
+                middle = (right(west) + x_of(east)) / 2.0
+                for link_type, offset in strands:
+                    xs = [right(west), middle, middle, x_of(east)]
+                    strand(link_type, xs, [start - offset, start - offset, end - offset, end - offset])
             case "elbow":
-                direction = np.sign(layout[lower][0] - layout[upper][0])
-                start = x_of(upper) + (slab_width if direction > 0 else 0.0)
-                corner = x_of(lower) + spine(lower)
-                for i, offset in zip(rows, offsets, strict=True):
-                    xs = [start, corner - direction * offset, corner - direction * offset]
-                    strand(i, xs, [top - offset, top - offset, bottom + slab_height / 2.0])
-                label_x = max(x_of(upper), x_of(lower))
-                listing(rows, label_x - em, top + half + 0.6 * em, "right", "bottom")
+                entered, start = elbows[pair]
+                from_west = layout[start][0] < layout[entered][0]
+                riser = x_of(entered) + 1.5 * em if from_west else right(entered) - 1.5 * em
+                origin_x = right(start) if from_west else x_of(start)
+                origin_y = y_of(start) + terminal_y[(start, pair)]
+                rising = y_of(entered) > y_of(start)
+                end = bottom(entered) if rising else top(entered)
+                sign = (1.0 if from_west else -1.0) * (1.0 if rising else -1.0)
+                for link_type, offset in strands:
+                    corner = riser - offset * sign
+                    strand(link_type, [origin_x, corner, corner], [origin_y - offset, origin_y - offset, end])
 
-    for i, slot in zip(rods, rod_slots, strict=True):
-        head = graph.links[i]
-        color = colors[class_names[i]]
-        x = x_of(members[i][0]) + em + slot * rod_pitch + (rod_pitch - rod_width) / 2.0
-        warm = y_of(head.stages[0]) + slab_height / 2.0 + gap - em
-        for low, high in head_spans(head, warm, y_of, slab_height):
-            segment = FancyBboxPatch(
-                (x, low + rod_gap / 2.0),
-                rod_width,
-                high - low - rod_gap,
-                boxstyle=f"round,pad=0,rounding_size={rod_width / 2.0}",
-                facecolor=color,
-                linewidth=0,
-                zorder=2,
+    for k, head in enumerate(heads):
+        x = x_of(head.stages[0]) + 0.8 * em + k * rod_pitch + (rod_pitch - rod_width) / 2.0
+        warm = top(head.stages[0]) + gap
+        for low, high in head_spans(head, warm, y_of, top, bottom):
+            ax.add_patch(
+                FancyBboxPatch(
+                    (x, low + 0.18 * em),
+                    rod_width,
+                    high - low - 0.36 * em,
+                    boxstyle=f"round,pad=0,rounding_size={0.25 * em}",
+                    facecolor=rod,
+                    linewidth=0,
+                    gid=head.name,
+                    zorder=2,
+                )
             )
-            ax.add_patch(segment)
-            link_artists[i].append(segment)
-        for name in members[i]:
-            collar = Rectangle(
-                (x, y_of(name) - slab_height / 2.0), rod_width, slab_height, facecolor=color, linewidth=0, zorder=4
+        for name in (*head.stages, *(() if head.clamp is None else (head.clamp,))):
+            ax.add_patch(
+                Rectangle((x, bottom(name)), rod_width, bar_height[name], facecolor=rod, linewidth=0, zorder=4)
             )
-            ax.add_patch(collar)
-            link_artists[i].append(collar)
-        bottom = min(y_of(name) for name in members[i]) - slab_height / 2.0 - em
-        label = ax.text(
-            x + rod_width / 2.0,
-            bottom,
-            head.name,
-            rotation=90,
-            rotation_mode="anchor",
-            ha="right",
-            va="center",
-            fontproperties=label_font,
-            color=ink,
-        )
-        link_artists[i].append(label)
-        for artist in link_artists[i]:
-            artist.set_gid(head.name)
 
-    def bounds(artists: Sequence[Artist]) -> Bbox:
+    def bounds() -> Bbox:
         to_data = ax.transData.inverted()
+        artists = ax.patches + ax.lines + ax.texts
         return Bbox.union([artist.get_window_extent(renderer).transformed(to_data) for artist in artists])
 
-    for i in sorted(regions, key=lambda i: len(members[i])):
-        enclosed = set(members[i])
-        contents = [artist for name in enclosed for artist in node_artists[name]]
-        contents += [
-            artist
-            for j, artists in link_artists.items()
-            if j != i and set(members[j]) <= enclosed
-            for artist in artists
-        ]
-        box = bounds(contents).padded(1.5 * em)
-        title = 3.2 * em
-        color = colors[class_names[i]]
-        for style in (
-            {"facecolor": to_rgba(color, 0.07), "edgecolor": "none"},
-            {"facecolor": "none", "edgecolor": color, "linewidth": 1.0, "linestyle": (0, (4, 3))},
-        ):
-            region = FancyBboxPatch(
+    to_data = ax.transData.inverted()
+    for link in sorted(regions, key=lambda link: len(link.nodes)):
+        members = [node_boxes[name].get_window_extent(renderer).transformed(to_data) for name in link.nodes]
+        if set(layout) <= set(link.nodes):
+            members.append(bounds())
+        box = Bbox.union(members).padded(1.2 * em)
+        label_height = 2.0 * em
+        ax.add_patch(
+            FancyBboxPatch(
                 (box.x0, box.y0),
                 box.width,
-                box.height + title,
-                boxstyle=f"round,pad=0,rounding_size={2.0 * em}",
-                gid=graph.links[i].name,
+                box.height + label_height,
+                boxstyle=f"round,pad=0,rounding_size={em}",
+                facecolor="none",
+                edgecolor=colors[type(link).__name__],
+                linewidth=1.2,
+                linestyle=(0, (5, 3)),
+                gid=link.name,
                 zorder=0,
-                **style,
             )
-            ax.add_patch(region)
-            link_artists[i].append(region)
-        top = box.y1 + title - em
-        link_artists[i].append(
-            ax.text(box.x0 + 1.5 * em, top, graph.links[i].name, va="top", fontproperties=title_font, color=ink)
         )
-        if words(class_names[i]).casefold() != graph.links[i].name.casefold():
-            link_artists[i].append(
-                ax.text(
-                    box.x0 + 1.5 * em,
-                    top - 1.6 * em,
-                    words(class_names[i]),
-                    va="top",
-                    fontproperties=label_font,
-                    color=muted,
+        ax.text(box.x0 + em, box.y1 + label_height / 2.0, link.name, va="center", fontproperties=label_font, color=ink)
+
+    content = bounds()
+    entries: list[tuple[Callable[[float, float], None], str]] = []
+    if heads:
+
+        def head_swatch(x: float, y: float) -> None:
+            for k in range(3):
+                ax.add_patch(
+                    FancyBboxPatch(
+                        (x + 0.25 * em, y - em + k * 0.72 * em),
+                        rod_width,
+                        0.55 * em,
+                        boxstyle=f"round,pad=0,rounding_size={0.2 * em}",
+                        facecolor=rod,
+                        linewidth=0,
+                    )
+                )
+
+        entries.append((head_swatch, ", ".join(head.name for head in heads) + " regenerator nodes"))
+    for kind in order:
+        if any(kind in kinds for kinds in pairs.values()):
+
+            def line_swatch(x: float, y: float, color: str = colors[kind]) -> None:
+                ax.plot([x, x + 1.6 * em], [y, y], color=color, linewidth=2.0, solid_capstyle="butt")
+
+            entries.append((line_swatch, words(kind)))
+    for link in pipes:
+
+        def pipe_swatch(x: float, y: float, color: str = colors[type(link).__name__]) -> None:
+            ax.plot([x + 0.8 * em] * 2, [y - 0.9 * em, y + 0.9 * em], color=color, linewidth=pipe_width * 72.0)
+            ax.add_patch(Circle((x + 0.8 * em, y), joint_radius, facecolor=color, linewidth=0))
+
+        entries.append((pipe_swatch, link.name))
+    for link in regions:
+
+        def region_swatch(x: float, y: float, color: str = colors[type(link).__name__]) -> None:
+            ax.add_patch(
+                Rectangle(
+                    (x, y - 0.5 * em),
+                    1.6 * em,
+                    em,
+                    facecolor="none",
+                    edgecolor=color,
+                    linewidth=1.2,
+                    linestyle=(0, (3, 2)),
                 )
             )
 
-    handles: list[Artist] = []
-    for name, color in colors.items():
-        first = class_names.index(name)
-        if first in regions:
-            handles.append(
-                Patch(facecolor=to_rgba(color, 0.07), edgecolor=color, linestyle=(0, (4, 3)), label=words(name))
-            )
-        else:
-            thickness = 7.0 if first in rods else 2.2
-            handles.append(Line2D([], [], color=color, linewidth=thickness, label=words(name)))
+        entries.append((region_swatch, link.name))
+    if boundary:
 
-    content = bounds(ax.patches + ax.lines + ax.texts)
-    legend = ax.legend(
-        handles=handles,
-        loc="upper center",
-        bbox_to_anchor=((content.x0 + content.x1) / 2.0, content.y0 - em),
-        bbox_transform=ax.transData,
-        ncols=len(handles),
-        frameon=False,
-        prop=label_font,
-        handlelength=2.5,
-    )
-    fitted = Bbox.union([content, bounds([legend])]).padded(em)
+        def boundary_swatch(x: float, y: float) -> None:
+            ax.add_patch(
+                Rectangle(
+                    (x, y - 0.5 * em),
+                    1.6 * em,
+                    em,
+                    facecolor=fill,
+                    edgecolor=edge,
+                    hatch="////",
+                    hatchcolor=hatch,
+                    linewidth=0.8,
+                )
+            )
+
+        entries.append((boundary_swatch, "Fixed temperature"))
+    if set(sensors) & set(layout):
+
+        def sensor_swatch(x: float, y: float) -> None:
+            ax.add_patch(Rectangle((x, y - 0.5 * em), 1.6 * em, em, facecolor=fill, edgecolor=ink, linewidth=1.6))
+
+        entries.append((sensor_swatch, "Thermometer"))
+    x = content.x1 + 2.5 * em
+    y = (content.y0 + content.y1) / 2.0 + (len(entries) - 1) * 1.15 * em
+    for draw, label in entries:
+        draw(x, y)
+        ax.text(x + 2.4 * em, y, label, va="center", fontproperties=label_font, color=ink)
+        y -= 2.3 * em
+
+    fitted = bounds().padded(1.2 * em)
+    fitted = Bbox.from_extents(fitted.x0, fitted.y0, fitted.x1 + 2.0 * em, fitted.y1)
     ax.set_xlim(fitted.x0, fitted.x1)
     ax.set_ylim(fitted.y0, fitted.y1)
     figure.set_size_inches(fitted.width, fitted.height)
     return figure
 
 
-def classify(
-    graph: Graph, members: Sequence[tuple[str, ...]], layout: Mapping[str, tuple[int, int]]
-) -> tuple[list[int], dict[tuple[str, str], list[int]], list[int]]:
-    """Splits link indices into rods, bundles by node pair, and regions."""
-    rods: list[int] = []
-    bundles: dict[tuple[str, str], list[int]] = {}
-    regions: list[int] = []
-    for i, (link, names) in enumerate(zip(graph.links, members, strict=True)):
-        if isinstance(link, PulseTubeHead) and len({layout[name][0] for name in names}) == 1:
-            rods.append(i)
-        elif len(names) == 2:
-            pair = tuple(sorted(names, key=lambda name: layout[name][::-1]))
-            bundles.setdefault(pair, []).append(i)
-        else:
-            regions.append(i)
-    return rods, bundles, regions
+def link_type_order() -> list[str]:
+    """Returns link class names in the order their types are registered."""
+    return [inspect.signature(loader).return_annotation.__name__ for loader in LINK_TYPES.values()]
 
 
 def route(pair: tuple[str, str], layout: Mapping[str, tuple[int, int]]) -> str:
-    """Returns how a bundle runs: across, down, bracket, or elbow."""
+    """Returns how a connector runs: across, down, bracket, or elbow."""
     (first_column, first_row), (second_column, second_row) = layout[pair[0]], layout[pair[1]]
     if first_row == second_row:
         return "across"
@@ -370,37 +416,50 @@ def route(pair: tuple[str, str], layout: Mapping[str, tuple[int, int]]) -> str:
     return "down"
 
 
-def bracket_lanes(cells: Sequence[tuple[tuple[int, int], tuple[int, int]]]) -> list[int]:
-    """Assigns each bracket the innermost lane free of overlapping brackets in its column."""
-    lanes = [0] * len(cells)
+def elbow_ends(pair: tuple[str, str], layout: Mapping[str, tuple[int, int]]) -> tuple[str, str]:
+    """Returns the node an elbow enters vertically and the node it leaves horizontally.
+
+    The vertical leg runs in a column with no node between the pair's rows, preferring the column with fewer nodes.
+    """
+    upper, lower = pair
+    upper_row, lower_row = layout[upper][1], layout[lower][1]
+
+    def cost(name: str) -> tuple[bool, int]:
+        column = layout[name][0]
+        blocked = any(c == column and upper_row < r < lower_row for c, r in layout.values())
+        return blocked, [c for c, _ in layout.values()].count(column)
+
+    entered = min((lower, upper), key=cost)
+    return entered, upper if entered == lower else lower
+
+
+def interval_lanes(spans: Sequence[tuple[int, int, int]]) -> list[int]:
+    """Assigns each (column, top row, bottom row) span the innermost lane free of overlapping spans in its column."""
+    lanes = [0] * len(spans)
     placed: list[int] = []
-    for i in sorted(range(len(cells)), key=lambda i: cells[i][1][1] - cells[i][0][1]):
-        (column, top), (_, bottom) = cells[i]
-        taken = {
-            lanes[j]
-            for j in placed
-            if cells[j][0][0] == column and min(bottom, cells[j][1][1]) >= max(top, cells[j][0][1])
-        }
+    for i in sorted(range(len(spans)), key=lambda i: spans[i][2] - spans[i][1]):
+        column, start, end = spans[i]
+        taken = {lanes[j] for j in placed if spans[j][0] == column and min(end, spans[j][2]) >= max(start, spans[j][1])}
         lanes[i] = min(set(range(len(taken) + 1)) - taken)
         placed.append(i)
     return lanes
 
 
 def head_spans(
-    head: PulseTubeHead, warm: float, y_of: Callable[[str], float], slab_height: float
+    head: PulseTubeHead,
+    warm: float,
+    y_of: Callable[[str], float],
+    top: Callable[[str], float],
+    bottom: Callable[[str], float],
 ) -> list[tuple[float, float]]:
     """Returns the bottom and top height of each regenerator node along a head's rod, warm to cold."""
     first, second = head.stages
-    half = slab_height / 2.0
-    pieces_2 = [(0.0, 1.0, y_of(first) - half, y_of(second) + half)]
+    pieces_2 = [(0.0, 1.0, bottom(first), top(second))]
     if head.clamp is not None and y_of(second) < y_of(head.clamp) < y_of(first):
         clamp = tiled_edges(head.regenerator_2.midpoint)[head.memory_node]
-        pieces_2 = [
-            (0.0, clamp, y_of(first) - half, y_of(head.clamp) + half),
-            (clamp, 1.0, y_of(head.clamp) - half, y_of(second) + half),
-        ]
+        pieces_2 = [(0.0, clamp, bottom(first), top(head.clamp)), (clamp, 1.0, bottom(head.clamp), top(second))]
     return [
-        *node_spans(head.regenerator_1.midpoint, [(0.0, 1.0, warm, y_of(first) + half)]),
+        *node_spans(head.regenerator_1.midpoint, [(0.0, 1.0, warm, top(first))]),
         *node_spans(head.regenerator_2.midpoint, pieces_2),
     ]
 
