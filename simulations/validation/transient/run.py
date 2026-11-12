@@ -25,7 +25,6 @@ from matplotlib.lines import Line2D
 from numpy.typing import NDArray
 
 from pulse_tube_cooldown import configure_model, save_output, simulate_cooldown
-from pulse_tube_cooldown.config import load_fridge
 from pulse_tube_cooldown.core.types import Model
 from pulse_tube_cooldown.measurements import log_temperature_residual, read_refrigerator_cooldown
 from pulse_tube_cooldown.plot.graph import plot_graph
@@ -218,7 +217,7 @@ def run(directory: Path, *, plot_only: bool = False) -> dict[str, dict]:
     print(format_metrics(metrics))
 
     figures = {
-        "graph": plot_graph(load_fridge(config["fridge"]), config.get("layout")),
+        "graph": plot_graph(model, config.get("layout"), sensors=measured.node.values),
         "temperature": plot_temperature(data, measured, legacy, metrics["condensing_time"]),
         "heat_flow": plot_heat_flows(data, list(measured.node.values)),
     }
