@@ -1,6 +1,7 @@
 """The `run-ptc` command, which simulates a configured cooldown and saves its Result."""
 
 import argparse
+import dataclasses
 import sys
 import tomllib
 from collections.abc import Sequence
@@ -12,7 +13,7 @@ __all__ = ["main"]
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    """Runs `run-ptc --config path_to_config --output path_to_output`.
+    """Runs `run-ptc --config path_to_config --output path_to_output [--ignore-stop-condition]`.
 
     Args:
         argv: Command-line arguments, defaulting to `sys.argv[1:]`.
@@ -24,10 +25,16 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="run-ptc", description="Simulates a cooldown and saves its Result as netCDF.")
     parser.add_argument("--config", required=True, help="path to the TOML configuration file")
     parser.add_argument("--output", required=True, help="path of the netCDF file to write")
+    parser.add_argument(
+        "--ignore-stop-condition", action="store_true", help="run to max_time, ignoring the procedure's stop condition"
+    )
     args = parser.parse_args(argv)
 
     try:
         model = ptc.configure_model(args.config)
+        if args.ignore_stop_condition:
+            procedure = dataclasses.replace(model.procedure, stop_condition=None)
+            model = dataclasses.replace(model, procedure=procedure)
         result = ptc.simulate_cooldown(model)
         ptc.save_output(result, args.output)
     except (PTCError, OSError, tomllib.TOMLDecodeError) as error:

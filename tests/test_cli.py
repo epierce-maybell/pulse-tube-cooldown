@@ -124,3 +124,21 @@ def test_solver_failure_saves_the_run_and_fails(tmp_path, monkeypatch, capsys):
     assert "Required step size is too small." in capsys.readouterr().err
     with xr.open_dataset(output) as saved:
         assert saved.attrs["status"] == "solver_failure"
+
+
+def test_ignore_stop_condition_runs_to_max_time_only_with_the_flag(tmp_path):
+    """The stop condition ends a run unless `--ignore-stop-condition` is given.
+
+    Catches the flag being ignored (the result ends at the condition) and leaking into the default (the result runs
+    to `max_time` without the flag).
+    """
+    until = '[procedure.until]\ncondition = "condensing_begins"\nnode = "Plate"\nthreshold = 299.0\n\n[simulation]'
+    config = _config(tmp_path, _CONFIG.replace("[simulation]", until))
+    default, ignored = tmp_path / "default.nc", tmp_path / "ignored.nc"
+
+    assert main(["--config", str(config), "--output", str(default)]) == 0
+    assert main(["--config", str(config), "--output", str(ignored), "--ignore-stop-condition"]) == 0
+
+    with xr.open_dataset(default) as stopped, xr.open_dataset(ignored) as continued:
+        assert float(stopped.time[-1]) < 3600.0
+        assert float(continued.time[-1]) == 3600.0

@@ -1,0 +1,121 @@
+[meta]
+experiment = "Conduction-only cooldown with the SN09 thermometer nodes"
+
+[[fridge.nodes]]
+name = "PRP"
+composition = [["OFHC Cu RRR100", 30.0]]
+
+[[fridge.nodes]]
+name = "RGP"
+composition = [["OFHC Cu RRR100", 10.0]]
+
+[[fridge.nodes]]
+name = "CFP"
+composition = [["OFHC Cu RRR100", 25.0]]
+
+[[fridge.nodes]]
+name = "STP"
+composition = [["OFHC Cu RRR100", 20.0]]
+
+[[fridge.nodes]]
+name = "ICP"
+composition = [["OFHC Cu RRR100", 10.0]]
+
+[[fridge.nodes]]
+name = "MXP"
+composition = [["OFHC Cu RRR100", 10.0]]
+
+[[fridge.nodes]]
+name = "DHX"
+composition = [["OFHC Cu RRR100", 1.0]]
+
+[[fridge.nodes]]
+name = "Bath"
+composition = [["OFHC Cu RRR100", 1.0]]
+
+[[fridge.links]]
+name = "Bath-PRP"
+type = "conduction"
+nodes = ["Bath", "PRP"]
+material = "OFHC Cu RRR100"
+area = 2.0e-5
+length = 0.1
+
+[[fridge.links]]
+name = "PRP-RGP"
+type = "conduction"
+nodes = ["PRP", "RGP"]
+material = "OFHC Cu RRR100"
+area = 2.0e-5
+length = 0.1
+
+[[fridge.links]]
+name = "RGP-CFP"
+type = "conduction"
+nodes = ["RGP", "CFP"]
+material = "OFHC Cu RRR100"
+area = 2.0e-5
+length = 0.1
+
+[[fridge.links]]
+name = "CFP-STP"
+type = "conduction"
+nodes = ["CFP", "STP"]
+material = "OFHC Cu RRR100"
+area = 2.0e-5
+length = 0.1
+
+[[fridge.links]]
+name = "STP-ICP"
+type = "conduction"
+nodes = ["STP", "ICP"]
+material = "OFHC Cu RRR100"
+area = 2.0e-5
+length = 0.1
+
+[[fridge.links]]
+name = "ICP-MXP"
+type = "conduction"
+nodes = ["ICP", "MXP"]
+material = "OFHC Cu RRR100"
+area = 2.0e-5
+length = 0.1
+
+[[fridge.links]]
+name = "MXP-DHX"
+type = "conduction"
+nodes = ["MXP", "DHX"]
+material = "OFHC Cu RRR100"
+area = 2.0e-5
+length = 0.1
+
+[[fridge.links]]
+name = "Boost"
+type = "conduction"
+nodes = ["Bath", "CFP"]
+material = "OFHC Cu RRR100"
+area = 2.0e-5
+length = 0.1
+
+[[procedure.phases]]
+name = "slow"
+disable = ["Boost"]
+until = { condition = "gas_pushing_begins", node = "PRP", threshold = 100.0 }
+
+[[procedure.phases]]
+name = "fast"
+enable = ["Boost"]
+
+[procedure.until]
+condition = "condensing_begins"
+node = "DHX"
+threshold = 280.0
+
+[simulation]
+solver = "Radau"
+max_time = 240000.0
+save_every = 1800.0
+rtol = 1.0e-6
+atol = 1.0e-8
+initial_temperature = [295.0, 295.0, 295.0, 295.0, 295.0, 295.0, 295.0, 3.0]
+fixed_boundary_nodes = ["Bath"]

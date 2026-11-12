@@ -1,0 +1,33 @@
+[meta]
+experiment = "Two copper nodes, stopping when B reaches 10 K"
+
+[[fridge.nodes]]
+name = "A"
+composition = [["OFHC Cu RRR100", 1.0]]
+
+[[fridge.nodes]]
+name = "B"
+composition = [["OFHC Cu RRR100", 1.0]]
+
+[[fridge.links]]
+name = "A-B"
+type = "conduction"
+nodes = ["A", "B"]
+material = "OFHC Cu RRR100"
+area = 2.0e-5
+length = 0.1
+
+[[procedure.phases]]
+name = "cooldown"
+
+[procedure.until]
+condition = "condensing_begins"
+node = "B"
+threshold = 10.0
+
+[simulation]
+solver = "Radau"
+max_time = 100.0
+save_every = 10.0
+initial_temperature = [295.0, 295.0]
+fixed_boundary_nodes = []
