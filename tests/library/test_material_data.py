@@ -68,17 +68,20 @@ def test_copper_specific_heat_agrees_with_measured_reference_within_fit_error(te
     np.testing.assert_allclose(material.specific_heat(np.array([temperature])), [expected], rtol=tolerance)
 
 
-def test_copper_is_valid_from_4_to_300_kelvin(recwarn):
+def test_copper_is_valid_from_2_to_300_kelvin(recwarn):
     material = load_material("OFHC Cu RRR100")
 
-    # NIST gives both fits from 4 K to 300 K; evaluation at the range ends does not warn, and beyond them it does.
-    material.specific_heat(np.array([4.0, 300.0]))
-    material.thermal_conductivity(np.array([4.0, 300.0]))
+    material.specific_heat(np.array([2.0, 3.0, 4.0, 300.0]))
+    material.thermal_conductivity(np.array([2.0, 3.0, 4.0, 300.0]))
     assert not recwarn.list
 
-    with pytest.warns(RuntimeWarning, match=r"OFHC Cu RRR100.*specific_heat.*below.*4.*300"):
-        material.specific_heat(np.array([3.9]))
-    with pytest.warns(RuntimeWarning, match=r"OFHC Cu RRR100.*thermal_conductivity.*above.*4.*300"):
+    with pytest.warns(RuntimeWarning, match=r"OFHC Cu RRR100.*specific_heat.*below.*2.*300"):
+        material.specific_heat(np.array([1.9]))
+    with pytest.warns(RuntimeWarning, match=r"OFHC Cu RRR100.*thermal_conductivity.*below.*2.*300"):
+        material.thermal_conductivity(np.array([1.9]))
+    with pytest.warns(RuntimeWarning, match=r"OFHC Cu RRR100.*specific_heat.*above.*2.*300"):
+        material.specific_heat(np.array([301.0]))
+    with pytest.warns(RuntimeWarning, match=r"OFHC Cu RRR100.*thermal_conductivity.*above.*2.*300"):
         material.thermal_conductivity(np.array([301.0]))
 
 
@@ -119,20 +122,38 @@ def test_stainless_steel_conductivity_integral_agrees_with_independent_compilati
     assert integral == pytest.approx(expected, rel=0.15)
 
 
-def test_stainless_steel_specific_heat_is_valid_from_4_and_conductivity_from_1_to_300_kelvin(recwarn):
+def test_stainless_steel_specific_heat_is_valid_from_2_and_conductivity_from_1_to_300_kelvin(recwarn):
     material = load_material("304 SS")
 
-    # NIST gives the specific heat equation from 4 K to 300 K and the conductivity equation from 1 K to 300 K.
-    material.specific_heat(np.array([4.0, 300.0]))
+    material.specific_heat(np.array([2.0, 3.0, 4.0, 300.0]))
     material.thermal_conductivity(np.array([1.0, 300.0]))
     assert not recwarn.list
 
-    with pytest.warns(RuntimeWarning, match=r"304 SS.*specific_heat.*below.*4.*300"):
-        material.specific_heat(np.array([3.9]))
+    with pytest.warns(RuntimeWarning, match=r"304 SS.*specific_heat.*below.*2.*300"):
+        material.specific_heat(np.array([1.9]))
+    with pytest.warns(RuntimeWarning, match=r"304 SS.*specific_heat.*above.*2.*300"):
+        material.specific_heat(np.array([301.0]))
     with pytest.warns(RuntimeWarning, match=r"304 SS.*thermal_conductivity.*below.*1.*300"):
         material.thermal_conductivity(np.array([0.9]))
     with pytest.warns(RuntimeWarning, match=r"304 SS.*thermal_conductivity.*above.*1.*300"):
         material.thermal_conductivity(np.array([301.0]))
+
+
+@pytest.mark.parametrize(
+    ("name", "property_name", "expected"),
+    [
+        # Furukawa, Saba and Reilly (1968), Table 2: J/(mol K), converted to J/(kg K).
+        ("OFHC Cu RRR100", "specific_heat", [0.00177 / _COPPER_MOLAR_MASS, 0.00337 / _COPPER_MOLAR_MASS]),
+        # Hust and Lankford (1984), Table 2.4.1: RRR100 copper, in W/(m K).
+        ("OFHC Cu RRR100", "thermal_conductivity", [312.0, 468.0]),
+        # Ho, King and Fickett (1978), Table 2: AISI 304, in J/(kg K).
+        ("304 SS", "specific_heat", [0.936, 1.41]),
+    ],
+)
+def test_low_temperature_properties_match_sourced_points(name, property_name, expected):
+    material = load_material(name)
+
+    np.testing.assert_allclose(getattr(material, property_name)(np.array([2.0, 3.0])), expected, rtol=1e-12)
 
 
 def test_aluminum_specific_heat_matches_nist_fit():
