@@ -1,0 +1,22 @@
+name = "G10"
+density = 1800.0
+source = "Boedeker, G-10 FR-4 Glass Epoxy Laminate Natural, typical properties"
+
+# G10-CR approximation; specific heat in J/(kg K).
+[specific_heat]
+form = "log_poly"
+coefficients = [-2.4083, 7.6006, -8.2982, 7.3301, -4.2386, 1.4294, -0.24396, 0.015236, 0.0]
+range = [4.0, 300.0]
+source = "NIST Cryogenic Material Properties, G-10 CR Fiberglass Epoxy"
+
+# Warp direction, along the laminate; conductivity in W/(m K).
+[thermal_conductivity]
+form = "log_poly"
+coefficients = [-2.64827, 8.80228, -24.8998, 41.1625, -39.8754, 23.1778, -7.95635, 1.48806, -0.11701]
+range = [4.0, 300.0]
+source = "NIST Cryogenic Material Properties, G-10 CR Fiberglass Epoxy, warp direction"
+
+[thermal_conductivity.low_temperature]
+join_temperature = 12.0
+table = [[4.0, 0.0761], [5.0, 0.0914], [6.0, 0.104], [8.0, 0.126], [10.0, 0.143]]
+source = "NBSIR 79-1609, Table 3, G-10CR warp thermal conductivity"
