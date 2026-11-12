@@ -17,6 +17,7 @@ def config_path():
     """Return the configuration path for interface tests."""
     return Path(__file__).parent / "fixtures" / "config_for_interface_tests.toml"
 
+
 @pytest.fixture
 def result(config_path):
     """Return the simulation result for the interface test configuration."""
@@ -122,6 +123,7 @@ def test_result_object_contract(result):
 
     for name, value in result.model.meta.items():
         assert data.attrs[name] == value
+
 
 def test_saved_data_roundtrips(result, tmp_path):
     """Verify that saving and loading preserves the result dataset exactly."""
