@@ -151,7 +151,8 @@ def run(system: str, directory: Path) -> dict[str, dict]:
     """Compares `directory`'s result with `system`'s measurements and legacy baseline.
 
     Reads `config.toml` and the `result.nc` it produced from `directory`, and writes `metrics.toml`, `graph.png`,
-    `temperature.png`, and `heat_flow.png` there.
+    `temperature.png`, and `heat_flow.png` there. The graph is drawn with `directory`'s `layout.toml`, which maps
+    each node name to its `[column, row]`, if there is one.
 
     Returns:
         The metrics.
@@ -177,8 +178,10 @@ def run(system: str, directory: Path) -> dict[str, dict]:
 
     with config.open("rb") as file:
         graph = load_fridge(tomllib.load(file)["fridge"])
+    layout_path = directory / "layout.toml"
+    layout = tomllib.loads(layout_path.read_text(encoding="utf-8")) if layout_path.exists() else None
     figures = {
-        "graph": plot_graph(graph).figure,
+        "graph": plot_graph(graph, layout),
         "temperature": plot_temperature(data, measured, legacy, metrics["condensing_time"]),
         "heat_flow": plot_heat_flows(data, list(measured.node.values)),
     }

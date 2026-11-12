@@ -1,6 +1,7 @@
 """Tests for drawing a Graph."""
 
 import dataclasses
+import itertools
 
 import matplotlib
 
@@ -9,8 +10,10 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
+from matplotlib.text import Text
 from numpy.typing import NDArray
 
+from pulse_tube_cooldown.config import load_link
 from pulse_tube_cooldown.core.types import EnergyBalanceTerms, Graph, Material, Node
 from pulse_tube_cooldown.plot.graph import plot_graph
 
@@ -38,145 +41,144 @@ class Bath(Strap):
     pass
 
 
-def _graph(*links) -> Graph:
-    nodes = tuple(Node(name, ((_TOY, 1.0),)) for name in ("PRP", "RGP", "CFP", "STP"))
-    return Graph(nodes=nodes, links=links)
+_LAYOUT = {
+    "Top": (0, 0),
+    "PRP": (0, 1),
+    "RGP": (0, 2),
+    "CFP": (0, 3),
+    "STP": (0, 4),
+    "PRP shield": (1, 1),
+    "STP shield": (1, 4),
+}
 
-
-@pytest.fixture
-def ax():
-    fig, ax = plt.subplots()
-    yield ax
-    plt.close(fig)
-
-
-def _text_position(ax, text):
-    (match,) = [artist for artist in ax.texts if artist.get_text() == text]
-    return np.array(match.get_position())
-
-
-def _edges(ax, link_name):
-    return [line for line in ax.get_lines() if line.get_gid() == link_name]
-
-
-def _ends(line):
-    xs, ys = line.get_xdata(), line.get_ydata()
-    return np.array([xs[0], ys[0]]), np.array([xs[-1], ys[-1]])
-
-
-def test_nodes_form_a_column_in_graph_order_first_on_top(ax):
-    plot_graph(_graph(), ax=ax)
-
-    positions = np.array([_text_position(ax, name) for name in ("PRP", "RGP", "CFP", "STP")])
-    np.testing.assert_allclose(positions[:, 0], positions[0, 0])
-    assert np.all(np.diff(positions[:, 1]) < 0.0)
-
-
-def test_labels_each_link_with_its_name_and_class_name(ax):
-    plot_graph(_graph(Strap("Rod", ("PRP", "RGP")), Bath("Gas", ("RGP", "CFP", "STP"))), ax=ax)
-
-    texts = [text.get_text() for text in ax.texts]
-    assert any("Rod" in text and "Strap" in text for text in texts)
-    assert any("Gas" in text and "Bath" in text for text in texts)
-
-
-def test_two_node_link_is_one_edge_between_its_nodes(ax):
-    plot_graph(_graph(Strap("Rod", ("PRP", "CFP"))), ax=ax)
-
-    (edge,) = _edges(ax, "Rod")
-    start, end = _ends(edge)
-    np.testing.assert_allclose(start, _text_position(ax, "PRP"))
-    np.testing.assert_allclose(end, _text_position(ax, "CFP"))
-
-
-def test_multi_node_link_joins_one_point_to_each_of_its_nodes(ax):
-    plot_graph(_graph(Bath("Gas", ("RGP", "CFP", "STP"))), ax=ax)
-
-    edges = _edges(ax, "Gas")
-    assert len(edges) == 3
-    ends = [_ends(edge) for edge in edges]
-    hubs = np.array([hub for hub, _ in ends])
-    np.testing.assert_allclose(hubs, [hubs[0]] * 3)
-    for (_, node_end), name in zip(ends, ("RGP", "CFP", "STP"), strict=True):
-        np.testing.assert_allclose(node_end, _text_position(ax, name))
-
-
-def test_single_node_link_is_an_edge_from_its_node_to_its_label(ax):
-    plot_graph(_graph(Strap("Heater", ("CFP",))), ax=ax)
-
-    (edge,) = _edges(ax, "Heater")
-    start, end = _ends(edge)
-    np.testing.assert_allclose(start, _text_position(ax, "CFP"))
-    np.testing.assert_allclose(end, _text_position(ax, "Heater\nStrap"))
-
-
-def test_parallel_links_are_drawn_apart(ax):
-    plot_graph(_graph(Strap("Rod", ("PRP", "RGP")), Bath("Glow", ("PRP", "RGP"))), ax=ax)
-
-    rod, glow = _text_position(ax, "Rod\nStrap"), _text_position(ax, "Glow\nBath")
-    assert not np.allclose(rod, glow)
-    (rod_edge,), (glow_edge,) = _edges(ax, "Rod"), _edges(ax, "Glow")
-    assert not np.allclose(rod_edge.get_xydata(), glow_edge.get_xydata())
-
-
-@pytest.mark.parametrize("link", [Strap("Rod", ("PRP", "RGP")), Strap("Heater", ("CFP",))])
-def test_lane_gap_is_in_points(ax, link):
-    distances = []
-    for lane_gap in (0.0, 36.0):
-        ax.clear()
-        plot_graph(_graph(link), ax=ax, lane_gap=lane_gap)
-        label = _text_position(ax, f"{link.name}\nStrap")
-        node = _text_position(ax, link.nodes[0])
-        distances.append(abs(label[0] - node[0]))
-
-    half_inch = 0.5 * ax.figure.dpi / ax.get_window_extent().width
-    assert distances[1] - distances[0] == pytest.approx(half_inch)
-
-
-class MultiLayerInsulationBlanket(Strap):
-    pass
-
-
-_CROWDED = (
-    Strap("PRP-RGP supports", ("PRP", "RGP")),
-    MultiLayerInsulationBlanket("PRP blanket with a long name", ("PRP", "RGP")),
-    Bath("PRP shield", ("RGP", "PRP")),
-    Strap("RGP-CFP supports", ("RGP", "CFP")),
-    Bath("RGP-STP switch", ("RGP", "STP")),
-    Bath("Exchange gas", ("PRP", "RGP", "CFP", "STP")),
-    Strap("Heater", ("STP",)),
-    Bath("Second heater", ("STP",)),
+_LINKS = (
+    Strap("Top supports", ("Top", "PRP")),
+    *(Strap(f"PRP-RGP strap with a long name {k}", ("PRP", "RGP")) for k in range(4)),
+    Bath("PRP-RGP bath", ("RGP", "PRP")),
+    *(Strap(f"RGP-CFP strap {k}", ("RGP", "CFP")) for k in range(3)),
+    Strap("CFP-STP strap", ("CFP", "STP")),
+    Strap("PRP-CFP bypass", ("PRP", "CFP")),
+    Strap("Top-STP suspension", ("Top", "STP")),
+    *(Strap(f"PRP shield strap {k}", ("PRP", "PRP shield")) for k in range(2)),
+    Strap("STP shield strap", ("STP", "STP shield")),
+    Bath("Shield radiation", ("STP shield", "PRP shield")),
+    Bath("Top-shield blanket", ("Top", "PRP shield")),
+    Bath("Gas", ("RGP", "CFP", "STP")),
 )
 
 
+def _graph(*links) -> Graph:
+    names = [name for name in _LAYOUT if any(name in link.nodes for link in links)]
+    nodes = [Node(name, ((_TOY, 1.0),)) for name in names]
+    nodes += [node for link in links for node in getattr(link, "internal_nodes", ())]
+    return Graph(nodes=tuple(nodes), links=links)
+
+
+@pytest.fixture(scope="module")
+def head():
+    return load_link(
+        {
+            "name": "Head",
+            "type": "pulse_tube_head",
+            "from_archetype": True,
+            "stages": ["PRP", "STP"],
+            "clamp": "RGP",
+            "contact_resistance": 1.0,
+            "warm_flange_temperature": 300.0,
+        }
+    )
+
+
 @pytest.fixture
-def crowded():
-    ax = plot_graph(_graph(*_CROWDED))
-    ax.figure.canvas.draw()
-    yield ax
-    plt.close(ax.figure)
+def crowded(head):
+    figure = plot_graph(_graph(*_LINKS, head), _LAYOUT)
+    figure.canvas.draw()
+    yield figure
+    plt.close(figure)
 
 
-def test_labels_do_not_overlap_however_long(crowded):
-    boxes = [text.get_bbox_patch().get_window_extent() for text in crowded.texts]
-    for i, first in enumerate(boxes):
-        for second in boxes[i + 1 :]:
-            assert not first.overlaps(second)
+def _texts(figure) -> list[Text]:
+    return [text for text in figure.findobj(Text) if text.get_visible() and text.get_text()]
 
 
-def test_no_edge_passes_behind_another_links_label(crowded):
-    for link in _CROWDED:
-        (label,) = [text for text in crowded.texts if text.get_text().startswith(f"{link.name}\n")]
-        box = label.get_bbox_patch().get_window_extent()
-        for line in crowded.get_lines():
-            if line.get_gid() not in {None, link.name}:
-                path = line.get_transform().transform_path(line.get_path())
-                assert not path.intersects_bbox(box, filled=False), (line.get_gid(), link.name)
+def _names(figure) -> set[str]:
+    return {text.get_text() for text in _texts(figure)}
 
 
-def test_draws_on_a_new_figure_without_axes():
-    ax = plot_graph(_graph(Strap("Rod", ("PRP", "RGP"))))
+def test_names_every_node_and_link(crowded, head):
+    names = _names(crowded)
+
+    assert set(_LAYOUT) <= names
+    assert {link.name for link in (*_LINKS, head)} <= names
+
+
+def test_internal_nodes_are_not_drawn_as_named_nodes(crowded, head):
+    assert not {node.name for node in head.internal_nodes} & _names(crowded)
+
+
+def test_texts_do_not_overlap(crowded):
+    renderer = crowded.canvas.get_renderer()
+    boxes = [text.get_window_extent(renderer) for text in _texts(crowded)]
+
+    for first, second in itertools.combinations(boxes, 2):
+        assert not first.overlaps(second)
+
+
+def test_link_texts_stay_clear_of_node_boxes(crowded):
+    renderer = crowded.canvas.get_renderer()
+    ax = crowded.axes[0]
+    boxes = [patch.get_window_extent(renderer) for patch in ax.patches if patch.get_gid() is None]
+    link_texts = [text for text in _texts(crowded) if text.get_text() not in _LAYOUT]
+
+    for text in link_texts:
+        extent = text.get_window_extent(renderer)
+        assert not any(extent.overlaps(box) for box in boxes), text.get_text()
+
+
+def test_figure_holds_every_text(crowded):
+    renderer = crowded.canvas.get_renderer()
+    frame = crowded.bbox
+
+    for text in _texts(crowded):
+        box = text.get_window_extent(renderer)
+        assert frame.x0 <= box.x0 and box.x1 <= frame.x1 and frame.y0 <= box.y0 and box.y1 <= frame.y1
+
+
+def test_regenerator_nodes_lie_between_the_boxes_of_their_ends(crowded, head):
+    renderer = crowded.canvas.get_renderer()
+    centers = {text.get_text(): text.get_window_extent(renderer) for text in _texts(crowded)}
+    boxes = {}
+    for patch in crowded.axes[0].patches:
+        extent = patch.get_window_extent(renderer)
+        for name in ("PRP", "RGP", "STP"):
+            center = centers[name]
+            if patch.get_gid() is None and extent.contains((center.x0 + center.x1) / 2, (center.y0 + center.y1) / 2):
+                boxes[name] = extent
+    segments = [
+        extent
+        for patch in crowded.axes[0].patches
+        if patch.get_gid() == head.name
+        and not any((extent := patch.get_window_extent(renderer)).overlaps(box) for box in boxes.values())
+    ]
+
+    above_stage_1 = [s for s in segments if s.y0 >= boxes["PRP"].y1]
+    above_clamp = [s for s in segments if boxes["RGP"].y1 <= s.y0 and s.y1 <= boxes["PRP"].y0]
+    below_clamp = [s for s in segments if boxes["STP"].y1 <= s.y0 and s.y1 <= boxes["RGP"].y0]
+    assert len(segments) == len(head.internal_nodes)
+    assert len(above_stage_1) == len(head.regenerator_1.nodes)
+    assert len(above_clamp) == head.memory_node
+    assert len(below_clamp) == len(head.regenerator_2.nodes) - head.memory_node
+
+
+def test_without_layout_nodes_form_a_column_in_graph_order():
+    graph = _graph(Strap("Rod", ("PRP", "RGP")), Strap("Bar", ("RGP", "CFP")))
+    figure = plot_graph(graph)
+    figure.canvas.draw()
     try:
-        assert len(_edges(ax, "Rod")) == 1
+        renderer = figure.canvas.get_renderer()
+        positions = {text.get_text(): text.get_window_extent(renderer) for text in _texts(figure)}
+        centers = np.array([[(positions[n].x0 + positions[n].x1) / 2, positions[n].y0] for n in ("PRP", "RGP", "CFP")])
+        np.testing.assert_allclose(centers[:, 0], centers[0, 0])
+        assert np.all(np.diff(centers[:, 1]) < 0.0)
     finally:
-        plt.close(ax.figure)
+        plt.close(figure)
