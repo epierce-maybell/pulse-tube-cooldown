@@ -3,12 +3,11 @@
 *Your job is to care deeply about the code. Treat design and architecture as fundamental to correctness, not optional polish. Prioritize clarity, simplicity, and maintainability. Make thoughtful decisions, build coherent abstractions, and leave the codebase better than you found it.*
 
 ## Start here
-1. Before writing code or proposing structure, read your task's entry in `TASKS.md`, the sections of `docs/DESIGN.md` it touches, and any applicable ADRs in `docs/adrs/`. Read `GLOSSARY.md` for shared terminology and follow its interaction rules. `CONTEXT.md` maps each work area to its specification, code, tests, and data. Read further when the work crosses into another area or raises a specific question. `CONTEXT.md` is navigation only; where it disagrees with those files, they are current.
+1. Before writing code or proposing structure, read your task's entry in `TASKS.md`, the sections of `docs/DESIGN.md` it touches, and any applicable ADRs in `docs/adrs/`. Read `GLOSSARY.md` for shared terminology and follow its interaction rules. `CONTEXT.md` maps each work area to its specification, code, tests, and data. Read further when the work crosses into another area or raises a specific question. `CONTEXT.md` is navigation only; where it disagrees with those files, they are current. 
 
 ## Design authority
 2. In general, only the human edits markdown files. Linting is allowed. Editing is allowed when given explicit permission.
-3. Recorded decisions can be challenged, not bypassed. If work on a task raises new information or if the logical, elegant approach would contradict DESIGN.md or an ADR, raise that as a discussion with the human.
-4. A decision made in chat is not finalized until it is recorded in a markdown file, but do not try to continually record every turn or statement. Before a handoff to a new session, state what is still unrecorded and supply the proposed text. ADRs are for significant or controversial decisions only.
+3. Recorded decisions can be challenged, not bypassed. If work on a task raises new information or if the logical, elegant approach would contradict DESIGN.md or an ADR, raise that as a discussion with the human. Only decisions that are consequential, non-obvious, and difficult to reverse are recorded in an ADR.
 
 ## Code
 5. An `__init__.py` holds only a docstring and re-exports. Definitions live in named modules, not `__init__.py` files. Names have no leading underscore; `__all__` lists the agreed public surface.
