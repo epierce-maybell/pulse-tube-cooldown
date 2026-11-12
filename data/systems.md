@@ -24,7 +24,19 @@ approximation and its assumptions.
 
 ## Gas-gap switches
 
-Supplied by the human. Each system has eleven switches: PRP–RGP 2 × N2, RGP–CFP 2 × N2, CFP–STP 3 × He-4, STP–ICP 2 × He-4, and ICP–MXP 2 × He-4. All use the same core (500-000182), outer core (500-000183), and shell (500-000185). Each gap is 0.5 mm wide with 40 cm^2 of facing area. The shell is 0.50 mm 304 SS sheet, 25.0 mm OD and 56.4 mm long, giving a 39 mm^2 conduction cross-section over a 70 mm developed length, and is its own conduction link. Switches are filled to 1 atm at room temperature and sealed with a crush tube. Each holds one 0.197 cm^3 charge of granulated coconut charcoal (part 200-000021), about 0.1 g at 0.5 g/cm^3.
+Supplied by the human. The model has eleven switch heat paths per system: PRP–RGP 2 × N2, RGP–CFP 2 × N2, CFP–STP 3 × He-4, STP–ICP 2 × He-4, and ICP–MXP 2 × He-4. All use the same core (500-000182), outer core (500-000183), and shell (500-000185). Each gap is 0.5 mm wide with 40 cm^2 of facing area. The shell is 0.50 mm 304 SS sheet, 25.0 mm OD and 56.4 mm long, giving a 39 mm^2 conduction cross-section over a 70 mm developed length, and is its own conduction link. Switches are filled to 1 atm at room temperature and sealed with a crush tube. Each core holds one 0.197 cm^3 charge of granulated coconut charcoal (part 200-000021), about 0.1 g at 0.5 g/cm^3.
+
+Charcoal thermalization locations, confirmed by Ethan Pierce on 2026-11-12:
+
+| Physical switch location | Model heat paths | Charcoal mounting plate |
+|---|---|---|
+| PRP–CFP double N2 | PRP–RGP and RGP–CFP | RGP |
+| CFP–STP He-4 | CFP–STP | STP |
+| STP–MXP double He-4 | STP–ICP and ICP–MXP | ICP |
+
+Each double switch contributes two heat paths sharing one sealed gas space and pressure, with both charcoal charges at the same mounting temperature. In the FP1 assembly STEP `910-000040, REV , RACK 1, 2PT, F2.0.step`, the axial passage through center part 500-000190 connects both gap plenums to the radial port and single fill tube 500-000191. Each of its two 500-000182 cores contains one charcoal charge, part 200-000021. All four FP1 doubles use this center geometry; the SN09 inventory identifies the same center part.
+
+The corrected run configurations use seven switch links for the eleven heat paths. A double has 6.0 cm^3 total gas volume and 0.2 g total charcoal, combining the existing estimates of 3.0 cm^3 and 0.1 g per half. Its two matching gaps receive equal shares of the gas volume.
 
 ## Surfaces
 
