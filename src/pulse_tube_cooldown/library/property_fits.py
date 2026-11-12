@@ -315,16 +315,18 @@ def make_fit(spec: Mapping[str, Any], label: str) -> PropertyFit:
 
 
 def warn_below(temperature: NDArray[np.float64], valid_range: Sequence[float], label: str, consequence: str) -> None:
-    """Warns, on behalf of the property's caller, for temperatures below the range."""
-    if np.any(temperature < valid_range[0]):
+    """Warns below the range, allowing a relative tolerance of sqrt(float64 epsilon)."""
+    lower = valid_range[0] * (1.0 - np.sqrt(np.finfo(np.float64).eps))
+    if np.any(temperature < lower):
         warnings.warn(
             f"{label} evaluated below {_range_text(valid_range)}; {consequence}.", RuntimeWarning, stacklevel=3
         )
 
 
 def warn_above(temperature: NDArray[np.float64], valid_range: Sequence[float], label: str, consequence: str) -> None:
-    """Warns, on behalf of the property's caller, for temperatures above the range."""
-    if np.any(temperature > valid_range[1]):
+    """Warns above the range, allowing a relative tolerance of sqrt(float64 epsilon)."""
+    upper = valid_range[1] * (1.0 + np.sqrt(np.finfo(np.float64).eps))
+    if np.any(temperature > upper):
         warnings.warn(
             f"{label} evaluated above {_range_text(valid_range)}; {consequence}.", RuntimeWarning, stacklevel=3
         )
