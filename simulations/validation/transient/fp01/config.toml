@@ -1,0 +1,689 @@
+[meta]
+experiment = "FP01 transient calibration"
+
+[fridge]
+source = "CAD 910-000040"
+
+[[fridge.nodes]]
+name = "Fixed boundary"
+composition = [["304 SS", 1.0]]
+
+[[fridge.nodes]]
+name = "PRP"
+composition = [["OFHC Cu RRR100", 16.867], ["304 SS", 0.021], ["G10", 0.086]]
+source = "BoM 910-000040"
+
+[[fridge.nodes]]
+name = "PRP shield"
+composition = [["Al 6063-T5", 7.178], ["Al 6061-T6", 2.336], ["OFHC Cu RRR100", 0.198]]
+source = "BoM 910-000040"
+
+[[fridge.nodes]]
+name = "RGP"
+composition = [["OFHC Cu RRR100", 11.158], ["304 SS", 0.042]]
+source = "BoM 910-000040"
+
+[[fridge.nodes]]
+name = "CFP"
+composition = [["OFHC Cu RRR100", 15.063], ["304 SS", 0.076], ["G10", 0.058]]
+source = "BoM 910-000040"
+
+[[fridge.nodes]]
+name = "CFP shield"
+composition = [["OFHC Cu RRR100", 23.764], ["Al 6061-T6", 0.044]]
+source = "BoM 910-000040"
+
+[[fridge.nodes]]
+name = "STP"
+composition = [["OFHC Cu RRR100", 12.412], ["304 SS", 0.369]]
+source = "BoM 910-000040"
+
+[[fridge.nodes]]
+name = "STP shield"
+composition = [["OFHC Cu RRR100", 19.296], ["Al 6061-T6", 0.044]]
+source = "BoM 910-000040"
+
+[[fridge.nodes]]
+name = "Upper CHX"
+composition = [["OFHC Cu RRR100", 0.145], ["304 SS", 0.067]]
+source = "BoM 910-000040"
+
+[[fridge.nodes]]
+name = "ICP"
+composition = [["OFHC Cu RRR100", 9.044], ["304 SS", 0.092]]
+source = "BoM 910-000040"
+
+[[fridge.nodes]]
+name = "Lower CHX"
+composition = [["OFHC Cu RRR100", 0.106], ["304 SS", 0.070]]
+source = "BoM 910-000040"
+
+[[fridge.nodes]]
+name = "DHX 1"
+composition = [["304 SS", 0.112], ["Silver", 0.043]]
+source = "BoM 910-000040"
+
+[[fridge.nodes]]
+name = "DHX 2"
+composition = [["304 SS", 0.112], ["Silver", 0.043]]
+source = "BoM 910-000040"
+
+[[fridge.nodes]]
+name = "DHX 3"
+composition = [["304 SS", 0.136], ["Silver", 0.084]]
+source = "BoM 910-000040"
+
+[[fridge.nodes]]
+name = "DHX 4"
+composition = [["304 SS", 0.136], ["Silver", 0.084]]
+source = "BoM 910-000040"
+
+[[fridge.nodes]]
+name = "DHX 5"
+composition = [["304 SS", 0.136], ["Silver", 0.084]]
+source = "BoM 910-000040"
+
+[[fridge.nodes]]
+name = "DHX 6"
+composition = [["304 SS", 0.136], ["Silver", 0.084]]
+source = "BoM 910-000040"
+
+[[fridge.nodes]]
+name = "MXP"
+composition = [["OFHC Cu RRR100", 11.253], ["304 SS", 0.065], ["G10", 0.096], ["Silver", 0.173]]
+source = "BoM 910-000040"
+
+[[fridge.nodes]]
+name = "MXP shield"
+composition = [["OFHC Cu RRR100", 12.140], ["Al 6061-T6", 0.044]]
+source = "BoM 910-000040"
+
+[[fridge.links]]
+name = "Head A"
+type = "pulse_tube_head"
+stages = ["PRP", "CFP"]
+clamp = "RGP"
+contact_resistance = 0.02
+warm_flange_temperature = 300.0
+data = "data/test_stand/s0028/calibration.toml"
+source = "data/test_stand/s0028/calibration.toml"
+
+[[fridge.links]]
+name = "Head B"
+type = "pulse_tube_head"
+stages = ["PRP", "CFP"]
+clamp = "RGP"
+contact_resistance = 0.02
+warm_flange_temperature = 300.0
+data = "data/test_stand/s0028/calibration.toml"
+source = "data/test_stand/s0028/calibration.toml"
+
+[[fridge.links]]
+name = "PRP shield panels"
+type = "conduction"
+nodes = ["PRP", "PRP shield"]
+material = "Al 6063-T5"
+area = 1.898e-03
+length = 0.5677
+source = "BoM 910-000040; data/fp1/geometry.csv"
+
+[[fridge.links]]
+name = "PRP shield brackets"
+type = "conduction"
+nodes = ["PRP", "PRP shield"]
+material = "Al 6061-T6"
+area = 6.176e-04
+length = 0.5677
+source = "BoM 910-000040; data/fp1/geometry.csv"
+
+[[fridge.links]]
+name = "CFP shield metal"
+type = "conduction"
+nodes = ["CFP", "CFP shield"]
+material = "OFHC Cu RRR100"
+area = 2.423e-03
+length = 0.4436
+source = "BoM 910-000040; data/fp1/geometry.csv"
+
+[[fridge.links]]
+name = "STP shield metal"
+type = "conduction"
+nodes = ["STP", "STP shield"]
+material = "OFHC Cu RRR100"
+area = 2.314e-03
+length = 0.3772
+source = "BoM 910-000040; data/fp1/geometry.csv"
+
+[[fridge.links]]
+name = "MXP shield metal"
+type = "conduction"
+nodes = ["MXP", "MXP shield"]
+material = "OFHC Cu RRR100"
+area = 2.341e-03
+length = 0.2345
+source = "BoM 910-000040; data/fp1/geometry.csv"
+
+[[fridge.links]]
+name = "PRP-RGP N2 switch 1"
+type = "gas_gap_switch"
+nodes = ["PRP", "RGP"]
+gas = "N2"
+fill_pressure = 101325.0
+fill_temperature = 293.15
+gas_volume = 3.0e-6
+gap = 5.0e-4
+area = 4.0e-3
+charcoal_mass = 1.0e-4
+source = "data/fp1/geometry.csv"
+
+[[fridge.links]]
+name = "PRP-RGP N2 switch 2"
+type = "gas_gap_switch"
+nodes = ["PRP", "RGP"]
+gas = "N2"
+fill_pressure = 101325.0
+fill_temperature = 293.15
+gas_volume = 3.0e-6
+gap = 5.0e-4
+area = 4.0e-3
+charcoal_mass = 1.0e-4
+source = "data/fp1/geometry.csv"
+
+[[fridge.links]]
+name = "RGP-CFP N2 switch 1"
+type = "gas_gap_switch"
+nodes = ["RGP", "CFP"]
+gas = "N2"
+fill_pressure = 101325.0
+fill_temperature = 293.15
+gas_volume = 3.0e-6
+gap = 5.0e-4
+area = 4.0e-3
+charcoal_mass = 1.0e-4
+source = "data/fp1/geometry.csv"
+
+[[fridge.links]]
+name = "RGP-CFP N2 switch 2"
+type = "gas_gap_switch"
+nodes = ["RGP", "CFP"]
+gas = "N2"
+fill_pressure = 101325.0
+fill_temperature = 293.15
+gas_volume = 3.0e-6
+gap = 5.0e-4
+area = 4.0e-3
+charcoal_mass = 1.0e-4
+source = "data/fp1/geometry.csv"
+
+[[fridge.links]]
+name = "CFP-STP He switch 1"
+type = "gas_gap_switch"
+nodes = ["CFP", "STP"]
+gas = "He-4"
+fill_pressure = 101325.0
+fill_temperature = 293.15
+gas_volume = 3.0e-6
+gap = 5.0e-4
+area = 4.0e-3
+charcoal_mass = 1.0e-4
+source = "data/fp1/geometry.csv"
+
+[[fridge.links]]
+name = "CFP-STP He switch 2"
+type = "gas_gap_switch"
+nodes = ["CFP", "STP"]
+gas = "He-4"
+fill_pressure = 101325.0
+fill_temperature = 293.15
+gas_volume = 3.0e-6
+gap = 5.0e-4
+area = 4.0e-3
+charcoal_mass = 1.0e-4
+source = "data/fp1/geometry.csv"
+
+[[fridge.links]]
+name = "CFP-STP He switch 3"
+type = "gas_gap_switch"
+nodes = ["CFP", "STP"]
+gas = "He-4"
+fill_pressure = 101325.0
+fill_temperature = 293.15
+gas_volume = 3.0e-6
+gap = 5.0e-4
+area = 4.0e-3
+charcoal_mass = 1.0e-4
+source = "data/fp1/geometry.csv"
+
+[[fridge.links]]
+name = "STP-ICP He switch 1"
+type = "gas_gap_switch"
+nodes = ["STP", "ICP"]
+gas = "He-4"
+fill_pressure = 101325.0
+fill_temperature = 293.15
+gas_volume = 3.0e-6
+gap = 5.0e-4
+area = 4.0e-3
+charcoal_mass = 1.0e-4
+source = "data/fp1/geometry.csv"
+
+[[fridge.links]]
+name = "STP-ICP He switch 2"
+type = "gas_gap_switch"
+nodes = ["STP", "ICP"]
+gas = "He-4"
+fill_pressure = 101325.0
+fill_temperature = 293.15
+gas_volume = 3.0e-6
+gap = 5.0e-4
+area = 4.0e-3
+charcoal_mass = 1.0e-4
+source = "data/fp1/geometry.csv"
+
+[[fridge.links]]
+name = "ICP-MXP He switch 1"
+type = "gas_gap_switch"
+nodes = ["ICP", "MXP"]
+gas = "He-4"
+fill_pressure = 101325.0
+fill_temperature = 293.15
+gas_volume = 3.0e-6
+gap = 5.0e-4
+area = 4.0e-3
+charcoal_mass = 1.0e-4
+source = "data/fp1/geometry.csv"
+
+[[fridge.links]]
+name = "ICP-MXP He switch 2"
+type = "gas_gap_switch"
+nodes = ["ICP", "MXP"]
+gas = "He-4"
+fill_pressure = 101325.0
+fill_temperature = 293.15
+gas_volume = 3.0e-6
+gap = 5.0e-4
+area = 4.0e-3
+charcoal_mass = 1.0e-4
+source = "data/fp1/geometry.csv"
+
+[[fridge.links]]
+name = "4 upper G10 supports"
+type = "conduction"
+nodes = ["Fixed boundary", "PRP"]
+material = "G10"
+area = 4.180e-04
+length = 0.1143
+source = "BoM 910-000040; data/fp1/geometry.csv"
+
+[[fridge.links]]
+name = "4 cold-foot supports, upper"
+type = "conduction"
+nodes = ["PRP", "RGP"]
+material = "G10"
+area = 1.145e-04
+length = 0.1192
+source = "BoM 910-000040; data/fp1/geometry.csv"
+
+[[fridge.links]]
+name = "4 cold-foot supports, lower"
+type = "conduction"
+nodes = ["RGP", "CFP"]
+material = "G10"
+area = 1.145e-04
+length = 0.1528
+source = "BoM 910-000040; data/fp1/geometry.csv"
+
+[[fridge.links]]
+name = "3 suspension paths"
+type = "conduction"
+nodes = ["Fixed boundary", "STP"]
+material = "G10"
+area = 2.356e-04
+length = 0.5540
+source = "BoM 910-000040; data/fp1/geometry.csv"
+
+[[fridge.links]]
+name = "6 mixing supports, upper"
+type = "conduction"
+nodes = ["STP", "ICP"]
+material = "G10"
+area = 1.629e-04
+length = 0.1594
+source = "BoM 910-000040; data/fp1/geometry.csv"
+
+[[fridge.links]]
+name = "6 mixing supports, lower"
+type = "conduction"
+nodes = ["ICP", "MXP"]
+material = "G10"
+area = 1.629e-04
+length = 0.1584
+source = "BoM 910-000040; data/fp1/geometry.csv"
+
+[[fridge.links]]
+name = "2 PRP-RGP switch shells"
+type = "conduction"
+nodes = ["PRP", "RGP"]
+material = "304 SS"
+area = 7.80000000e-5
+length = 0.070
+
+[[fridge.links]]
+name = "2 RGP-CFP switch shells"
+type = "conduction"
+nodes = ["RGP", "CFP"]
+material = "304 SS"
+area = 7.80000000e-5
+length = 0.070
+
+[[fridge.links]]
+name = "3 CFP-STP switch shells"
+type = "conduction"
+nodes = ["CFP", "STP"]
+material = "304 SS"
+area = 1.17000000e-4
+length = 0.070
+
+[[fridge.links]]
+name = "2 STP-ICP switch shells"
+type = "conduction"
+nodes = ["STP", "ICP"]
+material = "304 SS"
+area = 7.80000000e-5
+length = 0.070
+
+[[fridge.links]]
+name = "2 ICP-MXP switch shells"
+type = "conduction"
+nodes = ["ICP", "MXP"]
+material = "304 SS"
+area = 7.80000000e-5
+length = 0.070
+
+[[fridge.links]]
+name = "Vacuum-can MLI lining"
+type = "multi_layer_insulation"
+nodes = ["PRP shield", "Fixed boundary"]
+area = 3.22
+layers = 15
+layer_density = 2500.0
+spacer_coefficient = 4.92e-13
+layer_density_exponent = 2.63
+radiation_coefficient = 5.39e-10
+emissivity = 0.031
+source = "NASA CR-134477; ../pulse_tube_cooldown_simulation ptc_systems.json"
+
+[[fridge.links]]
+name = "PRP-CFP shield radiation"
+type = "radiation"
+nodes = ["CFP shield", "PRP shield"]
+area = [2.126, 2.862]
+surface = ["Gold-plated Cu", "Machined Al"]
+source = "data/fp1/geometry.csv"
+
+[[fridge.links]]
+name = "CFP-STP shield radiation"
+type = "radiation"
+nodes = ["STP shield", "CFP shield"]
+area = [1.658, 2.126]
+surface = ["Gold-plated Cu", "Gold-plated Cu"]
+source = "data/fp1/geometry.csv"
+
+[[fridge.links]]
+name = "STP-MXP shield radiation"
+type = "radiation"
+nodes = ["MXP shield", "STP shield"]
+area = [0.9942, 1.658]
+surface = ["Gold-plated Cu", "Gold-plated Cu"]
+source = "data/fp1/geometry.csv"
+
+[[fridge.links]]
+name = "Top plate-PRP radiation"
+type = "radiation"
+nodes = ["PRP", "Fixed boundary"]
+area = [0.22, 0.22]
+surface = ["Gold-plated Cu", "Machined Al"]
+source = "data/fp1/geometry.csv"
+
+[[fridge.links]]
+name = "PRP-RGP face radiation"
+type = "radiation"
+nodes = ["RGP", "PRP"]
+area = [0.22, 0.22]
+surface = ["Gold-plated Cu", "Gold-plated Cu"]
+source = "data/fp1/geometry.csv"
+
+[[fridge.links]]
+name = "RGP-CFP face radiation"
+type = "radiation"
+nodes = ["CFP", "RGP"]
+area = [0.22, 0.22]
+surface = ["Gold-plated Cu", "Gold-plated Cu"]
+source = "data/fp1/geometry.csv"
+
+[[fridge.links]]
+name = "CFP-STP face radiation"
+type = "radiation"
+nodes = ["STP", "CFP"]
+area = [0.1928, 0.1928]
+surface = ["Gold-plated Cu", "Gold-plated Cu"]
+source = "data/fp1/geometry.csv"
+
+[[fridge.links]]
+name = "STP-ICP face radiation"
+type = "radiation"
+nodes = ["ICP", "STP"]
+area = [0.159, 0.159]
+surface = ["Gold-plated Cu", "Gold-plated Cu"]
+source = "data/fp1/geometry.csv"
+
+[[fridge.links]]
+name = "ICP-MXP face radiation"
+type = "radiation"
+nodes = ["MXP", "ICP"]
+area = [0.159, 0.159]
+surface = ["Gold-plated Cu", "Gold-plated Cu"]
+source = "data/fp1/geometry.csv"
+
+[[fridge.links]]
+name = "MXP-bottom shield radiation"
+type = "radiation"
+nodes = ["MXP", "MXP shield"]
+area = [0.1346, 0.1346]
+surface = ["Gold-plated Cu", "Gold-plated Cu"]
+source = "data/fp1/geometry.csv"
+
+[[fridge.links]]
+name = "Still-upper CHX tubing"
+type = "conduction"
+nodes = ["STP", "Upper CHX"]
+material = "304 SS"
+area = 6.593e-06
+length = 0.54
+source = "data/fp1/geometry.csv"
+
+[[fridge.links]]
+name = "Upper CHX-ICP concentrated tubing"
+type = "conduction"
+nodes = ["Upper CHX", "ICP"]
+material = "304 SS"
+area = 6.593e-06
+length = 0.54
+source = "data/fp1/geometry.csv"
+
+[[fridge.links]]
+name = "Upper-lower CHX dilute tubing"
+type = "conduction"
+nodes = ["Upper CHX", "Lower CHX"]
+material = "304 SS"
+area = 6.593e-06
+length = 1.006
+source = "data/fp1/geometry.csv"
+
+[[fridge.links]]
+name = "ICP-lower CHX concentrated tubing"
+type = "conduction"
+nodes = ["ICP", "Lower CHX"]
+material = "304 SS"
+area = 6.593e-06
+length = 0.4665
+source = "data/fp1/geometry.csv"
+
+[[fridge.links]]
+name = "Lower CHX-DHX 1 tubing"
+type = "conduction"
+nodes = ["Lower CHX", "DHX 1"]
+material = "304 SS"
+area = 6.593e-06
+length = 0.4665
+source = "data/fp1/geometry.csv"
+
+[[fridge.links]]
+name = "DHX 1-2 tubing"
+type = "conduction"
+nodes = ["DHX 1", "DHX 2"]
+material = "304 SS"
+area = 9.765e-06
+length = 0.0081
+source = "CAD 910-000040"
+
+[[fridge.links]]
+name = "DHX 2-3 tubing"
+type = "conduction"
+nodes = ["DHX 2", "DHX 3"]
+material = "304 SS"
+area = 9.765e-06
+length = 0.0107
+source = "CAD 910-000040"
+
+[[fridge.links]]
+name = "DHX 3-4 tubing"
+type = "conduction"
+nodes = ["DHX 3", "DHX 4"]
+material = "304 SS"
+area = 9.765e-06
+length = 0.0081
+source = "CAD 910-000040"
+
+[[fridge.links]]
+name = "DHX 4-5 tubing"
+type = "conduction"
+nodes = ["DHX 4", "DHX 5"]
+material = "304 SS"
+area = 9.765e-06
+length = 0.0106
+source = "CAD 910-000040"
+
+[[fridge.links]]
+name = "DHX 5-6 tubing"
+type = "conduction"
+nodes = ["DHX 5", "DHX 6"]
+material = "304 SS"
+area = 9.765e-06
+length = 0.0081
+source = "CAD 910-000040"
+
+[[fridge.links]]
+name = "DHX 6-MXP tubing"
+type = "conduction"
+nodes = ["DHX 6", "MXP"]
+material = "304 SS"
+area = 9.765e-06
+length = 0.014
+source = "CAD 910-000040"
+
+[[fridge.links]]
+name = "Shared exchange gas"
+type = "exchange_gas"
+nodes = ["Fixed boundary", "PRP", "PRP shield", "RGP", "CFP", "CFP shield", "STP", "STP shield", "Upper CHX", "ICP", "Lower CHX", "DHX 1", "DHX 2", "DHX 3", "DHX 4", "DHX 5", "DHX 6", "MXP", "MXP shield"]
+gas = "N2"
+pressure_node = "CFP"
+pressure_coefficients = [3.16030871e-7, -1.32989499e-4, 1.90126130e-2, -7.78545808e-1]
+surfaces = [
+    { nodes = ["Fixed boundary", "PRP shield"], area = 0.5927, gap = 0.0425 },
+    { nodes = ["Fixed boundary", "PRP shield"], area = 0.5927, gap = 0.0427 },
+    { nodes = ["Fixed boundary", "PRP shield"], area = 0.7283, gap = 0.0388 },
+    { nodes = ["Fixed boundary", "PRP shield"], area = 0.7283, gap = 0.0652 },
+    { nodes = ["Fixed boundary", "PRP shield"], area = 0.22, gap = 0.0331 },
+    { nodes = ["Fixed boundary", "PRP"], area = 0.22, gap = 0.1143 },
+    { nodes = ["PRP", "RGP"], area = 0.22, gap = 0.1192 },
+    { nodes = ["RGP", "CFP"], area = 0.22, gap = 0.1528 },
+    { nodes = ["CFP", "STP"], area = 0.1928, gap = 0.1392 },
+    { nodes = ["STP", "ICP"], area = 0.159, gap = 0.1594 },
+    { nodes = ["ICP", "MXP"], area = 0.159, gap = 0.1584 },
+    { nodes = ["PRP shield", "CFP shield"], area = 0.8621, gap = 0.0152 },
+    { nodes = ["PRP shield", "CFP shield"], area = 1.072, gap = 0.01465 },
+    { nodes = ["PRP shield", "CFP shield"], area = 0.1928, gap = 0.0152 },
+    { nodes = ["CFP shield", "STP shield"], area = 0.6448, gap = 0.01525 },
+    { nodes = ["CFP shield", "STP shield"], area = 0.8544, gap = 0.0237 },
+    { nodes = ["CFP shield", "STP shield"], area = 0.159, gap = 0.0152 },
+    { nodes = ["STP shield", "MXP shield"], area = 0.3637, gap = 0.01525 },
+    { nodes = ["STP shield", "MXP shield"], area = 0.4959, gap = 0.0161 },
+    { nodes = ["STP shield", "MXP shield"], area = 0.1346, gap = 0.0152 },
+    { nodes = ["Upper CHX", "STP shield"], area = 0.02155, gap = 0.003175 },
+    { nodes = ["Lower CHX", "STP shield"], area = 0.01861, gap = 0.003175 },
+    { nodes = ["DHX 1", "STP shield"], area = 0.01201, gap = 0.03753 },
+    { nodes = ["DHX 2", "STP shield"], area = 0.01201, gap = 0.03753 },
+    { nodes = ["DHX 3", "STP shield"], area = 0.01379, gap = 0.03753 },
+    { nodes = ["DHX 4", "STP shield"], area = 0.01379, gap = 0.03753 },
+    { nodes = ["DHX 5", "STP shield"], area = 0.01379, gap = 0.03753 },
+    { nodes = ["DHX 6", "STP shield"], area = 0.01379, gap = 0.03753 },
+]
+source = "../../dev/cc_routines/routines/subroutines/monitor_ovc.yaml; data/fp1/geometry.csv; CAD 910-000040"
+
+[[fridge.links]]
+name = "Gas pushing"
+type = "gas_pushing"
+nodes = ["Fixed boundary", "PRP", "CFP", "STP", "Upper CHX", "Lower CHX", "DHX 1", "DHX 2", "DHX 3", "DHX 4", "DHX 5", "DHX 6", "MXP"]
+volumes = [
+    { nodes = ["Fixed boundary", "PRP"], volume = 5.0e-5 },
+    { nodes = ["PRP", "CFP"], volume = 8.30e-5 },
+    { nodes = ["CFP", "STP"], volume = 2.40e-5 },
+    { nodes = ["STP"], volume = 8.88e-5 },
+    { nodes = ["Upper CHX"], volume = 2.71e-5 },
+    { nodes = ["Lower CHX"], volume = 2.42e-5 },
+    { nodes = ["DHX 1"], volume = 2.26e-5 },
+    { nodes = ["DHX 2"], volume = 2.26e-5 },
+    { nodes = ["DHX 3"], volume = 4.00e-5 },
+    { nodes = ["DHX 4"], volume = 4.00e-5 },
+    { nodes = ["DHX 5"], volume = 4.00e-5 },
+    { nodes = ["DHX 6"], volume = 4.00e-5 },
+    { nodes = ["MXP"], volume = 3.72e-5 },
+]
+warm_volume = 2.0e-3
+buffer_volume = 1.0e-3
+pump_speed = 5.0e-4
+flow_conductance = 1.0e-4
+fill_pressure = 82500.0
+wave_strength = 50000.0
+refill_pressure = 22500.0
+buffer_pressure_cap = 132500.0
+depressurization_time = 4.0
+source = "../../dev/cc_routines/routines/subroutines/gas_pushing.yaml; data/fp1/geometry.csv"
+
+[procedure]
+source = "../../dev/cc_routines/routines/subroutines/"
+until = { condition = "condensing_begins", node = "MXP", threshold = 14.0 }
+
+[[procedure.phases]]
+name = "Exchange gas"
+disable = ["Gas pushing"]
+until = { condition = "gas_pushing_begins", node = "CFP", threshold = 75.0 }
+
+[[procedure.phases]]
+name = "Evacuated"
+disable = ["Shared exchange gas"]
+until = { condition = "gas_pushing_begins", node = "CFP", threshold = 70.0 }
+
+[[procedure.phases]]
+name = "Gas pushing"
+enable = ["Gas pushing"]
+
+[simulation]
+solver = "Radau"
+max_time = 259200.0
+save_every = 600.0
+rtol = 1.0e-6
+atol = 1.0e-6
+initial_temperature = 300.0
+fixed_boundary_nodes = ["Fixed boundary"]
