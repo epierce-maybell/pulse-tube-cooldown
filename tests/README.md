@@ -4,6 +4,7 @@
 2. Unit tests should enforce behavior, not implementation. 
 3. The agent that writes tests for a unit of code should not be the agent that writes the code. While writing library code, agents should not modify tests.
 4. The test suite should remain economical. If it takes more than a few minutes to run, that is a sign that the tests have been designed poorly.
+5. Long full-simulation tests are marked `slow` and deselected by default. Run them with `uv run pytest -m slow` when the work affects a full simulation.
 
 
 # Writing Good Tests (from obra/superpowers)
