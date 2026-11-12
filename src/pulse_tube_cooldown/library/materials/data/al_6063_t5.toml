@@ -1,0 +1,17 @@
+name = "Al 6063-T5"
+density = 2700.0
+source = "Hydro, EN AW-6063 datasheet, Rev. 4, p. 2"
+
+# Specific heat in J/(kg K), approximated by Al 6061-T6.
+[specific_heat]
+form = "log_poly"
+coefficients = [46.6467, -314.292, 866.662, -1298.3, 1162.27, -637.795, 210.351, -38.3094, 2.96344]
+range = [4.0, 300.0]
+source = "NIST Cryogenic Material Properties, 6061-T6 Aluminum"
+
+# Thermal conductivity in W/(m K).
+[thermal_conductivity]
+form = "log_poly"
+coefficients = [22.401433, -141.13433, 394.95461, -601.15377, 547.83202, -305.99691, 102.38656, -18.810237, 1.4576882]
+range = [4.0, 295.0]
+source = "NIST Cryogenic Material Properties, 6063-T5 Aluminum"
