@@ -3,7 +3,37 @@
 import numpy as np
 import xarray as xr
 
-__all__ = ["log_temperature_residual"]
+__all__ = ["log_temperature_ratio", "log_temperature_residual"]
+
+
+def log_temperature_ratio(simulated: xr.DataArray, measured: xr.Dataset) -> xr.DataArray:
+    """Returns ln(T_simulated / T_measured) at each measured sample.
+
+    Args:
+        simulated: Temperature(time, node) in K with time in s since compressor start, covering the measured nodes.
+            Temperatures are interpolated linearly in log temperature at each measured sample.
+        measured: A temperature(time, node) dataset in K.
+
+    Returns:
+        The ratio(time, node) on the measured samples. It is NaN where the reading is NaN or the sample lies outside
+        the simulated time.
+    """
+    log_simulated = np.column_stack(
+        [
+            np.interp(
+                measured.time.values,
+                simulated.time.values,
+                np.log(simulated.sel(node=node).values),
+                left=np.nan,
+                right=np.nan,
+            )
+            for node in measured.node.values
+        ]
+    )
+    log_measured = np.log(measured.temperature.transpose("time", "node").values)
+    return xr.DataArray(
+        log_simulated - log_measured, coords={"time": measured.time, "node": measured.node}, dims=("time", "node")
+    )
 
 
 def log_temperature_residual(simulated: xr.DataArray, measured: xr.Dataset) -> tuple[float, dict[str, float]]:
@@ -22,12 +52,12 @@ def log_temperature_residual(simulated: xr.DataArray, measured: xr.Dataset) -> t
             f"Run ends at {float(simulated.time[-1])} s, before the window's {float(measured.time[-1])} s."
         )
 
-    log_ratios = {}
-    for node in measured.node.values[measured.scored.values]:
-        temperature = measured.temperature.sel(node=node).values
-        valid = ~np.isnan(temperature)
-        log_simulated = np.interp(measured.time.values[valid], simulated.time.values, np.log(simulated.sel(node=node)))
-        log_ratios[str(node)] = log_simulated - np.log(temperature[valid])
+    scored = measured.isel(node=measured.scored.values)
+    ratio = log_temperature_ratio(simulated, scored)
+    log_ratios = {
+        str(node): ratio.sel(node=node).values[~np.isnan(scored.temperature.sel(node=node).values)]
+        for node in scored.node.values
+    }
 
     def rms(values: np.ndarray) -> float:
         return float(np.sqrt(np.mean(values**2)))

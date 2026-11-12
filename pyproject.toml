@@ -12,7 +12,9 @@ dependencies = [
     "matplotlib>=3.11.2",
     "netcdf4>=1.7.5",
     "numpy>=2.5.4",
+    "plotly>=7.1.0",
     "scipy>=1.18.1",
+    "streamlit>=1.67.0",
     "tomli-w>=1.2.0",
     "xarray>=2026.9.0",
 ]
