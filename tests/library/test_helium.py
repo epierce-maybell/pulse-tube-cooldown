@@ -2,7 +2,7 @@
 
 import numpy as np
 import pytest
-from hepak.properties import density_TP, enthalpy_TP, entropy_TP
+from hepak.properties import density_TP, enthalpy_TP, entropy_TP, thermal_conductivity_TP
 from scipy.optimize import brentq
 
 from pulse_tube_cooldown.library.gases.helium import (
@@ -12,6 +12,8 @@ from pulse_tube_cooldown.library.gases.helium import (
     isentropic_density,
     isobaric_expansion_coefficient,
     isobaric_specific_heat,
+    properties,
+    thermal_conductivity,
 )
 
 _GAS_CONSTANT = 8.314462618  # J/(mol K)
@@ -122,3 +124,23 @@ def test_broadcasts_over_arrays(function):
     assert values.shape == (3, 2)
     assert values[1, 0] == pytest.approx(function(40.0, 0.8e6))
     assert np.all(np.isfinite(values))
+
+
+@pytest.mark.parametrize("pressure", [0.8e6, 1.7e6, 2.5e6])
+@pytest.mark.parametrize("temperature", [1.5, 2.5, 3.0])
+def test_thermal_conductivity_below_3p5_kelvin_holds_its_3p5_kelvin_value(temperature, pressure):
+    """Verify that conductivity below 3.5 K is positive and equals the value at 3.5 K at the same pressure."""
+    held = thermal_conductivity(3.5, pressure)
+
+    assert held > 0.0
+    assert thermal_conductivity(temperature, pressure) == pytest.approx(held, rel=1e-12)
+    assert properties(temperature, pressure).thermal_conductivity == pytest.approx(held, rel=1e-12)
+
+
+@pytest.mark.parametrize("pressure", [0.8e6, 2.5e6])
+def test_thermal_conductivity_above_3p5_kelvin_follows_hepak(pressure):
+    """Verify that conductivity above 3.5 K is HEPAK's at 10 K and 20 K."""
+    assert thermal_conductivity(10.0, pressure) == pytest.approx(thermal_conductivity_TP(10.0, pressure), rel=1e-12)
+    assert properties(20.0, pressure).thermal_conductivity == pytest.approx(
+        thermal_conductivity_TP(20.0, pressure), rel=1e-12
+    )
