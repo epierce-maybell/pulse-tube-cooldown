@@ -1,7 +1,9 @@
 """He-4 properties from HEPAK, evaluated elementwise over temperature and pressure.
 
 Each function takes temperature in K and pressure in Pa as arrays or scalars that broadcast together, and returns an
-array of their broadcast shape in SI units. HEPAK raises `HepakError` for a state it cannot evaluate.
+array of their broadcast shape in SI units. HEPAK raises `HepakError` for a state it cannot evaluate. HEPAK's thermal
+conductivity starts at `CONDUCTIVITY_MINIMUM_TEMPERATURE`; below it, conductivity takes its value there at the same
+pressure.
 """
 
 from dataclasses import dataclass
@@ -30,6 +32,8 @@ __all__ = [
     "properties",
     "thermal_conductivity",
 ]
+
+CONDUCTIVITY_MINIMUM_TEMPERATURE = 3.5
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -107,7 +111,7 @@ def isobaric_expansion_coefficient(temperature: ArrayLike, pressure: ArrayLike) 
 
 def thermal_conductivity(temperature: ArrayLike, pressure: ArrayLike) -> NDArray[np.float64]:
     """Thermal conductivity in W/(m K)."""
-    return _conductivity(temperature, pressure)
+    return _conductivity(np.maximum(temperature, CONDUCTIVITY_MINIMUM_TEMPERATURE), pressure)
 
 
 def properties(temperature: ArrayLike, pressure: ArrayLike) -> HeliumProperties:
@@ -120,11 +124,15 @@ def properties(temperature: ArrayLike, pressure: ArrayLike) -> HeliumProperties:
     def collect(key: str) -> NDArray[np.float64]:
         return np.array([state[key] for state in states]).reshape(temperature.shape)
 
+    conductivity = collect("thermal_conductivity")
+    below_range = temperature < CONDUCTIVITY_MINIMUM_TEMPERATURE
+    conductivity[below_range] = thermal_conductivity(CONDUCTIVITY_MINIMUM_TEMPERATURE, pressure[below_range])
+
     return HeliumProperties(
         density=collect("density"),
         isobaric_specific_heat=collect("cp"),
         isobaric_expansion_coefficient=collect("expansion_coefficient") / temperature,
         isothermal_compressibility=collect("isothermal_compressibility"),
         heat_capacity_ratio=collect("gamma"),
-        thermal_conductivity=collect("thermal_conductivity"),
+        thermal_conductivity=conductivity,
     )
