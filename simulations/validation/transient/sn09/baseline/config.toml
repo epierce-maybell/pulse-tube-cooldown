@@ -625,7 +625,7 @@ enable = ["Gas pushing"]
 
 [simulation]
 solver = "Radau"
-max_time = 259200.0
+max_time = 324000.0
 save_every = 600.0
 rtol = 1.0e-6
 atol = 1.0e-6

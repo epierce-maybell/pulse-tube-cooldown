@@ -1,15 +1,15 @@
 # Times in s since compressor start.
 [provenance]
-commit = "660a10ddeb5fc8d4e0b18de59ed3eb6200049668"
+commit = "f0a13ff2ea2c7a59d2234138185f185a0e6cb989"
 uncommitted_changes = true
 
 [condensing_time]
 measured = 222840.0
-model = nan
+model = 301975.2138374126
 legacy = 193654.40475033273
 
 [model]
-condensing_error = nan
+condensing_error = 79135.2138374126
 scoring_end = 222840.0
 rms = 1.661104862203402
 
