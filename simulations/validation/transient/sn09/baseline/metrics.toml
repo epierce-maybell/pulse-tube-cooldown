@@ -1,6 +1,6 @@
 # Times in s since compressor start.
 [provenance]
-commit = "888b70e4056e7629c3a673c2b68de97bf6ff072d"
+commit = "660a10ddeb5fc8d4e0b18de59ed3eb6200049668"
 uncommitted_changes = true
 
 [condensing_time]

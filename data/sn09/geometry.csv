@@ -6,9 +6,12 @@ stp_to_cfp_spacing,143.4,mm,"STEP export of CAD 910-000018, 2026-11-03",
 cfp_to_rgp_spacing,96.8,mm,"STEP export of CAD 910-000018, 2026-11-03",
 rgp_to_prp_spacing,119.1,mm,"STEP export of CAD 910-000018, 2026-11-03",
 prp_to_top_plate_spacing,139.7,mm,"STEP export of CAD 910-000018, 2026-11-03","PRP top to the underside of PLATE, VACUUM CHAMBER TOP"
-still_pumping_line_bore,19.05,mm,BoM 350-000055 and CAD 910-000018,0.75 in ID bellows above the still exit at z 1223-1254; the tube above it is not a solid in the export
-still_pumping_line_gas_volume_stp_to_prp,101,cm^3,derived,pi/4 x bore^2 x 355.8 mm from the still exit tube top (z 1216.6) to the PRP underside (z 1572.4); spans STP to PRP through CFP
-still_pumping_line_gas_volume_prp_to_top,47,cm^3,derived,pi/4 x bore^2 x 165.1 mm from the PRP top (z 1582.0) to the top plate top (z 1747.1)
+still_pumping_line_bore,19.05,mm,BoM 350-000055 and CAD 910-000018,0.75 in ID bellows above the still exit at z 1223-1254; head-integrated pumping passages are recorded separately
+pumping_gas_volume_warm_to_prp,0.000426499477059,m^3,"STEP export of CAD 910-000018, PULSE TUBE / PULSE TUBE STRIPPED",59 mm bore of upper pumping tube between CAD z 1611.797 and 1767.797 mm; exchanger baffle excluded
+pumping_gas_volume_prp,8.93074444034e-5,m^3,"STEP export of CAD 910-000018, PULSE TUBE / PULSE TUBE STRIPPED",connected stage-1 exchanger cavity between CAD z 1569.797 and 1611.797 mm; chamber and baffle solids subtracted; brazed fits closed with 0.03 mm boolean tolerance
+pumping_gas_volume_prp_to_cfp,0.000283117973747,m^3,"STEP export of CAD 910-000018, PULSE TUBE / PULSE TUBE STRIPPED",39 mm bore of lower pumping tube between CAD z 1332.797 and 1569.797 mm; exchanger cavities excluded
+pumping_gas_volume_cfp,3.47976197835e-5,m^3,"STEP export of CAD 910-000018, PULSE TUBE / PULSE TUBE STRIPPED",connected stage-2 exchanger cavity between CAD z 1295.977 and 1332.797 mm; flange chamber and baffle solids subtracted; brazed fits closed with 0.03 mm boolean tolerance
+pumping_gas_volume_cfp_to_stp,2.14645251268e-5,m^3,"STEP export of CAD 910-000018, still bellows and pumping inlet",bore-and-length estimate: 19.05 mm bore over 65.6082 mm from still exit to pumping-HX housing top plus 16 mm bore over 13.7504 mm to CFP inlet; bellows corrugations and internal tube displacement approximated; ends above existing STP gas volume
 still_gas_volume,172.0,cm^3,"STEP export of CAD 910-000018, 2026-11-03","cavity enclosed by CHAMBER, STILL (pocketed 120.9 x 61.0 x 33.0 mm block) and BASE, STILL with HX UPPER, STILL inside, including the exit bores of INNER and OUTER TUBE, STILL to z 1216.6; boolean within the chamber footprint"
 still_condensing_hx_gas_volume,1,cm^3,estimate,"HX LOWER, STILL is a 34 x 51 x 36 mm block below the chamber; channel volume not resolved"
 icp_hx_gas_volume,13.9,cm^3,"STEP export of CAD 910-000018, 2026-11-03","channels between BASE and INSERT, HX ICP PLATE with FITTING; boolean within the insert footprint 118.5 x 62.6 mm; at ICP"

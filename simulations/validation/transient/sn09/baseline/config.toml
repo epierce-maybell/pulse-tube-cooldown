@@ -578,9 +578,11 @@ name = "Gas pushing"
 type = "gas_pushing"
 nodes = ["Fixed boundary", "PRP", "CFP", "STP", "Upper CHX", "Lower CHX", "DHX 1", "DHX 2", "DHX 3", "DHX 4", "DHX 5", "DHX 6", "MXP"]
 volumes = [
-    { nodes = ["Fixed boundary", "PRP"], volume = 4.70e-5 },
-    { nodes = ["PRP", "CFP"], volume = 6.67e-5 },
-    { nodes = ["CFP", "STP"], volume = 3.43e-5 },
+    { nodes = ["Fixed boundary", "PRP"], volume = 0.000426499477059 },
+    { nodes = ["PRP"], volume = 8.93074444034e-5 },
+    { nodes = ["PRP", "CFP"], volume = 0.000283117973747 },
+    { nodes = ["CFP"], volume = 3.47976197835e-5 },
+    { nodes = ["CFP", "STP"], volume = 2.14645251268e-5 },
     { nodes = ["STP"], volume = 1.73e-4 },
     { nodes = ["Upper CHX"], volume = 2.02e-5 },
     { nodes = ["Lower CHX"], volume = 2.42e-5 },
@@ -601,7 +603,7 @@ wave_strength = 50000.0
 refill_pressure = 22500.0
 buffer_pressure_cap = 132500.0
 depressurization_time = 4.0
-source = "../../dev/cc_routines/routines/subroutines/gas_pushing.yaml; data/sn09/geometry.csv"
+source = "../../dev/cc_routines/routines/subroutines/gas_pushing.yaml; data/sn09/geometry.csv; CAD 910-000018, PULSE TUBE / PULSE TUBE STRIPPED"
 
 [procedure]
 source = "../../dev/cc_routines/routines/subroutines/"
