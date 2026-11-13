@@ -10,7 +10,7 @@ import xarray as xr
 
 from pulse_tube_cooldown import configure_model, simulate_cooldown
 from pulse_tube_cooldown.engine.steady_state import solve_steady_state
-from pulse_tube_cooldown.library.links.pulse_tube import (
+from pulse_tube_cooldown.library.links.pulse_tube.empirical import (
     HeadCalibration,
     HeadCoefficients,
     LoadMap,
@@ -88,7 +88,7 @@ def model(objectives):
                 "regenerate": "uv run pytest tests/acceptance/test_pulse_tube_fit.py",
             },
         ),
-        Path(__file__).parents[2] / "src/pulse_tube_cooldown/library/links/pulse_tube/data/archetype.toml",
+        Path(__file__).parents[2] / "src/pulse_tube_cooldown/library/links/pulse_tube/empirical/data/archetype.toml",
     )
     head = build_pulse_tube_head(
         fitted, graph, name="Head", stages=fitted.test_stand_stages, warm_flange_temperature=objectives.room_temperature

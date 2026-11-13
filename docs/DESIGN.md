@@ -117,7 +117,8 @@ Materials, gases, and surfaces have named library data files.
 Published source coefficients used to derive a library property live with that
 property's data. Head designs, with their source geometry and material filling,
 are packaged in `library/links/pulse_tube/data/heads/`.
-The archetypal head is the packaged `data/archetype.toml`, a PT1.5 on one
+The archetypal head is the packaged
+`library/links/pulse_tube/empirical/data/archetype.toml`, a PT1.5 on one
 compressor fitted to the mean one-compressor stand records. Select it with
 `from_archetype = true` or `HeadCalibration.from_archetype()`; regenerate it with
 `uv run pytest tests/acceptance/test_pulse_tube_fit.py`.

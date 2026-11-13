@@ -40,6 +40,7 @@ __all__ = [
 ]
 
 DATA_DIRECTORY = Path(__file__).parent / "data"
+DESIGN_DIRECTORY = Path(__file__).parents[1] / "data" / "heads"
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -248,9 +249,7 @@ class HeadCalibration:
         return read_head_calibration(DATA_DIRECTORY / "archetype.toml")
 
 
-def load_head_design(
-    name: str, /, *, directory: str | os.PathLike[str] = DATA_DIRECTORY / "heads"
-) -> HeadDesignParameters:
+def load_head_design(name: str, /, *, directory: str | os.PathLike[str] = DESIGN_DIRECTORY) -> HeadDesignParameters:
     """Loads a head design by name, such as "PT1.5", from a directory of design files.
 
     Raises:
@@ -339,7 +338,7 @@ def load_fit_parameters(path: str | os.PathLike[str] = DATA_DIRECTORY / "fit_par
 
 
 def read_head_calibration(
-    path: str | os.PathLike[str], /, *, designs: str | os.PathLike[str] = DATA_DIRECTORY / "heads"
+    path: str | os.PathLike[str], /, *, designs: str | os.PathLike[str] = DESIGN_DIRECTORY
 ) -> HeadCalibration:
     """Reads a calibration file, loading its design by name from `designs`."""
     table = tomllib.loads(Path(path).read_text(encoding="utf-8"))

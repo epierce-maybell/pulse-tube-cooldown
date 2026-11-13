@@ -16,9 +16,10 @@ bolted joints, radiation, MLI, gas-gap switches, exchange gas, and gas pushing.
 The adopted head formulation is recorded in
 [ADR-06](docs/adrs/06-reduced-head-dynamics.md), including its fixed power-law
 warm response, seven fitted coefficients, and clamp temperature and
-cooling-power closure. The head, its fit, and its packaged designs and
-parameters are in `library/links/pulse_tube/`. Full refrigerator
-configurations are tasks 4.1 and 4.2.
+cooling-power closure. The head, its fit, and its packaged parameters are in
+`library/links/pulse_tube/empirical/`. Head designs are in
+`library/links/pulse_tube/data/heads/`. Full refrigerator configurations are
+tasks 4.1 and 4.2.
 
 ## Where to work
 
@@ -35,7 +36,7 @@ Implementation and test paths are relative to `src/pulse_tube_cooldown/` and
 | Conduction, contacts, radiation, MLI | DESIGN "Physical modeling approach" | `library/links/` | `library/`, `acceptance/`; `data/systems.md` |
 | Gas-gap switches and exchange gas | [ADR-05](docs/adrs/05-exchange-gas-pressure.md) | `library/links/gas_gap_switch.py`, `exchange_gas.py` | Component, integration, and acceptance tests; `data/systems.md` |
 | Gas pushing | [ADR-02](docs/adrs/02-gas-pushing-routine.md) | `library/links/gas_pushing.py` | Component and acceptance tests; `data/systems.md` |
-| Pulse-tube head and its measurements | [ADR-06](docs/adrs/06-reduced-head-dynamics.md), [archived ADR-03](docs/adrs/archive/03-coupled-capacity-maps.md) | `library/links/pulse_tube/` and its packaged `data/`, `measurements/test_stand.py` | `measurements/`; `data/test_stand/`, `data/test_stand.md`, `data/compressors.md` |
+| Pulse-tube head and its measurements | [ADR-06](docs/adrs/06-reduced-head-dynamics.md), [archived ADR-03](docs/adrs/archive/03-coupled-capacity-maps.md) | `library/links/pulse_tube/empirical/` and its packaged `data/`, head designs in `library/links/pulse_tube/data/heads/`, `measurements/test_stand.py` | `measurements/`; `data/test_stand/`, `data/test_stand.md`, `data/compressors.md` |
 | Plots | DESIGN "Architecture and responsibilities" | `plot/` | `plot/` |
 | Refrigerator measurements and validation | [Simulation guide](simulations/README.md) | `measurements/refrigerator.py`, `measurements/comparison.py`, `simulations/validation/` | `measurements/test_refrigerator.py`, `validation/`; `data/<system>/cooldown.toml` and measured traces |
 | Helium adsorption fit | [Data guide](data/README.md) | `library/gases/prepare.py` | Packaged `library/gases/data/he4.toml` source coefficients |

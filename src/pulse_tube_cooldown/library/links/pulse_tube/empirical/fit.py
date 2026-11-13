@@ -14,8 +14,8 @@ from scipy.optimize import least_squares
 from pulse_tube_cooldown.core.errors import ConfigurationError, SimulationError
 from pulse_tube_cooldown.core.types import Graph
 from pulse_tube_cooldown.engine.equations import calc_temperature_rate_of_change
-from pulse_tube_cooldown.library.links.pulse_tube.head import PulseTubeHead, build_pulse_tube_head
-from pulse_tube_cooldown.library.links.pulse_tube.parameters import (
+from pulse_tube_cooldown.library.links.pulse_tube.empirical.head import PulseTubeHead, build_pulse_tube_head
+from pulse_tube_cooldown.library.links.pulse_tube.empirical.parameters import (
     FitParameters,
     HeadCalibration,
     HeadCoefficients,

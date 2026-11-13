@@ -13,7 +13,7 @@ from scipy.optimize import brentq
 from pulse_tube_cooldown.core.errors import ConfigurationError
 from pulse_tube_cooldown.core.types import EnergyBalanceTerms, Graph, Node
 from pulse_tube_cooldown.engine.equations import calc_net_heat_flow
-from pulse_tube_cooldown.library.links.pulse_tube.parameters import (
+from pulse_tube_cooldown.library.links.pulse_tube.empirical.parameters import (
     HeadCalibration,
     HeadCoefficients,
     RegeneratorLayer,

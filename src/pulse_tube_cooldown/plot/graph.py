@@ -15,7 +15,7 @@ from numpy.typing import NDArray
 
 from pulse_tube_cooldown.config import LINK_TYPES
 from pulse_tube_cooldown.core.types import Link, Model
-from pulse_tube_cooldown.library.links.pulse_tube.head import PulseTubeHead
+from pulse_tube_cooldown.library.links.pulse_tube.empirical.head import PulseTubeHead
 
 __all__ = ["GraphColors", "plot_graph"]
 
