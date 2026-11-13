@@ -3,7 +3,6 @@
 import os
 import tomllib
 from collections.abc import Callable, Mapping
-from functools import partial
 from typing import Any
 
 import numpy as np
@@ -18,10 +17,23 @@ from pulse_tube_cooldown.library.links.gas_pushing import load_gas_pushing
 from pulse_tube_cooldown.library.links.joint_contact import load_joint_contact
 from pulse_tube_cooldown.library.links.multi_layer_insulation import load_multi_layer_insulation
 from pulse_tube_cooldown.library.links.pulse_tube.empirical import load_pulse_tube_head
+from pulse_tube_cooldown.library.links.pulse_tube.energy_flow import load_energy_flow_pulse_tube_head
 from pulse_tube_cooldown.library.links.radiation import load_radiation
 from pulse_tube_cooldown.library.materials.load import load_material
 
 __all__ = ["LINK_TYPES", "configure_model", "load_fridge", "load_link", "load_procedure"]
+
+LINK_TYPES: Mapping[str, Callable[[Mapping[str, Any]], Link]] = {
+    "conduction": load_conduction,
+    "exchange_gas": load_exchange_gas,
+    "gas_gap_switch": load_gas_gap_switch,
+    "gas_pushing": load_gas_pushing,
+    "joint_contact": load_joint_contact,
+    "multi_layer_insulation": load_multi_layer_insulation,
+    "radiation": load_radiation,
+    "pulse_tube_head": lambda config: load_pulse_tube_head(config, load_graph=load_fridge),
+    "energy_flow_pulse_tube_head": load_energy_flow_pulse_tube_head,
+}
 
 
 def configure_model(path_to_config: str | os.PathLike[str]) -> Model:
@@ -85,18 +97,6 @@ def load_fridge(fridge: Mapping[str, Any]) -> Graph:
     nodes = (*configured, *(node for link in links for node in getattr(link, "internal_nodes", ())))
 
     return Graph(nodes=nodes, links=links)
-
-
-LINK_TYPES: Mapping[str, Callable[[Mapping[str, Any]], Link]] = {
-    "conduction": load_conduction,
-    "exchange_gas": load_exchange_gas,
-    "gas_gap_switch": load_gas_gap_switch,
-    "gas_pushing": load_gas_pushing,
-    "joint_contact": load_joint_contact,
-    "multi_layer_insulation": load_multi_layer_insulation,
-    "radiation": load_radiation,
-    "pulse_tube_head": partial(load_pulse_tube_head, load_graph=load_fridge),
-}
 
 
 def load_link(config: Mapping[str, Any]) -> Link:

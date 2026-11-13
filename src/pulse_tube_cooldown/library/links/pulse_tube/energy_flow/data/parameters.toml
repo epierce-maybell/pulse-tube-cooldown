@@ -1,0 +1,25 @@
+cells_per_layer = 1
+pulse_tube_segments = 4
+
+[nusselt]
+source = "Gedeon and Wood (1996), NASA CR-198442, eq. 2.14, effective Nusselt number for woven screens"
+coefficient = 0.64
+peclet_exponent = 0.72
+porosity_exponent = 1.79
+
+[compressors."F-70"]
+source = "data/compressors.md: Copeland ZR72KC swept volume at 3500 rpm; FP1 front-panel swing at the relief cap"
+displacement_rate = 5.72e-3
+relief_amplitude = 9.65e5
+
+[designs."PT1.1"]
+source = "uncalibrated initial guess"
+effective_impedance = 9.3e8
+stage_1_split = 0.3
+volumetric_efficiency = 0.9
+
+[designs."PT1.5"]
+source = "uncalibrated initial guess"
+effective_impedance = 9.3e8
+stage_1_split = 0.3
+volumetric_efficiency = 0.9
