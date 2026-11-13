@@ -1,0 +1,107 @@
+# Masses in kg, volumes in m^3, density in kg/m^3.
+source = ", REV , New assembly with FP ref.step"
+source_sha256 = "6ade94fd4081989336b28fc081a3f99716981e2e079254ff42751394664d850b"
+extraction = "../pulse-tube-research/simulations/exploration/test_stand_cad_2026-11-13/inspect.py"
+representation = "English component solids; one installed head"
+material_assumption = "OFHC Cu RRR100 for the lower blocks and lids; existing upper-component assignments retained"
+installation_assumption = "Cold-end components share the attached stage temperature; the CAD inventory is provisionally used for both PT1.1 and PT1.5"
+copper_density = 8960.0
+density_source = "src/pulse_tube_cooldown/library/materials/data/ofhc_cu_rrr100.toml"
+
+[[components]]
+name = "UPPER COMP, STAGE 1, PT"
+stage = 1
+material = "OFHC Cu RRR100"
+mass = 0.3928
+volume = 4.382e-05
+included_in_original_stand = true
+source = "data/test_stand.md: original supplied inventory; CAD 350-000162"
+
+[[components]]
+name = "UPPER COMP, STAGE 2, PT"
+stage = 2
+material = "304 SS"
+mass = 0.4218
+volume = 5.255e-05
+included_in_original_stand = true
+source = "data/test_stand.md: original supplied inventory; CAD 350-000162"
+
+[[components]]
+name = "LID, STAGE 1, PT"
+stage = 1
+material = "OFHC Cu RRR100"
+mass = 0.19906074048447778
+volume = 2.221660050049975e-05
+included_in_original_stand = false
+source = ", REV , New assembly with FP ref.step"
+
+[[components]]
+name = "LOWER COMP, STAGE 2, PT"
+stage = 2
+material = "OFHC Cu RRR100"
+mass = 0.8119935174579573
+volume = 9.062427650200417e-05
+included_in_original_stand = false
+source = ", REV , New assembly with FP ref.step"
+
+[[components]]
+name = "LOWER COMP, STAGE 1, PT"
+stage = 1
+material = "OFHC Cu RRR100"
+mass = 2.288070906252021
+volume = 0.0002553650565013416
+included_in_original_stand = false
+source = ", REV , New assembly with FP ref.step"
+
+[[components]]
+name = "LID, STAGE 2, PT"
+stage = 2
+material = "OFHC Cu RRR100"
+mass = 0.09452410238764145
+volume = 1.0549564998620697e-05
+included_in_original_stand = false
+source = ", REV , New assembly with FP ref.step"
+
+[installed_head]
+stage_1 = [
+    [
+        "OFHC Cu RRR100",
+        2.879931646736498,
+    ],
+]
+stage_2 = [
+    [
+        "OFHC Cu RRR100",
+        0.9065176198455988,
+    ],
+    [
+        "304 SS",
+        0.4218,
+    ],
+]
+
+[test_stand]
+stage_1 = [
+    [
+        "OFHC Cu RRR100",
+        4.070931646736499,
+    ],
+    [
+        "Al 6061-T6",
+        0.4536,
+    ],
+    [
+        "304 SS",
+        0.0709,
+    ],
+]
+stage_2 = [
+    [
+        "304 SS",
+        0.4218,
+    ],
+    [
+        "OFHC Cu RRR100",
+        0.9462176198455987,
+    ],
+]

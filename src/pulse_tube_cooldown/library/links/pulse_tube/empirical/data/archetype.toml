@@ -6,13 +6,13 @@ test_stand_stages = [
 warm_flange_temperature = 297.81649277207674
 
 [coefficients]
-stage_1_warm_amplitude = 100.71308917044682
-stage_1_warm_exponent = 1.3099516874079062
-stage_2_warm_amplitude = 27.740287899324148
-stage_2_warm_exponent = 0.7133878553136751
-regenerator_1_exchange_coefficient = 0.04619169729949183
-regenerator_2_exchange_coefficient = 0.10218383077472924
-energy_coupling_coefficient = 2.9364475589384447
+stage_1_warm_amplitude = 397.53358252592636
+stage_1_warm_exponent = 1.3882797408649594
+stage_2_warm_amplitude = 76.70239596147847
+stage_2_warm_exponent = 1.0123433758217968
+regenerator_1_exchange_coefficient = 0.14607533424258318
+regenerator_2_exchange_coefficient = 0.10337239146052621
+energy_coupling_coefficient = 6.8281956245890365
 
 [provenance]
 source = "tests/acceptance/fixtures/pulse_tube_cooler/"
@@ -32,7 +32,7 @@ name = "Stage 1"
 composition = [
     [
         "OFHC Cu RRR100",
-        1.5838,
+        4.070931646736499,
     ],
     [
         "Al 6061-T6",
@@ -43,6 +43,7 @@ composition = [
         0.0709,
     ],
 ]
+source = "data/test_stand/cold_end_inventory.toml"
 
 [[test_stand.nodes]]
 name = "Stage 2"
@@ -53,9 +54,10 @@ composition = [
     ],
     [
         "OFHC Cu RRR100",
-        0.0397,
+        0.9462176198455987,
     ],
 ]
+source = "data/test_stand/cold_end_inventory.toml"
 
 [[test_stand.links]]
 name = "Shield radiation"

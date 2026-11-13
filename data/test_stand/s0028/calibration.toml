@@ -4,26 +4,29 @@ test_stand_stages = [
     "Stage 2",
 ]
 warm_flange_temperature = 294.1209913684476
-source = "S0028 baseline accepted for FP01; ../pulse-tube-research/simulations/exploration/fp01_head_reference/baseline.toml"
 
 [coefficients]
-# source = 'S0028 baseline accepted for FP01; ../pulse-tube-research/simulations/exploration/fp01_head_reference/baseline.toml'
-stage_1_warm_amplitude = 1999.506957912695
-stage_1_warm_exponent = 2.2399780275889696
-stage_2_warm_amplitude = 24.174786781583453
-stage_2_warm_exponent = 0.682003696191073
-regenerator_1_exchange_coefficient = 0.7432573361387808
-regenerator_2_exchange_coefficient = 0.17450785634576005
-energy_coupling_coefficient = 39.11149476218225
+stage_1_warm_amplitude = 1982.1006007559465
+stage_1_warm_exponent = 2.3884459586861797
+stage_2_warm_amplitude = 70.02718181100118
+stage_2_warm_exponent = 0.9446348049854242
+regenerator_1_exchange_coefficient = 1.0035516486943805
+regenerator_2_exchange_coefficient = 0.1762286350524275
+energy_coupling_coefficient = 37.13192604339944
 
 [provenance]
 source = "data/test_stand/s0028/cooldown_2026-06-30.dat; data/test_stand/s0028/load_map_2026-07-02.dat"
 compressors = "2"
 purpose = "Reference performance for both FP01 heads, each operated on two compressors"
-regenerate = ".venv/Scripts/python -B C:\\Users\\EthanPierce\\Documents\\projects\\pulse-tube-research\\simulations\\exploration\\fp01_head_reference\\check_s0028.py baseline"
+regenerate = "uv run python ../pulse-tube-research/simulations/exploration/stand_inventory_refit_2026-11-13/run.py fit --case s0028 --root . --output ../pulse-tube-research/simulations/exploration/stand_inventory_refit_2026-11-13"
+inventory_source = "data/test_stand/cold_end_inventory.toml"
+inventory_material_assumption = "OFHC Cu RRR100"
+compressor_start = "2026-06-30T17:12:03"
+comparison_end = "2026-06-30T21:12:02"
+fit_source = "../pulse-tube-research/simulations/exploration/stand_inventory_refit_2026-11-13/fits/s0028/calibration.toml"
 
 [test_stand]
-source = "S0028 baseline accepted for FP01; ../pulse-tube-research/simulations/exploration/fp01_head_reference/baseline.toml"
+source = "data/test_stand.md; data/test_stand/cold_end_inventory.toml"
 
 [[test_stand.nodes]]
 name = "Room temperature"
@@ -33,14 +36,14 @@ composition = [
         1.0,
     ],
 ]
-source = "S0028 baseline accepted for FP01; ../pulse-tube-research/simulations/exploration/fp01_head_reference/baseline.toml"
+source = "data/test_stand.md"
 
 [[test_stand.nodes]]
 name = "Stage 1"
 composition = [
     [
         "OFHC Cu RRR100",
-        1.5838,
+        4.070931646736499,
     ],
     [
         "Al 6061-T6",
@@ -51,7 +54,7 @@ composition = [
         0.0709,
     ],
 ]
-source = "S0028 baseline accepted for FP01; ../pulse-tube-research/simulations/exploration/fp01_head_reference/baseline.toml"
+source = "data/test_stand/cold_end_inventory.toml"
 
 [[test_stand.nodes]]
 name = "Stage 2"
@@ -62,10 +65,10 @@ composition = [
     ],
     [
         "OFHC Cu RRR100",
-        0.0397,
+        0.9462176198455987,
     ],
 ]
-source = "S0028 baseline accepted for FP01; ../pulse-tube-research/simulations/exploration/fp01_head_reference/baseline.toml"
+source = "data/test_stand/cold_end_inventory.toml"
 
 [[test_stand.links]]
 name = "Shield radiation"
@@ -82,7 +85,7 @@ surface = [
     "Gold-plated Cu",
     "Machined Al",
 ]
-source = "S0028 baseline accepted for FP01; ../pulse-tube-research/simulations/exploration/fp01_head_reference/baseline.toml"
+source = "data/test_stand.md"
 
 [load_map]
 source = "data/test_stand/s0028/load_map_2026-07-02.dat"

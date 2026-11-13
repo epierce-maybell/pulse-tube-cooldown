@@ -10,8 +10,8 @@ composition = [["304 SS", 1.0]]
 
 [[fridge.nodes]]
 name = "PRP"
-composition = [["OFHC Cu RRR100", 16.867], ["304 SS", 0.021], ["G10", 0.086]]
-source = "BoM 910-000040"
+composition = [["OFHC Cu RRR100", 22.626863293472997], ["304 SS", 0.021], ["G10", 0.086]]
+source = "BoM 910-000040; data/test_stand/cold_end_inventory.toml"
 
 [[fridge.nodes]]
 name = "PRP shield"
@@ -25,8 +25,8 @@ source = "BoM 910-000040"
 
 [[fridge.nodes]]
 name = "CFP"
-composition = [["OFHC Cu RRR100", 15.063], ["304 SS", 0.076], ["G10", 0.058]]
-source = "BoM 910-000040"
+composition = [["OFHC Cu RRR100", 16.8760352396912], ["304 SS", 0.9196], ["G10", 0.058]]
+source = "BoM 910-000040; data/test_stand/cold_end_inventory.toml"
 
 [[fridge.nodes]]
 name = "CFP shield"

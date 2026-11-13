@@ -5,14 +5,16 @@ experiment = "Pulse-tube cooler acceptance tests"
 name = "Room temperature"
 composition = [["304 SS", 1.0]]
 
-# Stage inventories from data/test_stand.md
+# Stage inventories from data/test_stand/cold_end_inventory.toml
 [[fridge.nodes]]
 name = "Stage 1"
-composition = [["OFHC Cu RRR100", 1.5838], ["Al 6061-T6", 0.4536], ["304 SS", 0.0709]]
+composition = [["OFHC Cu RRR100", 4.070931646736499], ["Al 6061-T6", 0.4536], ["304 SS", 0.0709]]
+source = "data/test_stand/cold_end_inventory.toml"
 
 [[fridge.nodes]]
 name = "Stage 2"
-composition = [["304 SS", 0.4218], ["OFHC Cu RRR100", 0.0397]]
+composition = [["304 SS", 0.4218], ["OFHC Cu RRR100", 0.9462176198455987]]
+source = "data/test_stand/cold_end_inventory.toml"
 
 # Shield area assumes 1.191 kg of copper sheet at 0.0016 m thickness.
 [[fridge.links]]
@@ -38,25 +40,25 @@ fixed_boundary_nodes = ["Room temperature"]
 design = "PT1.5"
 stages = ["Stage 1", "Stage 2"]
 
-# Starting values from ADR-06's S0035 calibration.
+# Starting values from the pre-correction archetype in stand_inventory_refit_2026-11-13/snapshot/.
 [calibration.coefficients]
-stage_1_warm_amplitude = 144.789
-stage_1_warm_exponent = 1.42393
-stage_2_warm_amplitude = 26.5995
-stage_2_warm_exponent = 0.667621
-regenerator_1_exchange_coefficient = 0.0376894
-regenerator_2_exchange_coefficient = 0.120623
-energy_coupling_coefficient = 1.97665
+stage_1_warm_amplitude = 100.71308917044682
+stage_1_warm_exponent = 1.3099516874079062
+stage_2_warm_amplitude = 27.740287899324148
+stage_2_warm_exponent = 0.7133878553136751
+regenerator_1_exchange_coefficient = 0.04619169729949183
+regenerator_2_exchange_coefficient = 0.10218383077472924
+energy_coupling_coefficient = 2.9364475589384447
 
 [calibration.fit]
-sample_points = 1001
+sample_points = 5001
 
 [calibration.fit.solver]
-rtol = 1e-3
-atol = 1e-5
+rtol = 1e-5
+atol = 1e-7
 
 [calibration.fit.optimizer]
-diff_step = 0.02
-ftol = 0.01
-xtol = 0.1
-gtol = 0.01
+diff_step = 0.002
+ftol = 2e-5
+xtol = 2e-5
+gtol = 2e-5
