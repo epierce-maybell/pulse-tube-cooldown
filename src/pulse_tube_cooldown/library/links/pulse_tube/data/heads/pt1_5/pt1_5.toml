@@ -2,13 +2,82 @@ name = "PT1.5"
 clamp_fraction = 0.619
 source = "geometry.csv; ../pt1_1/geometry.csv"
 regenerate = "uv run python -m pulse_tube_cooldown.library.links.pulse_tube.prepare"
-regenerator_1 = [
-    { material = "304 SS", mass = 0.9758, length_fraction = 0.72 },
-    { material = "Pb", mass = 1.112, length_fraction = 0.28 },
+wall_material = "304 SS"
+dead_volume = 4.5e-05
+reservoir_volume = 0.01056
+heat_exchanger_void_volume = [
+    3.93e-05,
+    1.08e-05,
 ]
-regenerator_2 = [
-    { material = "Pb", mass = 0.2212, length_fraction = 0.16 },
-    { material = "Er3Ni", mass = 0.353, length_fraction = 0.32 },
-    { material = "HoCu2", mass = 0.3597, length_fraction = 0.32 },
-    { material = "Gd2O2S", mass = 0.1791, length_fraction = 0.2 },
+regenerator_length = [
+    0.18,
+    0.2445,
 ]
+regenerator_bore_area = [
+    0.003137,
+    0.0008042,
+]
+regenerator_wall_area = [
+    0.0001001,
+    5.105e-05,
+]
+pulse_tube_length = [
+    0.181,
+    0.444,
+]
+pulse_tube_bore_area = [
+    0.001385,
+    0.0004524,
+]
+pulse_tube_wall_area = [
+    6.676e-05,
+    3.848e-05,
+]
+
+[[regenerator_1]]
+material = "304 SS"
+mass = 0.9758
+length_fraction = 0.72
+packing = "screens"
+porosity = 0.7
+hydraulic_diameter = 0.0001237
+
+[[regenerator_1]]
+material = "Pb"
+mass = 1.112
+length_fraction = 0.28
+packing = "spheres"
+porosity = 0.38
+hydraulic_diameter = 0.0001226
+
+[[regenerator_2]]
+material = "Pb"
+mass = 0.2212
+length_fraction = 0.16
+packing = "spheres"
+porosity = 0.38
+hydraulic_diameter = 0.0001226
+
+[[regenerator_2]]
+material = "Er3Ni"
+mass = 0.353
+length_fraction = 0.32
+packing = "spheres"
+porosity = 0.38
+hydraulic_diameter = 8.172e-05
+
+[[regenerator_2]]
+material = "HoCu2"
+mass = 0.3597
+length_fraction = 0.32
+packing = "spheres"
+porosity = 0.38
+hydraulic_diameter = 8.172e-05
+
+[[regenerator_2]]
+material = "Gd2O2S"
+mass = 0.1791
+length_fraction = 0.2
+packing = "spheres"
+porosity = 0.38
+hydraulic_diameter = 0.0001022

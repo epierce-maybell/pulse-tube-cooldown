@@ -12,7 +12,7 @@ stage2_pulse_tube_outer_radius,12.50,mm,,,CAD 910-000018,0.492 in; the longer tu
 stage2_pulse_tube_length,444.1,mm,,,CAD 910-000018,cylindrical face area 54.051 in^2 / (2 pi r); runs from CFP past PRP to the warm flange
 stage2_pulse_tube_t3_below_stage1,0.0508,m,,,human 2026-11-02,approximately 2 inches below stage 1 on the main pulse tube reaching stage 2; sensor attachment unspecified
 tube_wall_thickness,0.5,mm,,,estimate,typical thin-wall cryocooler tube; not in CAD
-tube_wall_material,304 stainless steel,,,,Falter 2024,stainless regenerator tube; grade assumed
+tube_wall_material,304 stainless steel,,304 SS,,Falter 2024,stainless regenerator tube; grade assumed
 stage1_regenerator_layer_SS,0.72,fraction of length,304 SS,screens,Falter 2024 Fig. 2,warm end; schematic measured to about 0.05
 stage1_regenerator_layer_Pb,0.28,fraction of length,Pb,spheres,Falter 2024 Fig. 2,cold end; production filling assumed to match the paper
 stage2_regenerator_layer_Pb,0.16,fraction of length,Pb,spheres,Falter 2024 Fig. 2,from PRP
@@ -29,3 +29,10 @@ stage2_pulse_tube_gas_volume,200.9,cm^3,,,derived,pi (r - wall)^2 x length; line
 reservoir_volume,5258,cm^3,,,"STEP export of CAD 910-000018, 2026-11-03","TANK, BUFFER 350-000175 (BOM line 326), one per pulse tube; bore radius 76.5 mm over 286 mm; lid and bottom pockets under 0.06 L neglected"
 reservoir_hose_volume,34,cm^3,,,"STEP export of CAD 910-000018, 2026-11-03","HOSE, BUFFER (BOM lines 714-715), one per reservoir; bore radius 4.763 mm over 482.6 mm"
 valve_to_head_dead_volume,45,cm^3,,,"STEP export of CAD 910-000018, 2026-11-03","rough sum of bores: VH inlet tube, isolator, isolator-to-hose tube, 24 in hose 400-000132 (7.04 mm bore), glands and elbow; rotary valve ports are not in the CAD"
+stage1_heat_exchanger_void_volume,39.3,cm^3,,,"assumed equal to PT1.5, STEP export of CAD 910-000040, 2026-11-06",not measured in CAD 910-000018
+stage2_heat_exchanger_void_volume,10.8,cm^3,,,"assumed equal to PT1.5, STEP export of CAD 910-000040, 2026-11-06",not measured in CAD 910-000018
+sphere_diameter_Pb,0.3,mm,Pb,spheres,"Xu, Morie, and Tsuchiya, Development of Zinc-plated Regenerator Material, CEC-ICMC 2017 C3OrD-4, slide P.4",typical lead sphere diameter; not measured for this head
+sphere_diameter_Er3Ni,0.2,mm,Er3Ni,spheres,"Pan et al., Experimental progress of a 4K VM/PT hybrid cryocooler for pre-cooling 1K sorption cooler, CEC 2017 poster C2PoK-04, structural parameters table",low end of the stated 0.2-0.25 mm; not measured for this head
+sphere_diameter_HoCu2,0.2,mm,HoCu2,spheres,"Fukuda, Tamura, and Masuyama, Investigation of the 2nd stage regenerator materials of a Gifford-McMahon cryocooler, abstract",not measured for this head
+sphere_diameter_Gd2O2S,0.25,mm,Gd2O2S,spheres,"Fukuda, Tamura, and Masuyama, Investigation of the 2nd stage regenerator materials of a Gifford-McMahon cryocooler, abstract",not measured for this head
+screen_wire_diameter,0.053,mm,304 SS,screens,"ASTM E11 No. 200 sieve, nominal wire diameter, as tabulated at https://wovenwire.com/reference/astm-sieve.htm",200 mesh per Fukuda et al. and Pan et al.; mesh and wire not measured for this head

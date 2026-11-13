@@ -1,6 +1,6 @@
 """Parameters, coefficients, and calibrations of the pulse-tube head model, and the files that hold them.
 
-The package's `data/` directory holds the head designs, the parameters shared by every head, and the fit parameters.
+The package's `data/` directory holds the parameters shared by every head and the fit parameters.
 A calibration file holds what belongs to one head and drive condition: its fitted coefficients, measured load map,
 test stand, and the name of its packaged design.
 """
@@ -17,30 +17,27 @@ import tomli_w
 import xarray as xr
 from numpy.typing import NDArray
 
-from pulse_tube_cooldown.core.types import Material
-from pulse_tube_cooldown.library.materials.load import load_material
-from pulse_tube_cooldown.library.toml_files import read_named_toml
+from pulse_tube_cooldown.library.links.pulse_tube.design import (
+    HeadDesignParameters,
+    load_head_design,
+)
 
 __all__ = [
     "ClampResponseParameters",
     "FitParameters",
     "HeadCalibration",
     "HeadCoefficients",
-    "HeadDesignParameters",
     "LoadMap",
     "LoadedProfileParameters",
-    "RegeneratorLayer",
     "SharedParameters",
     "UnloadedProfileParameters",
     "load_fit_parameters",
-    "load_head_design",
     "load_shared_parameters",
     "read_head_calibration",
     "save_head_calibration",
 ]
 
 DATA_DIRECTORY = Path(__file__).parent / "data"
-DESIGN_DIRECTORY = Path(__file__).parents[1] / "data" / "heads"
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -54,38 +51,6 @@ class HeadCoefficients:
     regenerator_1_exchange_coefficient: float  # [W/(kg K)]
     regenerator_2_exchange_coefficient: float  # [W/(kg K)]
     energy_coupling_coefficient: float  # unitless
-
-
-@dataclass(frozen=True, slots=True, kw_only=True)
-class RegeneratorLayer:
-    """One material fill of a regenerator.
-
-    Attributes:
-        material: The fill material.
-        mass: Mass in kg.
-        length_fraction: Fraction of the regenerator's length.
-    """
-
-    material: Material
-    mass: float
-    length_fraction: float
-
-
-@dataclass(frozen=True, slots=True, kw_only=True)
-class HeadDesignParameters:
-    """A head design's regenerator inventories and clamp position.
-
-    Attributes:
-        name: Design name, such as "PT1.5".
-        clamp_fraction: Clamp position as a fraction of regenerator 2's length from its warm end.
-        regenerator_1: Layers from warm to cold.
-        regenerator_2: Layers from warm to cold.
-    """
-
-    name: str
-    clamp_fraction: float
-    regenerator_1: tuple[RegeneratorLayer, ...]
-    regenerator_2: tuple[RegeneratorLayer, ...]
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -249,31 +214,6 @@ class HeadCalibration:
         return read_head_calibration(DATA_DIRECTORY / "archetype.toml")
 
 
-def load_head_design(name: str, /, *, directory: str | os.PathLike[str] = DESIGN_DIRECTORY) -> HeadDesignParameters:
-    """Loads a head design by name, such as "PT1.5", from a directory of design files.
-
-    Raises:
-        ConfigurationError: If no file or more than one file defines the name.
-    """
-    table = read_named_toml(name, directory=directory, kind="head designs")
-    return HeadDesignParameters(
-        name=table["name"],
-        clamp_fraction=table["clamp_fraction"],
-        regenerator_1=regenerator_layers(table["regenerator_1"]),
-        regenerator_2=regenerator_layers(table["regenerator_2"]),
-    )
-
-
-def regenerator_layers(tables: list[Mapping[str, Any]]) -> tuple[RegeneratorLayer, ...]:
-    """Builds regenerator layers from tables of `material` name, `mass`, and `length_fraction`."""
-    return tuple(
-        RegeneratorLayer(
-            material=load_material(table["material"]), mass=table["mass"], length_fraction=table["length_fraction"]
-        )
-        for table in tables
-    )
-
-
 def load_shared_parameters(
     path: str | os.PathLike[str] = DATA_DIRECTORY / "shared_parameters.toml",
 ) -> SharedParameters:
@@ -337,16 +277,14 @@ def load_fit_parameters(path: str | os.PathLike[str] = DATA_DIRECTORY / "fit_par
     )
 
 
-def read_head_calibration(
-    path: str | os.PathLike[str], /, *, designs: str | os.PathLike[str] = DESIGN_DIRECTORY
-) -> HeadCalibration:
-    """Reads a calibration file, loading its design by name from `designs`."""
+def read_head_calibration(path: str | os.PathLike[str], /) -> HeadCalibration:
+    """Reads a calibration file, loading its packaged design by name."""
     table = tomllib.loads(Path(path).read_text(encoding="utf-8"))
     rows = np.asarray(table["load_map"]["table"], dtype=np.float64)
     first, second = table["test_stand_stages"]
     return HeadCalibration(
         coefficients=HeadCoefficients(**table["coefficients"]),
-        design=load_head_design(table["design"], directory=designs),
+        design=load_head_design(table["design"]),
         load_map=LoadMap(temperature=rows[:, :2], heater_power=rows[:, 2:]),
         test_stand=table["test_stand"],
         test_stand_stages=(first, second),

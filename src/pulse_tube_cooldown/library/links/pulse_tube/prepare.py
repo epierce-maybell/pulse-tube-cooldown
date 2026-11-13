@@ -16,10 +16,24 @@ def read_geometry(path: Path) -> dict[str, dict[str, str]]:
 
 
 def compile_design(name: str, rows: dict[str, dict[str, str]], source: str) -> dict:
-    """Calculates layer masses in kg and length fractions, rounded to the precision of the geometry records."""
+    """Calculates the design in SI units, rounded to the precision of the geometry records."""
 
     def value(quantity: str) -> float:
         return float(rows[quantity]["value"])
+
+    def rounded(number: float) -> float:
+        return float(f"{number:.4g}")
+
+    wall = value("tube_wall_thickness") * 1e-3
+
+    def areas(tube: str) -> tuple[float, float]:
+        outer = value(f"{tube}_outer_radius") * 1e-3
+        return math.pi * (outer - wall) ** 2, math.pi * (outer**2 - (outer - wall) ** 2)
+
+    def hydraulic_diameter(row: dict[str, str], porosity: float) -> float:
+        if row["packing"] == "spheres":
+            return 2.0 * porosity * value(f"sphere_diameter_{row['material']}") * 1e-3 / (3.0 * (1.0 - porosity))
+        return porosity * value("screen_wire_diameter") * 1e-3 / (1.0 - porosity)
 
     above, below = value("prp_to_clamp"), value("clamp_to_cfp")
     design = {
@@ -27,20 +41,38 @@ def compile_design(name: str, rows: dict[str, dict[str, str]], source: str) -> d
         "clamp_fraction": float(f"{above / (above + below):.3f}"),
         "source": source,
         "regenerate": "uv run python -m pulse_tube_cooldown.library.links.pulse_tube.prepare",
+        "wall_material": rows["tube_wall_material"]["material"],
+        "dead_volume": rounded(value("valve_to_head_dead_volume") * 1e-6),
+        "reservoir_volume": rounded(2 * (value("reservoir_volume") + value("reservoir_hose_volume")) * 1e-6),
+        "heat_exchanger_void_volume": [
+            rounded(value(f"stage{stage}_heat_exchanger_void_volume") * 1e-6) for stage in (1, 2)
+        ],
     }
+    for kind in ("regenerator", "pulse_tube"):
+        tubes = [f"stage{stage}_{kind}" for stage in (1, 2)]
+        design[f"{kind}_length"] = [rounded(value(f"{tube}_length") * 1e-3) for tube in tubes]
+        design[f"{kind}_bore_area"] = [rounded(areas(tube)[0]) for tube in tubes]
+        design[f"{kind}_wall_area"] = [rounded(areas(tube)[1]) for tube in tubes]
+
     for regenerator in (1, 2):
         tube = f"stage{regenerator}_regenerator"
-        radius = (value(f"{tube}_outer_radius") - value("tube_wall_thickness")) * 1e-3
-        volume = math.pi * radius**2 * value(f"{tube}_length") * 1e-3
+        volume = areas(tube)[0] * value(f"{tube}_length") * 1e-3
         layers = []
         for quantity, row in rows.items():
             if not quantity.startswith(f"{tube}_layer_"):
                 continue
             fraction = float(row["value"])
-            density = load_material(row["material"]).density
-            mass = density * volume * fraction * (1 - value(f"matrix_porosity_{row['packing']}"))
+            porosity = value(f"matrix_porosity_{row['packing']}")
+            mass = load_material(row["material"]).density * volume * fraction * (1 - porosity)
             layers.append(
-                {"material": row["material"], "mass": float(f"{mass:.4g}"), "length_fraction": float(f"{fraction:.6g}")}
+                {
+                    "material": row["material"],
+                    "mass": rounded(mass),
+                    "length_fraction": float(f"{fraction:.6g}"),
+                    "packing": row["packing"],
+                    "porosity": porosity,
+                    "hydraulic_diameter": rounded(hydraulic_diameter(row, porosity)),
+                }
             )
         design[f"regenerator_{regenerator}"] = layers
     return design

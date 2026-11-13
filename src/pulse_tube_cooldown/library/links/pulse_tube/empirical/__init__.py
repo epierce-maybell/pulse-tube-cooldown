@@ -1,5 +1,6 @@
 """The reduced pulse-tube head, its parameters, and its calibration."""
 
+from pulse_tube_cooldown.library.links.pulse_tube.design import HeadDesignParameters, load_head_design
 from pulse_tube_cooldown.library.links.pulse_tube.empirical.fit import (
     first_crossing_time,
     fit_pulse_tube_head,
@@ -14,11 +15,9 @@ from pulse_tube_cooldown.library.links.pulse_tube.empirical.parameters import (
     FitParameters,
     HeadCalibration,
     HeadCoefficients,
-    HeadDesignParameters,
     LoadMap,
     SharedParameters,
     load_fit_parameters,
-    load_head_design,
     load_shared_parameters,
     read_head_calibration,
     save_head_calibration,
