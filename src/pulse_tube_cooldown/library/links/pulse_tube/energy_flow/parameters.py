@@ -91,6 +91,9 @@ def load_energy_flow_pulse_tube_head(config: Mapping[str, Any]) -> PulseTubeHead
         nusselt_coeff=parameters["nusselt"]["coefficient"],
         nusselt_peclet_exp=parameters["nusselt"]["peclet_exponent"],
         nusselt_porosity_exp=parameters["nusselt"]["porosity_exponent"],
+        axial_conductivity_coeff=parameters["axial_conductivity"]["coefficient"],
+        axial_conductivity_peclet_exp=parameters["axial_conductivity"]["peclet_exponent"],
+        axial_conductivity_porosity_exp=parameters["axial_conductivity"]["porosity_exponent"],
         manifold=Manifold(
             head_count=manifold["head_count"],
             compressor_count=manifold["compressor_count"],

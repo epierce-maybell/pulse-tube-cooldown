@@ -2,10 +2,16 @@ cells_per_layer = 1
 pulse_tube_segments = 4
 
 [nusselt]
-source = "Gedeon and Wood (1996), NASA CR-198442, eq. 2.14, effective Nusselt number for woven screens"
-coefficient = 0.64
-peclet_exponent = 0.72
+source = "Gedeon and Wood (1996), NASA CR-198442, eq. 2.8, Nusselt number for woven screens"
+coefficient = 0.99
+peclet_exponent = 0.66
 porosity_exponent = 1.79
+
+[axial_conductivity]
+source = "Gedeon and Wood (1996), NASA CR-198442, eq. 2.9, enhanced axial conductivity ratio for woven screens"
+coefficient = 0.50
+peclet_exponent = 0.66
+porosity_exponent = -2.91
 
 [compressors."F-70"]
 source = "data/compressors.md: Copeland ZR72KC swept volume at 3500 rpm; FP1 front-panel swing at the relief cap"

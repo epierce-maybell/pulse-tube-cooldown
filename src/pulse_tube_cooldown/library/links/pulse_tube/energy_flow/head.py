@@ -25,9 +25,12 @@ class PulseTubeHead:
         effective_impedance: Acoustic impedance that sets the acoustic power entering regenerator 1, p_a^2 / (2 Z).
         stage_1_split: Fraction of the acoustic power reaching stage 1 that enters regenerator 2.
         valve_frequency: Frequency of the rotary valve's pressure cycle.
-        nusselt_coeff: Coefficient of the Peclet-number term in the matrix's effective Nusselt number.
-        nusselt_peclet_exp: Exponent of the Peclet number in the matrix's effective Nusselt number.
-        nusselt_porosity_exp: Exponent of the porosity factor in the matrix's effective Nusselt number.
+        nusselt_coeff: Coefficient of the Peclet-number term in the matrix's Nusselt number.
+        nusselt_peclet_exp: Exponent of the Peclet number in the matrix's Nusselt number.
+        nusselt_porosity_exp: Exponent of the porosity factor in the matrix's Nusselt number.
+        axial_conductivity_coeff: Coefficient of the Peclet-number term in the gas's axial conductivity ratio.
+        axial_conductivity_peclet_exp: Exponent of the Peclet number in the gas's axial conductivity ratio.
+        axial_conductivity_porosity_exp: Exponent of the porosity factor in the gas's axial conductivity ratio.
         manifold: The compressors and gas supply driving the head.
         regenerator_1: Nodes of the regenerator-1 sections, from the warm flange to stage 1.
         regenerator_2_upper: Nodes of the regenerator-2 sections, from stage 1 to the clamp.
@@ -59,6 +62,9 @@ class PulseTubeHead:
     nusselt_coeff: float
     nusselt_peclet_exp: float
     nusselt_porosity_exp: float
+    axial_conductivity_coeff: float
+    axial_conductivity_peclet_exp: float
+    axial_conductivity_porosity_exp: float
 
     manifold: Manifold
 
@@ -204,8 +210,18 @@ class PulseTubeHead:
         )
 
     def nusselt_number(self, peclet: NDArray[np.float64], porosity: NDArray[np.float64]) -> NDArray[np.float64]:
-        """Return the effective Nusselt number in the regenerator tube."""
+        """Return the Nusselt number for heat exchange between the gas and the matrix."""
         return (1.0 + self.nusselt_coeff * peclet**self.nusselt_peclet_exp) * porosity**self.nusselt_porosity_exp
+
+    def axial_conductivity_ratio(
+        self, peclet: NDArray[np.float64], porosity: NDArray[np.float64]
+    ) -> NDArray[np.float64]:
+        """Return the ratio of the gas's axial conductivity in the matrix to its molecular conductivity."""
+        return 1.0 + (
+            self.axial_conductivity_coeff
+            * peclet**self.axial_conductivity_peclet_exp
+            * porosity**self.axial_conductivity_porosity_exp
+        )
 
     def acoustic_powers(
         self,
@@ -288,6 +304,7 @@ class PulseTubeHead:
 
         axial_conductance = (
             matrix_fraction**2 * gas.isobaric_specific_heat**2 * mean_square_mass_flow / exchange_conductance
+            + self.axial_conductivity_ratio(peclet, self.section_porosity) * gas.thermal_conductivity * void_area
             + self.wall_material.thermal_conductivity(section_temperatures) * self.section_wall_area
         )
 
